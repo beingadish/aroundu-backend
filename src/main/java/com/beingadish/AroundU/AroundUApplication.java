@@ -12,5 +12,4 @@ public class AroundUApplication {
     public static void main(String[] args) {
         SpringApplication.run(AroundUApplication.class, args);
     }
-
 }
