@@ -36,16 +36,12 @@ public enum Currency {
     VND("₫"),           // Vietnamese Dong
     PKR("Rs");          // Pakistani Rupee
 
+    // Getter for symbol
     private final String symbol;
 
     // Constructor
     Currency(String symbol) {
         this.symbol = symbol;
-    }
-
-    // Getter for symbol
-    public String getSymbol() {
-        return symbol;
     }
 
     // Override toString() for display

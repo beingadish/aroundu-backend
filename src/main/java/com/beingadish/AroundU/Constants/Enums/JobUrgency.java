@@ -1,7 +1,7 @@
 package com.beingadish.AroundU.Constants.Enums;
 
-public enum JobPriority {
+public enum JobUrgency {
     URGENT,
     MEDIUM,
-    LOW;
+    NORMAL;
 }

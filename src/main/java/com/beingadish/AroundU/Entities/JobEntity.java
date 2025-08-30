@@ -1,12 +1,15 @@
 package com.beingadish.AroundU.Entities;
 
-import com.beingadish.AroundU.Constants.Enums.Currency;
-import com.beingadish.AroundU.Constants.Enums.JobPriority;
 import com.beingadish.AroundU.Constants.Enums.JobStatus;
+import com.beingadish.AroundU.Constants.Enums.JobUrgency;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,32 +23,32 @@ public class JobEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long jobId;
+    private Long id;
 
     @Column(nullable = false)
-    private String jobTitle;
+    private String title;
 
+    @Column(length = 500)
+    private String shortDescription;
+
+    @Lob
     @Column(nullable = false)
-    private String jobDescription;
+    private String longDescription;
 
-    private Integer estimatedPrice;
+    @Embedded
+    private Price price;
+
+    @ManyToOne
+    @JoinColumn(name = "job_location_id", nullable = false)
+    private Address jobLocation;
 
     @Enumerated(EnumType.STRING)
-    private Currency currencySymbol;
-
-    @Enumerated(EnumType.STRING)
-    private JobPriority jobPriority;
-
-    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private JobStatus jobStatus;
 
-    @ManyToOne
-    @JoinColumn(name = "created_by", nullable = false)
-    private ClientEntity createdBy;
-
-    @ManyToOne
-    @JoinColumn(name = "assigned_worker")
-    private WorkerEntity assignedWorker;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private JobUrgency jobUrgency;
 
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
@@ -53,13 +56,21 @@ public class JobEntity {
             joinColumns = @JoinColumn(name = "job_id"),
             inverseJoinColumns = @JoinColumn(name = "skill_id")
     )
-    private List<SkillEntity> skillRequiredList;
+    private List<SkillEntity> requiredSkills;
 
-    @Column(nullable = false, updatable = false)
+    @ManyToOne
+    @JoinColumn(name = "created_by", nullable = false)
+    private User createdBy;
+
+    @ManyToOne
+    @JoinColumn(name = "assigned_to")
+    private WorkerEntity assignedTo;
+
     @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
     @UpdateTimestamp
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 }
