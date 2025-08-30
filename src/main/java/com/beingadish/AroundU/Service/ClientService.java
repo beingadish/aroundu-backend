@@ -1,7 +1,5 @@
 package com.beingadish.AroundU.Service;
 
-import com.beingadish.AroundU.DTO.Client.ClientRequestDTO;
-import com.beingadish.AroundU.DTO.Client.ClientResponseDTO;
 import org.springframework.stereotype.Service;
 
 @Service

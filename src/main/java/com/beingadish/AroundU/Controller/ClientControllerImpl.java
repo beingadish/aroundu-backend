@@ -1,8 +1,6 @@
 package com.beingadish.AroundU.Controller;
 
 import com.beingadish.AroundU.Constants.URIConstants;
-import com.beingadish.AroundU.DTO.Client.ClientRequestDTO;
-import com.beingadish.AroundU.DTO.Client.ClientResponseDTO;
 import com.beingadish.AroundU.Service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

@@ -44,6 +44,10 @@ public enum Currency {
         this.symbol = symbol;
     }
 
+    public String getSymbol() {
+        return symbol;
+    }
+
     // Override toString() for display
     @Override
     public String toString() {

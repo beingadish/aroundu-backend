@@ -24,7 +24,8 @@ public class Address {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Country countryCode;
+    @NotNull
+    private Country country;
 
     @Column(nullable = false)
     @NotBlank

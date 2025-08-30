@@ -1,5 +1,8 @@
 package com.beingadish.AroundU.Constants.Enums;
 
+import lombok.Getter;
+
+@Getter
 public enum Country {
     AF("Afghanistan"),
     AL("Albania"),
@@ -242,7 +245,4 @@ public enum Country {
         this.fullName = fullName;
     }
 
-    public String getFullName() {
-        return fullName;
-    }
 }

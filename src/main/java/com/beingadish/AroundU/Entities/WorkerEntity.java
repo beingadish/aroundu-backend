@@ -14,10 +14,6 @@ import java.util.List;
 @Builder
 public class WorkerEntity extends User {
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "current_address_id", referencedColumnName = "addressId")
-    private Address currentAddress;
-
     @OneToMany
     @JoinTable(
             name = "worker_jobs",

@@ -1,13 +1,10 @@
 package com.beingadish.AroundU.Service;
 
-import com.beingadish.AroundU.DTO.Client.ClientRequestDTO;
-import com.beingadish.AroundU.DTO.Client.ClientResponseDTO;
 import com.beingadish.AroundU.Entities.ClientEntity;
 import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
 import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
 import com.beingadish.AroundU.Exceptions.Client.ClientValidationException;
 import com.beingadish.AroundU.Repository.ClientRepository;
-import com.beingadish.AroundU.Utilities.DTOConversionUtil;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

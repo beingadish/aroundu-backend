@@ -3,6 +3,8 @@ package com.beingadish.AroundU.Entities;
 import com.beingadish.AroundU.Constants.Enums.JobStatus;
 import com.beingadish.AroundU.Constants.Enums.JobUrgency;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,9 +28,11 @@ public class JobEntity {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank
     private String title;
 
-    @Column(length = 500)
+    @Column(length = 200)
+    @Size(max = 200)
     private String shortDescription;
 
     @Lob
@@ -50,7 +54,7 @@ public class JobEntity {
     @Column(nullable = false)
     private JobUrgency jobUrgency;
 
-    @ManyToMany(cascade = CascadeType.ALL)
+    @ManyToMany
     @JoinTable(
             name = "job_skills",
             joinColumns = @JoinColumn(name = "job_id"),

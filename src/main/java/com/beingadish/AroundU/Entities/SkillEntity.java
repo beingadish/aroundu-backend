@@ -1,12 +1,11 @@
 package com.beingadish.AroundU.Entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Entity
+@Table(name = "skills")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,5 +14,8 @@ public class SkillEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long skillId;
+
+    @Column(unique = true, nullable = false)
+    @NotBlank
     private String skillName;
 }

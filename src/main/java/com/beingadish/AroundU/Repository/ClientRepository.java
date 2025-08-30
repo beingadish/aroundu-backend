@@ -3,12 +3,10 @@ package com.beingadish.AroundU.Repository;
 import com.beingadish.AroundU.Entities.ClientEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -21,12 +19,6 @@ public interface ClientRepository extends CrudRepository<ClientEntity, Long> {
 
     @Query("SELECT c FROM ClientEntity c WHERE c.clientEmail = :email AND c.password = :password")
     Optional<ClientEntity> findByEmailAndPassword(@Param("email") String email, @Param("password") String password);
-
-    List<ClientEntity> findAllByCountry_CountryName(String countryName);
-
-    List<ClientEntity> findAllByState_StateName(String stateName);
-
-    List<ClientEntity> findAllByDistrict_DistrictName(String districtName);
 
     List<ClientEntity> findAllByCreatedAtAfter(LocalDateTime date);
 
