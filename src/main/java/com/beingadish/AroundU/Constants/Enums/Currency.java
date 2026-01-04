@@ -1,5 +1,10 @@
 package com.beingadish.AroundU.Constants.Enums;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
 public enum Currency {
     USD("$"),           // US Dollar
     EUR("€"),           // Euro
@@ -38,15 +43,6 @@ public enum Currency {
 
     // Getter for symbol
     private final String symbol;
-
-    // Constructor
-    Currency(String symbol) {
-        this.symbol = symbol;
-    }
-
-    public String getSymbol() {
-        return symbol;
-    }
 
     // Override toString() for display
     @Override

@@ -1,4 +1,4 @@
-package com.beingadish.AroundU.DTO.Client;
+package com.beingadish.AroundU.DTO.Client.register;
 
 import com.beingadish.AroundU.Constants.Enums.Currency;
 import com.beingadish.AroundU.DTO.Common.AddressDTO;
@@ -11,7 +11,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ClientSignupRequestDTO {
+public class ClientRegisterRequestDTO {
     @NotBlank
     private String name;
     @Email

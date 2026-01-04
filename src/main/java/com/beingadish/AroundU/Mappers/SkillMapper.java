@@ -1,7 +1,7 @@
 package com.beingadish.AroundU.Mappers;
 
 import com.beingadish.AroundU.DTO.Common.SkillDTO;
-import com.beingadish.AroundU.Entities.SkillEntity;
+import com.beingadish.AroundU.Entities.Skill;
 import com.beingadish.AroundU.Models.SkillModel;
 import org.springframework.stereotype.Component;
 
@@ -32,17 +32,17 @@ public class SkillMapper {
     }
 
     // Model to Entity
-    public SkillEntity modelToEntity(SkillModel model) {
+    public Skill modelToEntity(SkillModel model) {
         if (model == null) return null;
 
-        SkillEntity entity = new SkillEntity();
+        Skill entity = new Skill();
         entity.setSkillId(model.getId());
         entity.setSkillName(model.getSkillName());
         return entity;
     }
 
     // Entity to Model
-    public SkillModel entityToModel(SkillEntity entity) {
+    public SkillModel entityToModel(Skill entity) {
         if (entity == null) return null;
 
         SkillModel model = new SkillModel();
@@ -62,12 +62,12 @@ public class SkillMapper {
         return models.stream().map(this::modelToDto).collect(Collectors.toList());
     }
 
-    public List<SkillEntity> modelsToEntities(List<SkillModel> models) {
+    public List<Skill> modelsToEntities(List<SkillModel> models) {
         if (models == null) return null;
         return models.stream().map(this::modelToEntity).collect(Collectors.toList());
     }
 
-    public List<SkillModel> entitiesToModels(List<SkillEntity> entities) {
+    public List<SkillModel> entitiesToModels(List<Skill> entities) {
         if (entities == null) return null;
         return entities.stream().map(this::entityToModel).collect(Collectors.toList());
     }

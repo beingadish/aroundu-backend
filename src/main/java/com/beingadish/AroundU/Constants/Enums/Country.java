@@ -1,8 +1,10 @@
 package com.beingadish.AroundU.Constants.Enums;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
 public enum Country {
     AF("Afghanistan"),
     AL("Albania"),
@@ -240,9 +242,5 @@ public enum Country {
     ZW("Zimbabwe");
 
     private final String fullName;
-
-    Country(String fullName) {
-        this.fullName = fullName;
-    }
 
 }

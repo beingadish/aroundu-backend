@@ -12,4 +12,5 @@ public class UserModel {
     private Currency currency;
     private AddressModel currentAddress;
     private VerificationStatusModel verificationStatus;
+    private String hashedPassword;
 }

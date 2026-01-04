@@ -4,7 +4,7 @@ import com.beingadish.AroundU.DTO.Job.JobCreateRequest;
 import com.beingadish.AroundU.DTO.Job.JobDetailDTO;
 import com.beingadish.AroundU.DTO.Job.JobSummaryDTO;
 import com.beingadish.AroundU.DTO.Job.JobUpdateRequest;
-import com.beingadish.AroundU.Entities.JobEntity;
+import com.beingadish.AroundU.Entities.Job;
 import com.beingadish.AroundU.Models.JobModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -127,7 +127,7 @@ public class JobMapper {
     }
 
     // Entity to Model
-    public JobModel entityToModel(JobEntity entity) {
+    public JobModel entityToModel(Job entity) {
         if (entity == null) return null;
 
         JobModel model = new JobModel();
@@ -155,10 +155,10 @@ public class JobMapper {
     }
 
     // Model to Entity
-    public JobEntity modelToEntity(JobModel model) {
+    public Job modelToEntity(JobModel model) {
         if (model == null) return null;
 
-        JobEntity entity = new JobEntity();
+        Job entity = new Job();
         entity.setId(model.getId());
         entity.setTitle(model.getTitle());
         entity.setShortDescription(model.getShortDescription());
@@ -177,7 +177,7 @@ public class JobMapper {
     }
 
     // Entity to JobSummaryDTO (direct conversion)
-    public JobSummaryDTO entityToJobSummaryDto(JobEntity entity) {
+    public JobSummaryDTO entityToJobSummaryDto(Job entity) {
         if (entity == null) return null;
 
         JobSummaryDTO dto = new JobSummaryDTO();

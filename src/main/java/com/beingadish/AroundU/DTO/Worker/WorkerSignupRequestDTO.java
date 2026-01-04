@@ -26,5 +26,6 @@ public class WorkerSignupRequestDTO {
     @Valid
     @NotNull
     private AddressDTO currentAddress;
-    private List<Long> skillIds; // or List<String> skillNames for free-text flow
+
+    private List<String> skillIds;
 }

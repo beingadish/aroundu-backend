@@ -13,7 +13,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "jobs")
@@ -21,7 +22,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class JobEntity {
+public class Job {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,20 +56,16 @@ public class JobEntity {
     private JobUrgency jobUrgency;
 
     @ManyToMany
-    @JoinTable(
-            name = "job_skills",
-            joinColumns = @JoinColumn(name = "job_id"),
-            inverseJoinColumns = @JoinColumn(name = "skill_id")
-    )
-    private List<SkillEntity> requiredSkills;
+    @JoinTable(name = "job_required_skills", joinColumns = @JoinColumn(name = "job_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
+    private Set<Skill> skillSet = new HashSet<>();
 
     @ManyToOne
     @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    private Client createdBy;
 
     @ManyToOne
     @JoinColumn(name = "assigned_to")
-    private WorkerEntity assignedTo;
+    private Worker assignedTo;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

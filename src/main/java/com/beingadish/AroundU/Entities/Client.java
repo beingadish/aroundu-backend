@@ -15,12 +15,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ClientEntity extends User {
+public class Client extends User {
 
+    // List of created jobs
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<JobEntity> postedJobs;
+    private List<Job> postedJobs;
 
     // List of saved addresses
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Address> savedAddresses;
 }

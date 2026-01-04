@@ -53,8 +53,8 @@ public class AddressMapper {
         model.setCountry(entity.getCountry());
         model.setPostalCode(entity.getPostalCode());
         model.setFullAddress(entity.getFullAddress());
-        if (entity.getUser() != null) {
-            model.setUserId(entity.getUser().getId());
+        if (entity.getClient() != null) {
+            model.setUserId(entity.getClient().getId());
         }
         return model;
     }

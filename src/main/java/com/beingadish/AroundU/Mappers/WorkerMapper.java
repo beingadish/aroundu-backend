@@ -3,7 +3,7 @@ package com.beingadish.AroundU.Mappers;
 import com.beingadish.AroundU.DTO.Job.WorkerBriefDTO;
 import com.beingadish.AroundU.DTO.Worker.WorkerDetailDTO;
 import com.beingadish.AroundU.DTO.Worker.WorkerSignupRequestDTO;
-import com.beingadish.AroundU.Entities.WorkerEntity;
+import com.beingadish.AroundU.Entities.Worker;
 import com.beingadish.AroundU.Models.WorkerModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -89,7 +89,7 @@ public class WorkerMapper {
     }
 
     // Entity to Model
-    public WorkerModel entityToModel(WorkerEntity entity) {
+    public WorkerModel entityToModel(Worker entity) {
         if (entity == null) return null;
 
         WorkerModel model = new WorkerModel();
@@ -112,10 +112,10 @@ public class WorkerMapper {
     }
 
     // Model to Entity
-    public WorkerEntity modelToEntity(WorkerModel model) {
+    public Worker modelToEntity(WorkerModel model) {
         if (model == null) return null;
 
-        WorkerEntity entity = new WorkerEntity();
+        Worker entity = new Worker();
         // Copy base user fields
         userMapper.mapModelToEntity(model, entity);
 
@@ -125,7 +125,7 @@ public class WorkerMapper {
     }
 
     // Entity to WorkerBriefDTO
-    public WorkerBriefDTO entityToWorkerBriefDto(WorkerEntity entity) {
+    public WorkerBriefDTO entityToWorkerBriefDto(Worker entity) {
         if (entity == null) return null;
 
         WorkerBriefDTO dto = new WorkerBriefDTO();

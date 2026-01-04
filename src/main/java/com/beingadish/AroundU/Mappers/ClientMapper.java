@@ -1,8 +1,8 @@
 package com.beingadish.AroundU.Mappers;
 
 import com.beingadish.AroundU.DTO.Client.ClientDetailDTO;
-import com.beingadish.AroundU.DTO.Client.ClientSignupRequestDTO;
-import com.beingadish.AroundU.Entities.ClientEntity;
+import com.beingadish.AroundU.DTO.Client.register.ClientRegisterRequestDTO;
+import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Models.ClientModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,7 @@ public class ClientMapper {
     private AddressMapper addressMapper;
 
     // ClientSignupRequestDTO to Model
-    public ClientModel signupRequestDtoToModel(ClientSignupRequestDTO dto) {
+    public ClientModel signupRequestDtoToModel(ClientRegisterRequestDTO dto) {
         if (dto == null) return null;
 
         ClientModel model = new ClientModel();
@@ -84,7 +84,7 @@ public class ClientMapper {
     }
 
     // Entity to Model
-    public ClientModel entityToModel(ClientEntity entity) {
+    public ClientModel entityToModel(Client entity) {
         if (entity == null) return null;
 
         ClientModel model = new ClientModel();
@@ -114,10 +114,10 @@ public class ClientMapper {
     }
 
     // Model to Entity
-    public ClientEntity modelToEntity(ClientModel model) {
+    public Client modelToEntity(ClientModel model) {
         if (model == null) return null;
 
-        ClientEntity entity = new ClientEntity();
+        Client entity = new Client();
         // Copy base user fields
         userMapper.mapModelToEntity(model, entity);
 

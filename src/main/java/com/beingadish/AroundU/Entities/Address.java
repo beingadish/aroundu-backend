@@ -3,7 +3,6 @@ package com.beingadish.AroundU.Entities;
 import com.beingadish.AroundU.Constants.Enums.Country;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -36,6 +35,6 @@ public class Address {
     private String fullAddress;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "client_id")
+    private Client client;
 }

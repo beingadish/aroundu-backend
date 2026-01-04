@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class User {
 
     @Id
@@ -30,7 +29,6 @@ public abstract class User {
     @Email
     @NotBlank
     private String email;
-
 
     @Column(nullable = false)
     @NotBlank
