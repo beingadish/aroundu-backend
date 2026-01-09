@@ -17,6 +17,8 @@ public interface BidMapper {
     @Mapping(target = "job", source = "job")
     @Mapping(target = "worker", source = "worker")
     @Mapping(target = "status", constant = "PENDING")
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     Bid toEntity(BidCreateRequest request, Job job, Worker worker);
 
     @Mapping(target = "jobId", source = "job.id")

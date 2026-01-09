@@ -1,5 +1,6 @@
 package com.beingadish.AroundU.Exceptions;
 
+import com.beingadish.AroundU.DTO.Client.ClientResponseDTO;
 import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
 import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
 import com.beingadish.AroundU.Exceptions.Client.ClientValidationException;

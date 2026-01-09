@@ -1,6 +1,7 @@
 package com.beingadish.AroundU.Entities;
 
 import com.beingadish.AroundU.Constants.Enums.Country;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -48,5 +49,6 @@ public class Address {
 
     @ManyToOne
     @JoinColumn(name = "client_id")
+    @JsonBackReference
     private Client client;
 }

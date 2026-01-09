@@ -1,8 +1,5 @@
 package com.beingadish.AroundU.Constants.Enums;
 
 public enum BidStatus {
-    PENDING,
-    SELECTED,
-    REJECTED,
-    WITHDRAWN
+    PENDING, SELECTED, REJECTED, WITHDRAWN
 }

@@ -1,5 +1,6 @@
 package com.beingadish.AroundU.Entities;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
@@ -23,5 +24,6 @@ public class Client extends User {
 
     // List of saved addresses
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Address> savedAddresses;
 }

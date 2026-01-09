@@ -20,13 +20,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
 @RequiredArgsConstructor
 public class ClientServiceImpl implements ClientService {
 
-    private ClientMapper clientMapper;
-    private ClientRepository clientRepository;
-    private PasswordEncoder passwordEncoder;
+    private final ClientMapper clientMapper;
+    private final ClientRepository clientRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public ClientRegisterResponseDTO registerClient(ClientRegisterRequestDTO requestDTO) {

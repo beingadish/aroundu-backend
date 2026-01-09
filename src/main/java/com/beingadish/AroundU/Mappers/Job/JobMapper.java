@@ -26,7 +26,7 @@ public interface JobMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "price", source = "request.price")
     @Mapping(target = "jobLocation", source = "jobLocation")
-    @Mapping(target = "jobStatus", expression = "java(JobStatus.CREATED)")
+    @Mapping(target = "jobStatus", expression = "java(com.beingadish.AroundU.Constants.Enums.JobStatus.CREATED)")
     @Mapping(target = "jobUrgency", source = "request.jobUrgency")
     @Mapping(target = "paymentMode", source = "request.paymentMode")
     @Mapping(target = "skillSet", source = "skills")
@@ -43,6 +43,11 @@ public interface JobMapper {
     @Mapping(target = "jobStatus", source = "request.jobStatus")
     @Mapping(target = "paymentMode", source = "request.paymentMode")
     @Mapping(target = "skillSet", source = "skills")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "assignedTo", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(JobUpdateRequest request, @MappingTarget Job job, Address jobLocation, Set<Skill> skills);
 
     @Mapping(target = "requiredSkills", source = "skillSet")

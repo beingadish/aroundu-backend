@@ -35,6 +35,7 @@ public class JobConfirmationCode {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private JobCodeStatus status = JobCodeStatus.START_PENDING;
 
     @CreationTimestamp

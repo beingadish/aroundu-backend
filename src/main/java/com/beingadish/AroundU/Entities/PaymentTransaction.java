@@ -49,6 +49,7 @@ public class PaymentTransaction {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING_ESCROW;
 
     @Column(length = 255)

@@ -19,6 +19,8 @@ public interface PaymentTransactionMapper {
     @Mapping(target = "paymentMode", source = "job.paymentMode")
     @Mapping(target = "status", constant = "ESCROW_LOCKED")
     @Mapping(target = "gatewayReference", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     PaymentTransaction toEntity(PaymentLockRequest request, Job job, Client client, Worker worker);
 
     default PaymentTransaction withStatus(PaymentTransaction tx, PaymentStatus status) {

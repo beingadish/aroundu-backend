@@ -4,6 +4,7 @@ import com.beingadish.AroundU.Entities.Worker;
 import com.beingadish.AroundU.Mappers.User.Worker.WorkerMapper;
 import com.beingadish.AroundU.Models.WorkerModel;
 import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,16 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class WorkerServiceImpl implements WorkerService {
 
-    @Autowired
-    private WorkerRepository workerRepository;
-
-    @Autowired
-    private WorkerMapper workerMapper;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder; // For password hashing
+    private final WorkerRepository workerRepository;
+    private final WorkerMapper workerMapper;
+    private final PasswordEncoder passwordEncoder; // For password hashing
 
     @Override
     public WorkerModel registerWorker(WorkerModel registerWorkerModel, String plainPassword) {
@@ -51,6 +48,6 @@ public class WorkerServiceImpl implements WorkerService {
         Worker savedEntity = workerRepository.save(workerEntity);
 
         // 7. Convert back to Model and return
-        return workerMapper.entityToModel(savedEntity);
+        return workerMapper.toModel(savedEntity);
     }
 }

@@ -49,6 +49,7 @@ public class Bid {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private BidStatus status = BidStatus.PENDING;
 
     @CreationTimestamp

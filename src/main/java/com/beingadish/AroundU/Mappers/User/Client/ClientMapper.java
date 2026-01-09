@@ -5,24 +5,37 @@ import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
 import com.beingadish.AroundU.Entities.Address;
 import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Mappers.Common.AddressMapper;
+import com.beingadish.AroundU.Mappers.Common.VerificationStatusMapper;
 import com.beingadish.AroundU.Models.ClientModel;
+import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
+import org.mapstruct.ReportingPolicy;
 import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {AddressMapper.class})
+@Mapper(componentModel = "spring", uses = {AddressMapper.class, VerificationStatusMapper.class}, builder = @Builder(disableBuilder = true), unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface ClientMapper {
 
-    ClientRegisterRequestDTO modelToRegisterRequestDto(ClientModel model);
+        @Mapping(target = "password", ignore = true)
+        @Mapping(target = "savedAddresses", ignore = true)
+        ClientRegisterRequestDTO modelToRegisterRequestDto(ClientModel model);
 
-    ClientModel registerRequestDtoToModel(ClientRegisterRequestDTO dto);
+        @Mapping(target = "id", ignore = true)
+        @Mapping(target = "verificationStatus", ignore = true)
+        @Mapping(target = "hashedPassword", ignore = true)
+        @Mapping(target = "profileImageUrl", ignore = true)
+        @Mapping(target = "postedJobIds", ignore = true)
+        @Mapping(target = "savedAddressIds", ignore = true)
+        ClientModel registerRequestDtoToModel(ClientRegisterRequestDTO dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "postedJobs", ignore = true)
-    @Mapping(target = "savedAddresses", source = "savedAddresses")
+    @Mapping(target = "savedAddresses", ignore = true)
     @Mapping(target = "currentAddress", source = "currentAddress")
     @Mapping(target = "verificationStatus", ignore = true)
+        @Mapping(target = "createdAt", ignore = true)
+        @Mapping(target = "updatedAt", ignore = true)
     Client modelToEntity(ClientModel model);
 
     @Mapping(
@@ -31,7 +44,7 @@ public interface ClientMapper {
     )
     @Mapping(
             target = "savedAddressIds",
-            expression = "java(entity.getSavedAddresses() == null ? java.util.List.of() : entity.getSavedAddresses().stream().map(Address::getAddressId).toList())"
+            expression = "java(entity.getSavedAddresses() == null ? java.util.List.of() : entity.getSavedAddresses().stream().map(com.beingadish.AroundU.Entities.Address::getAddressId).toList())"
     )
     ClientModel entityToModel(Client entity);
 

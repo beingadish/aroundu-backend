@@ -27,6 +27,7 @@ public class Worker extends User {
     @Column(length = 1000)
     private String certifications;
 
+    @Builder.Default
     private Boolean isOnDuty = false;
 
     @Column(length = 255)

@@ -58,10 +58,12 @@ public class Job {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private PaymentMode paymentMode = PaymentMode.ESCROW;
 
     @ManyToMany
     @JoinTable(name = "job_required_skills", joinColumns = @JoinColumn(name = "job_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))
+    @Builder.Default
     private Set<Skill> skillSet = new HashSet<>();
 
     @ManyToOne

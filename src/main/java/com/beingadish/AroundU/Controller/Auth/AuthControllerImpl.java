@@ -1,6 +1,6 @@
 package com.beingadish.AroundU.Controller.Auth;
 
-import com.beingadish.AroundU.DTO.LoginRequestDTO;
+import com.beingadish.AroundU.DTO.Auth.LoginRequestDTO;
 import com.beingadish.AroundU.DTO.LoginResponseDTO;
 import com.beingadish.AroundU.Security.JwtTokenProvider;
 import jakarta.validation.Valid;
