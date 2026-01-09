@@ -96,6 +96,7 @@ public class UserMapper {
         entity.setEmail(model.getEmail());
         entity.setPhoneNumber(model.getPhoneNumber());
         entity.setCurrency(model.getCurrency());
+        entity.setHashedPassword(model.getHashedPassword());
         entity.setCurrentAddress(addressMapper.modelToEntity(model.getCurrentAddress()));
         entity.setVerificationStatus(verificationStatusMapper.modelToEntity(model.getVerificationStatus()));
     }

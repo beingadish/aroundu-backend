@@ -12,6 +12,7 @@ import com.beingadish.AroundU.Repository.Client.ClientRepository;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class ClientServiceImpl implements ClientService {
 
     private ClientMapper clientMapper;
     private ClientRepository clientRepository;
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public ClientRegisterResponseDTO registerClient(ClientRegisterRequestDTO requestDTO) {
@@ -36,6 +38,8 @@ public class ClientServiceImpl implements ClientService {
         if (alreadyExistClient.isPresent()) {
             throw new ClientAlreadyExistException("Client with the given email already exist.");
         }
+
+        clientModel.setHashedPassword(passwordEncoder.encode(requestDTO.getPassword()));
         // Save the client entity in the database
         Client savedClient = clientRepository.save(clientMapper.modelToEntity(clientModel));
 
