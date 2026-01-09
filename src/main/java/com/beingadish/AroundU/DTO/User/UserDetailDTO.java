@@ -17,4 +17,5 @@ public abstract class UserDetailDTO {
     private Currency currency;
     private AddressDTO currentAddress;
     private VerificationStatusDTO verificationStatus;
+    private String profileImageUrl;
 }

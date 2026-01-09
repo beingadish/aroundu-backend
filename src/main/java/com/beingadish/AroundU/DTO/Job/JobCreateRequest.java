@@ -1,6 +1,7 @@
 package com.beingadish.AroundU.DTO.Job;
 
 import com.beingadish.AroundU.Constants.Enums.JobUrgency;
+import com.beingadish.AroundU.Constants.Enums.PaymentMode;
 import com.beingadish.AroundU.DTO.Common.PriceDTO;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -25,4 +26,6 @@ public class JobCreateRequest {
     private JobUrgency jobUrgency;
     @NotNull
     private List<Long> requiredSkillIds;
+    @NotNull
+    private PaymentMode paymentMode;
 }

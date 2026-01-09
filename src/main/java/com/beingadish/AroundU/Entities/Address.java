@@ -31,6 +31,18 @@ public class Address {
     private String postalCode;
 
     @Column
+    private String city;
+
+    @Column
+    private String area;
+
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
+    @Column
     @Size(max = 500)
     private String fullAddress;
 

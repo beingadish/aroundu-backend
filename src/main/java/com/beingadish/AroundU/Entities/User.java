@@ -35,6 +35,9 @@ public abstract class User {
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$")
     private String phoneNumber;
 
+    @Column
+    private String profileImageUrl;
+
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "current_address_id", nullable = false)
     private Address currentAddress;

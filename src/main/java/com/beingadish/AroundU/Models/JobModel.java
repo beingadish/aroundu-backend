@@ -2,6 +2,7 @@ package com.beingadish.AroundU.Models;
 
 import com.beingadish.AroundU.Constants.Enums.JobStatus;
 import com.beingadish.AroundU.Constants.Enums.JobUrgency;
+import com.beingadish.AroundU.Constants.Enums.PaymentMode;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +17,7 @@ public class JobModel {
     private AddressModel jobLocation;
     private JobStatus jobStatus;
     private JobUrgency jobUrgency;
+    private PaymentMode paymentMode;
     private List<SkillModel> requiredSkills;
     private Long createdByUserId;
     private Long assignedToWorkerId;

@@ -3,7 +3,7 @@ package com.beingadish.AroundU.Controller.Worker;
 import com.beingadish.AroundU.Constants.URIConstants;
 import com.beingadish.AroundU.DTO.Worker.WorkerDetailDTO;
 import com.beingadish.AroundU.DTO.Worker.WorkerSignupRequestDTO;
-import com.beingadish.AroundU.Mappers.WorkerMapper;
+import com.beingadish.AroundU.Mappers.User.Worker.WorkerMapper;
 import com.beingadish.AroundU.Models.WorkerModel;
 import com.beingadish.AroundU.Service.WorkerService;
 import lombok.RequiredArgsConstructor;

@@ -2,6 +2,7 @@ package com.beingadish.AroundU.Entities;
 
 import com.beingadish.AroundU.Constants.Enums.JobStatus;
 import com.beingadish.AroundU.Constants.Enums.JobUrgency;
+import com.beingadish.AroundU.Constants.Enums.PaymentMode;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -54,6 +55,10 @@ public class Job {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private JobUrgency jobUrgency;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMode paymentMode = PaymentMode.ESCROW;
 
     @ManyToMany
     @JoinTable(name = "job_required_skills", joinColumns = @JoinColumn(name = "job_id"), inverseJoinColumns = @JoinColumn(name = "skill_id"))

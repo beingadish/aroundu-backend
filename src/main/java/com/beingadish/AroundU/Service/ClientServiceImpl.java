@@ -6,7 +6,7 @@ import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterResponseDTO;
 import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
 import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
-import com.beingadish.AroundU.Mappers.ClientMapper;
+import com.beingadish.AroundU.Mappers.User.Client.ClientMapper;
 import com.beingadish.AroundU.Models.ClientModel;
 import com.beingadish.AroundU.Repository.Client.ClientRepository;
 import lombok.AllArgsConstructor;
@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ClientDetailsResponseDTO getClientDetails(Long clientId) {
         Optional<Client> clientOptional = clientRepository.findById(clientId);
         if (clientOptional.isPresent()) {
@@ -58,6 +60,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseEntity<List<ClientDetailsResponseDTO>> getAllClients() {
         return null;
     }

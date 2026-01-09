@@ -1,5 +1,6 @@
 package com.beingadish.AroundU.Entities;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -20,6 +21,16 @@ public class Worker extends User {
     private List<Job> engagedJobList;
 
     private Double overallRating;
+
+    private Integer experienceYears;
+
+    @Column(length = 1000)
+    private String certifications;
+
+    private Boolean isOnDuty = false;
+
+    @Column(length = 255)
+    private String payoutAccount;
 
     @OneToMany(mappedBy = "worker")
     private List<Review> reviews;

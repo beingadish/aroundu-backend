@@ -14,4 +14,8 @@ import java.util.List;
 public class WorkerDetailDTO extends UserDetailDTO {
     private List<SkillDTO> skills;
     private List<Long> engagedJobIds;
+    private Integer experienceYears;
+    private String certifications;
+    private Boolean isOnDuty;
+    private String payoutAccount;
 }

@@ -15,6 +15,10 @@ public class AddressDTO {
     private Country country;
     @NotBlank
     private String postalCode;
+    private String city;
+    private String area;
+    private Double latitude;
+    private Double longitude;
     @Size(max = 500)
     private String fullAddress;
 }

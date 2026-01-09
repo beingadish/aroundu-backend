@@ -1,7 +1,7 @@
 package com.beingadish.AroundU.Service;
 
 import com.beingadish.AroundU.Entities.Worker;
-import com.beingadish.AroundU.Mappers.WorkerMapper;
+import com.beingadish.AroundU.Mappers.User.Worker.WorkerMapper;
 import com.beingadish.AroundU.Models.WorkerModel;
 import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
