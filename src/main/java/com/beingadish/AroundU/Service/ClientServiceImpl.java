@@ -1,42 +1,63 @@
-//package com.beingadish.AroundU.Service;
-//
-//import com.beingadish.AroundU.Entities.ClientEntity;
-//import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
-//import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
-//import com.beingadish.AroundU.Exceptions.Client.ClientValidationException;
-//import com.beingadish.AroundU.Repository.ClientRepository;
-//import lombok.NonNull;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Service;
-//
-//import java.util.Optional;
-//
-//@Service
-//public class ClientServiceImpl implements ClientService {
-//
-//
-//    @Autowired
-//    private ClientRepository clientRepository;
-//
-//    @Override
-//    public ClientResponseDTO registerClient(ClientRequestDTO clientRequestDTO) {
-//        // Convert the ClientRequestDTO to ClientEntity
-//        ClientEntity clientEntity = DTOConversionUtil.clientRequestDtoToClientEntity(clientRequestDTO);
-//
-//        // Validating if Client does not already exist
-//        Optional<ClientEntity> alreadyExistClient = clientRepository
-//                .findByEmail(clientEntity.getClientEmail());
-//
-//        if(alreadyExistClient.isPresent()){
-//            throw new ClientAlreadyExistException("Client with the given email already exist.");
-//        }
-//
-//        // Save the client entity in the database
-//        ClientEntity savedClient = clientRepository.save(clientEntity);
-//        // Convert the saved entity back to ClientResponseDTO
-//        return DTOConversionUtil.clientEntityToClientResponseDto(savedClient, "Client Registered Successfully");
-//    }
-//
+package com.beingadish.AroundU.Service;
+
+import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
+import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
+import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterResponseDTO;
+import com.beingadish.AroundU.Entities.Client;
+import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
+import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
+import com.beingadish.AroundU.Mappers.ClientMapper;
+import com.beingadish.AroundU.Models.ClientModel;
+import com.beingadish.AroundU.Repository.Client.ClientRepository;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@AllArgsConstructor
+@RequiredArgsConstructor
+public class ClientServiceImpl implements ClientService {
+
+    private ClientMapper clientMapper;
+    private ClientRepository clientRepository;
+
+    @Override
+    public ClientRegisterResponseDTO registerClient(ClientRegisterRequestDTO requestDTO) {
+        // Convert the RequestDTO to ClientModel
+        ClientModel clientModel = clientMapper.registerRequestDtoToModel(requestDTO);
+
+        // Validating if Client does not already exist
+        Optional<Client> alreadyExistClient = clientRepository.findByEmail(clientModel.getEmail());
+
+        if (alreadyExistClient.isPresent()) {
+            throw new ClientAlreadyExistException("Client with the given email already exist.");
+        }
+        // Save the client entity in the database
+        Client savedClient = clientRepository.save(clientMapper.modelToEntity(clientModel));
+
+        return new ClientRegisterResponseDTO("Client is successfully created");
+    }
+
+    @Override
+    public ClientDetailsResponseDTO getClientDetails(Long clientId) {
+        Optional<Client> clientOptional = clientRepository.findById(clientId);
+        if (clientOptional.isPresent()) {
+            ClientModel model = clientMapper.entityToModel(clientOptional.get());
+            return clientMapper.modelToClientDetailsResponseDto(model);
+        } else {
+            throw new ClientNotFoundException("Client with id %d does not exists".formatted(clientId));
+        }
+    }
+
+    @Override
+    public ResponseEntity<List<ClientDetailsResponseDTO>> getAllClients() {
+        return null;
+    }
+
 //    @Override
 //    public ClientResponseDTO getClientDetails(@NonNull ClientRequestDTO clientRequestDTO) {
 //        // Extract email from the request DTO
@@ -44,9 +65,7 @@
 //        String password = clientRequestDTO.getPassword();
 //
 //        // Use the repository method to fetch client details
-//        ClientEntity clientEntity = clientRepository
-//                .findByEmail(email)
-//                .orElseThrow(() -> new ClientNotFoundException("Client not found"));
+//        ClientEntity clientEntity = clientRepository.findByEmail(email).orElseThrow(() -> new ClientNotFoundException("Client not found"));
 //
 //        // Convert the client entity to ClientResponseDTO and return
 //        return DTOConversionUtil.clientEntityToClientResponseDto(clientEntity, "Client found");
@@ -58,9 +77,7 @@
 //        Long clientId = clientRequestDTO.getClientId();
 //
 //        // Finding the Client Entity using Email & Password
-//        ClientEntity foundClientEntity = clientRepository
-//                .findById(clientId)
-//                .orElseThrow(() -> new ClientValidationException("Cannot update, client not found"));
+//        ClientEntity foundClientEntity = clientRepository.findById(clientId).orElseThrow(() -> new ClientValidationException("Cannot update, client not found"));
 //
 //        // If found then set the incoming name
 //        foundClientEntity.setClientName(clientRequestDTO.getClientName());
@@ -73,4 +90,4 @@
 //        // Convert the updated entity to a DTO and return
 //        return DTOConversionUtil.clientEntityToClientResponseDto(updatedClientEntity, "Client Updated Successfully");
 //    }
-//}
+}

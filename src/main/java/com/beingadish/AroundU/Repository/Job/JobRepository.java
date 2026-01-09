@@ -1,4 +1,4 @@
-package com.beingadish.AroundU.Repository;
+package com.beingadish.AroundU.Repository.Job;
 
 import org.springframework.stereotype.Repository;
 

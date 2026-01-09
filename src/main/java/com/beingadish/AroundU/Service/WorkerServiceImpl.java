@@ -3,7 +3,7 @@ package com.beingadish.AroundU.Service;
 import com.beingadish.AroundU.Entities.Worker;
 import com.beingadish.AroundU.Mappers.WorkerMapper;
 import com.beingadish.AroundU.Models.WorkerModel;
-import com.beingadish.AroundU.Repository.WorkerRepository;
+import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.beingadish.AroundU.DTO.Client.register;
+package com.beingadish.AroundU.DTO.Client.Register;
 
 import com.beingadish.AroundU.Constants.Enums.Currency;
 import com.beingadish.AroundU.DTO.Common.AddressDTO;

@@ -1,4 +1,4 @@
-package com.beingadish.AroundU.Repository;
+package com.beingadish.AroundU.Repository.Worker;
 
 import com.beingadish.AroundU.Entities.Worker;
 import org.springframework.data.jpa.repository.JpaRepository;

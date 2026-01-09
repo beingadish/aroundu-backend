@@ -3,10 +3,13 @@ package com.beingadish.AroundU.DTO.User;
 import com.beingadish.AroundU.Constants.Enums.Currency;
 import com.beingadish.AroundU.DTO.Common.AddressDTO;
 import com.beingadish.AroundU.DTO.Common.VerificationStatusDTO;
+import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.SuperBuilder;
 
 @Data
-public class UserDetailDTO {
+@SuperBuilder
+public abstract class UserDetailDTO {
     private Long id;
     private String name;
     private String email;
