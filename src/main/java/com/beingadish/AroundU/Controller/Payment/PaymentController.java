@@ -10,8 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.beingadish.AroundU.Constants.URIConstants.JOB_BASE;
+
 @RestController
-@RequestMapping("/api/jobs")
+@RequestMapping(JOB_BASE)
 @RequiredArgsConstructor
 public class PaymentController {
 
@@ -23,9 +25,7 @@ public class PaymentController {
     }
 
     @PostMapping("/{jobId}/payments/release")
-    public ResponseEntity<PaymentTransaction> release(@PathVariable Long jobId,
-                                                      @RequestParam Long clientId,
-                                                      @Valid @RequestBody PaymentReleaseRequest request) {
+    public ResponseEntity<PaymentTransaction> release(@PathVariable Long jobId, @RequestParam Long clientId, @Valid @RequestBody PaymentReleaseRequest request) {
         return ResponseEntity.ok(paymentService.releaseEscrow(jobId, clientId, request));
     }
 }

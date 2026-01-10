@@ -3,26 +3,52 @@ package com.beingadish.AroundU.Controller.Client;
 import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterResponseDTO;
+import com.beingadish.AroundU.Service.ClientService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.beingadish.AroundU.Constants.URIConstants.CLIENT_BASE;
+import static com.beingadish.AroundU.Constants.URIConstants.REGISTER;
 
-public interface ClientController {
+@RestController
+@RequestMapping(CLIENT_BASE)
+@RequiredArgsConstructor
+public class ClientController {
 
-    // For registering the client
-    ResponseEntity<ClientRegisterResponseDTO> registerClient(@RequestBody ClientRegisterRequestDTO clientRequestDTO);
+    private ClientService clientService;
 
-    // For sending the client details
-    ResponseEntity<ClientDetailsResponseDTO> getClientDetails(Long clientId);
+    @PostMapping(REGISTER)
+    public ResponseEntity<ClientRegisterResponseDTO> registerClient(@RequestBody ClientRegisterRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(clientService.registerClient(request));
+    }
 
-    // Fetch all clients
-    ResponseEntity<List<ClientDetailsResponseDTO>> getAllClients();
-//    ResponseEntity<ClientResponseDTO> getClientDetailsLevel2(@RequestParam("clientEmail") String clientEmail);
+    @GetMapping("/{clientId}")
+    public ResponseEntity<ClientDetailsResponseDTO> getClientDetails(@PathVariable Long clientId) {
+        ClientDetailsResponseDTO clientDetails = clientService.getClientDetails(clientId);
+        return ResponseEntity.ok(clientDetails);
+    }
 
-//    ResponseEntity<ClientResponseDTO> getClientDetailsLevel3(@RequestParam("clientEmail") String clientEmail);
+    public ResponseEntity<List<ClientDetailsResponseDTO>> getAllClients() {
+        return clientService.getAllClients();
+    }
 //
+//    @Override
+//    @GetMapping("/getDetails")
+//    public ResponseEntity<ClientResponseDTO> getClientDetails(@RequestParam(value="email") String clientEmail) {
+//        ClientRequestDTO clientRequestDTO = ClientRequestDTO
+//                .builder()
+//                .clientEmail(clientEmail)
+//                .build();
+//        return ResponseEntity.status(HttpStatus.OK).body(clientService.getClientDetails(clientRequestDTO));
+//    }
 //
-//    ResponseEntity<ClientResponseDTO> updateClientDetails(@RequestBody ClientRequestDTO clientRequestDTO);
+//    @Override
+//    @PutMapping("/updateDetails")
+//    public ResponseEntity<ClientResponseDTO> updateClientDetails(@RequestBody ClientRequestDTO clientRequestDTO) {
+//        return ResponseEntity.status(HttpStatus.OK).body(clientService.updateClientDetails(clientRequestDTO));
+//    }
 }

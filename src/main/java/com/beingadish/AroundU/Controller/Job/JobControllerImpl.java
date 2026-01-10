@@ -13,10 +13,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import static com.beingadish.AroundU.Constants.URIConstants.JOB_BASE;
+
 @RestController
-@RequestMapping("/api/jobs")
+@RequestMapping(JOB_BASE)
 @RequiredArgsConstructor
-public class JobControllerImpl implements JobController {
+public class JobControllerImpl {
 
     private final JobService jobService;
 
@@ -36,9 +38,7 @@ public class JobControllerImpl implements JobController {
     }
 
     @GetMapping
-    public ResponseEntity<List<JobSummaryDTO>> listJobs(@RequestParam(required = false) String city,
-                                                        @RequestParam(required = false) String area,
-                                                        @RequestParam(required = false) List<Long> skillIds) {
+    public ResponseEntity<List<JobSummaryDTO>> listJobs(@RequestParam(required = false) String city, @RequestParam(required = false) String area, @RequestParam(required = false) List<Long> skillIds) {
         return ResponseEntity.ok(jobService.listJobs(city, area, skillIds));
     }
 }
