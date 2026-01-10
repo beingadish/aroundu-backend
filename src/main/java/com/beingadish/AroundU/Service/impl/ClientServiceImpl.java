@@ -36,11 +36,13 @@ public class ClientServiceImpl implements ClientService {
         // Convert the RequestDTO to ClientModel
         ClientModel clientModel = clientMapper.registerRequestDtoToModel(requestDTO);
 
-        // Validating if Client does not already exist
-        Optional<Client> alreadyExistClient = clientReadRepository.findByEmail(clientModel.getEmail());
+        // Validating if Client does not already exist (email/phone)
+        if (Boolean.TRUE.equals(clientReadRepository.existsByEmail(clientModel.getEmail()))) {
+            throw new ClientAlreadyExistException("Client with the given email already exists.");
+        }
 
-        if (alreadyExistClient.isPresent()) {
-            throw new ClientAlreadyExistException("Client with the given email already exist.");
+        if (Boolean.TRUE.equals(clientReadRepository.existsByPhoneNumber(clientModel.getPhoneNumber()))) {
+            throw new ClientAlreadyExistException("Client with the given phone number already exists.");
         }
 
         clientModel.setHashedPassword(passwordEncoder.encode(requestDTO.getPassword()));
@@ -79,7 +81,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(foundClientEntity.getEmail())) {
-            if (clientReadRepository.existsByEmail(updateRequest.getEmail())) {
+            if (Boolean.TRUE.equals(clientReadRepository.existsByEmail(updateRequest.getEmail()))) {
                 throw new ClientValidationException("Email already in use");
             }
             foundClientEntity.setEmail(updateRequest.getEmail());

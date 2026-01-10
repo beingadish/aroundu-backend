@@ -1,53 +1,119 @@
 package com.beingadish.AroundU.Service.impl;
 
+import com.beingadish.AroundU.DTO.Worker.Update.WorkerUpdateRequestDTO;
+import com.beingadish.AroundU.DTO.Worker.WorkerDetailDTO;
+import com.beingadish.AroundU.DTO.Worker.WorkerSignupRequestDTO;
 import com.beingadish.AroundU.Entities.Worker;
+import com.beingadish.AroundU.Exceptions.Worker.WorkerAlreadyExistException;
+import com.beingadish.AroundU.Exceptions.Worker.WorkerNotFoundException;
+import com.beingadish.AroundU.Exceptions.Worker.WorkerValidationException;
 import com.beingadish.AroundU.Mappers.User.Worker.WorkerMapper;
 import com.beingadish.AroundU.Models.WorkerModel;
-import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
+import com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository;
 import com.beingadish.AroundU.Service.WorkerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class WorkerServiceImpl implements WorkerService {
 
-    private final WorkerRepository workerRepository;
     private final WorkerMapper workerMapper;
-    private final PasswordEncoder passwordEncoder; // For password hashing
+    private final WorkerReadRepository workerReadRepository;
+    private final WorkerWriteRepository workerWriteRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
-    public WorkerModel registerWorker(WorkerModel registerWorkerModel, String plainPassword) {
+    @Transactional
+    public void registerWorker(WorkerSignupRequestDTO workerSignupRequestDTO) {
+        WorkerModel workerModel = workerMapper.signupRequestDtoToModel(workerSignupRequestDTO);
 
-        // 1. Validate if email already exists
-        if (workerRepository.existsByEmail(registerWorkerModel.getEmail())) {
-            throw new RuntimeException("Email already exists: " + registerWorkerModel.getEmail());
+        if (Boolean.TRUE.equals(workerReadRepository.existsByEmail(workerModel.getEmail()))) {
+            throw new WorkerAlreadyExistException("Worker with the given email already exists");
         }
 
-        // 2. Validate if phone number already exists
-        if (workerRepository.existsByPhoneNumber(registerWorkerModel.getPhoneNumber())) {
-            throw new RuntimeException("Phone number already exists: " + registerWorkerModel.getPhoneNumber());
+        if (Boolean.TRUE.equals(workerReadRepository.existsByPhoneNumber(workerModel.getPhoneNumber()))) {
+            throw new WorkerAlreadyExistException("Worker with the given phone number already exists");
         }
 
-        // 3. Hash the password
-        registerWorkerModel.setHashedPassword(passwordEncoder.encode(plainPassword));
+        workerModel.setHashedPassword(passwordEncoder.encode(workerSignupRequestDTO.getPassword()));
+        workerWriteRepository.save(workerMapper.modelToEntity(workerModel));
+    }
 
-        // 4. Set initial verification status
-        if (registerWorkerModel.getVerificationStatus() == null) {
-            // Set default verification status (you'll need to create this)
-            // registerWorkerModel.setVerificationStatus(createDefaultVerificationStatus());
+    @Override
+    @Transactional(readOnly = true)
+    public WorkerDetailDTO getWorkerDetails(Long workerId) {
+        Worker workerEntity = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new WorkerNotFoundException("Worker with id %d does not exist".formatted(workerId)));
+
+        WorkerModel model = workerMapper.toModel(workerEntity);
+        return workerMapper.modelToWorkerDetailDto(model);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<WorkerDetailDTO> getAllWorkers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Worker> pageData = workerReadRepository.findAll(pageable);
+        return pageData.map(workerMapper::toModel).map(workerMapper::modelToWorkerDetailDto);
+    }
+
+    @Override
+    @Transactional
+    public WorkerDetailDTO updateWorkerDetails(Long workerId, WorkerUpdateRequestDTO updateRequest) {
+        Worker foundWorker = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new WorkerValidationException("Cannot update, worker not found"));
+
+        if (updateRequest.getName() != null) {
+            foundWorker.setName(updateRequest.getName());
         }
 
-        // 5. Convert Model to Entity
-        Worker workerEntity = workerMapper.modelToEntity(registerWorkerModel);
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(foundWorker.getEmail())) {
+            if (Boolean.TRUE.equals(workerReadRepository.existsByEmail(updateRequest.getEmail()))) {
+                throw new WorkerValidationException("Email already in use");
+            }
+            foundWorker.setEmail(updateRequest.getEmail());
+        }
 
-        // 6. Save to database
-        Worker savedEntity = workerRepository.save(workerEntity);
+        if (updateRequest.getPhoneNumber() != null && !updateRequest.getPhoneNumber().equals(foundWorker.getPhoneNumber())) {
+            if (Boolean.TRUE.equals(workerReadRepository.existsByPhoneNumber(updateRequest.getPhoneNumber()))) {
+                throw new WorkerValidationException("Phone number already in use");
+            }
+            foundWorker.setPhoneNumber(updateRequest.getPhoneNumber());
+        }
 
-        // 7. Convert back to Model and return
-        return workerMapper.toModel(savedEntity);
+        if (updateRequest.getProfileImageUrl() != null) {
+            foundWorker.setProfileImageUrl(updateRequest.getProfileImageUrl());
+        }
+
+        if (updateRequest.getExperienceYears() != null) {
+            foundWorker.setExperienceYears(updateRequest.getExperienceYears());
+        }
+
+        if (updateRequest.getCertifications() != null) {
+            foundWorker.setCertifications(updateRequest.getCertifications());
+        }
+
+        if (updateRequest.getIsOnDuty() != null) {
+            foundWorker.setIsOnDuty(updateRequest.getIsOnDuty());
+        }
+
+        if (updateRequest.getPayoutAccount() != null) {
+            foundWorker.setPayoutAccount(updateRequest.getPayoutAccount());
+        }
+
+        if (updateRequest.getCurrency() != null) {
+            foundWorker.setCurrency(updateRequest.getCurrency());
+        }
+
+        Worker updatedWorker = workerWriteRepository.save(foundWorker);
+        WorkerModel updatedModel = workerMapper.toModel(updatedWorker);
+        return workerMapper.modelToWorkerDetailDto(updatedModel);
     }
 }

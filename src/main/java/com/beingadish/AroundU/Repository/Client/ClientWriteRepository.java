@@ -7,6 +7,8 @@ import org.springframework.data.repository.Repository;
 @org.springframework.stereotype.Repository
 public interface ClientWriteRepository extends Repository<Client, Long> {
     Client save(Client client);
+
     void deleteById(Long id);
+
     void deleteByEmail(String email);
 }

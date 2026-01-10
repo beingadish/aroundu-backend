@@ -7,7 +7,7 @@ import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Entities.Worker;
 import com.beingadish.AroundU.Repository.Admin.AdminRepository;
 import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
 import com.beingadish.AroundU.Security.JwtTokenProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.beingadish.AroundU.Constants.URIConstants.*;
+import static com.beingadish.AroundU.Constants.URIConstants.AUTH_BASE;
+import static com.beingadish.AroundU.Constants.URIConstants.LOGIN;
 
 @RestController
 @RequestMapping(AUTH_BASE)
@@ -33,7 +34,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
     private final ClientReadRepository clientReadRepository;
-    private final WorkerRepository workerRepository;
+    private final WorkerReadRepository workerRepository;
     private final AdminRepository adminRepository;
 
     @PostMapping(LOGIN)

@@ -7,6 +7,7 @@ import com.beingadish.AroundU.DTO.Common.ApiResponse;
 import com.beingadish.AroundU.Service.ClientService;
 import com.beingadish.AroundU.Utilities.PageResponse;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class ClientController {
     private final ClientService clientService;
 
     @PostMapping(REGISTER)
-    public ResponseEntity<ApiResponse<String>> registerClient(@RequestBody ClientRegisterRequestDTO request) {
+    public ResponseEntity<ApiResponse<String>> registerClient(@Valid @RequestBody ClientRegisterRequestDTO request) {
         clientService.registerClient(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Client registered successfully"));
     }
