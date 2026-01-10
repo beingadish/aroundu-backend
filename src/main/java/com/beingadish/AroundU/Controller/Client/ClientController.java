@@ -1,11 +1,11 @@
 package com.beingadish.AroundU.Controller.Client;
 
+import com.beingadish.AroundU.DTO.Client.ClientResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterResponseDTO;
 import com.beingadish.AroundU.Service.ClientService;
 import com.beingadish.AroundU.Utilities.PageResponse;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 import static com.beingadish.AroundU.Constants.URIConstants.CLIENT_BASE;
 import static com.beingadish.AroundU.Constants.URIConstants.REGISTER;
@@ -44,6 +43,14 @@ public class ClientController {
         PageResponse<ClientDetailsResponseDTO> response = new PageResponse<>(p);
         return ResponseEntity.ok(response);
     }
+
+//    @PatchMapping("/update/{clientId}")
+//    @PreAuthorize("#clientId == authentication.principal.id or hasRole('ADMIN')")
+//    public ResponseEntity<ClientResponseDTO> updateClientDetails(@PathVariable Long clientId, @RequestBody ClientRequestDTO clientRequestDTO) {
+//        return ResponseEntity.status(HttpStatus.OK).body(clientService.updateClientDetails(clientRequestDTO));
+//    }
+
+
 //
 //    @Override
 //    @GetMapping("/getDetails")
@@ -56,8 +63,4 @@ public class ClientController {
 //    }
 //
 //    @Override
-//    @PutMapping("/updateDetails")
-//    public ResponseEntity<ClientResponseDTO> updateClientDetails(@RequestBody ClientRequestDTO clientRequestDTO) {
-//        return ResponseEntity.status(HttpStatus.OK).body(clientService.updateClientDetails(clientRequestDTO));
-//    }
 }

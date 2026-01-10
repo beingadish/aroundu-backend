@@ -23,18 +23,22 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final WorkerRepository workerRepository;
     private final AdminRepository adminRepository;
 
+    private static final String ADMIN = "ROLE_ADMIN";
+    private static final String CLIENT = "ROLE_CLIENT";
+    private static final String WORKER = "ROLE_WORKER";
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         // Try finding in Client repository
         Optional<Client> client = clientRepository.findByEmail(email);
         if (client.isPresent()) {
-            return User.builder().username(client.get().getEmail()).password(client.get().getHashedPassword()).authorities("ROLE_CLIENT").build();
+            return User.builder().username(client.get().getEmail()).password(client.get().getHashedPassword()).authorities(CLIENT).build();
         }
 
         // Try finding in Worker repository
         Optional<Worker> worker = workerRepository.findByEmail(email);
         if (worker.isPresent()) {
-            return User.builder().username(worker.get().getEmail()).password(worker.get().getHashedPassword()).authorities("ROLE_WORKER").build();
+            return User.builder().username(worker.get().getEmail()).password(worker.get().getHashedPassword()).authorities(WORKER).build();
         }
 
         // Try finding in Admin repository
@@ -43,7 +47,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             return User.builder()
                     .username(admin.get().getEmail())
                     .password(admin.get().getHashedPassword())
-                    .authorities("ROLE_ADMIN")
+                    .authorities(ADMIN)
                     .build();
         }
 
