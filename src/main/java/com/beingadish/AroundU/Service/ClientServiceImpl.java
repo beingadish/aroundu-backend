@@ -2,7 +2,6 @@ package com.beingadish.AroundU.Service;
 
 import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
-import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterResponseDTO;
 import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
 import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
@@ -28,7 +27,7 @@ public class ClientServiceImpl implements ClientService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public ClientRegisterResponseDTO registerClient(ClientRegisterRequestDTO requestDTO) {
+    public void registerClient(ClientRegisterRequestDTO requestDTO) {
         // Convert the RequestDTO to ClientModel
         ClientModel clientModel = clientMapper.registerRequestDtoToModel(requestDTO);
 
@@ -42,8 +41,6 @@ public class ClientServiceImpl implements ClientService {
         clientModel.setHashedPassword(passwordEncoder.encode(requestDTO.getPassword()));
         // Save the client entity in the database
         Client savedClient = clientRepository.save(clientMapper.modelToEntity(clientModel));
-
-        return new ClientRegisterResponseDTO("Client is successfully created");
     }
 
     @Override
