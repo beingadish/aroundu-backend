@@ -9,6 +9,11 @@ import com.beingadish.AroundU.Repository.Admin.AdminRepository;
 import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
 import com.beingadish.AroundU.Security.JwtTokenProvider;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +36,7 @@ import static com.beingadish.AroundU.Constants.URIConstants.LOGIN;
 @RequestMapping(AUTH_BASE)
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Auth", description = "Authentication endpoints")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -40,6 +46,12 @@ public class AuthController {
     private final AdminRepository adminRepository;
 
     @PostMapping(LOGIN)
+    @Operation(summary = "Authenticate user", description = "Authenticate by email/password and receive JWT", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(schema = @Schema(implementation = LoginRequestDTO.class))))
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Authenticated", content = @Content(schema = @Schema(implementation = LoginResponseDTO.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+    })
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 

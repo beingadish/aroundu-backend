@@ -18,7 +18,7 @@ import static com.beingadish.AroundU.Constants.URIConstants.JOB_BASE;
 @RestController
 @RequestMapping(JOB_BASE)
 @RequiredArgsConstructor
-public class JobControllerImpl {
+public class JobController {
 
     private final JobService jobService;
 
