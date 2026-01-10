@@ -11,6 +11,7 @@ import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
 import com.beingadish.AroundU.Security.JwtTokenProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,6 +30,7 @@ import static com.beingadish.AroundU.Constants.URIConstants.LOGIN;
 @RestController
 @RequestMapping(AUTH_BASE)
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -45,6 +47,8 @@ public class AuthController {
         String role = authentication.getAuthorities().stream().findFirst().map(GrantedAuthority::getAuthority).orElse("USER");
         Long userId = resolveUserId(loginRequest.getEmail(), role);
         String jwt = tokenProvider.generateToken(userId, loginRequest.getEmail());
+
+        log.info("User authenticated email={} role={}", loginRequest.getEmail(), role);
 
         return ResponseEntity.ok(new LoginResponseDTO(jwt, "Bearer", loginRequest.getEmail(), role));
     }

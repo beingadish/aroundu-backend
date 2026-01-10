@@ -13,6 +13,7 @@ import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository;
 import com.beingadish.AroundU.Service.WorkerService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WorkerServiceImpl implements WorkerService {
 
     private final WorkerMapper workerMapper;
@@ -44,6 +46,7 @@ public class WorkerServiceImpl implements WorkerService {
 
         workerModel.setHashedPassword(passwordEncoder.encode(workerSignupRequestDTO.getPassword()));
         workerWriteRepository.save(workerMapper.modelToEntity(workerModel));
+        log.info("Registered worker with email={} (id assigned by DB)", workerModel.getEmail());
     }
 
     @Override
@@ -52,6 +55,7 @@ public class WorkerServiceImpl implements WorkerService {
         Worker workerEntity = workerReadRepository.findById(workerId)
                 .orElseThrow(() -> new WorkerNotFoundException("Worker with id %d does not exist".formatted(workerId)));
 
+        log.debug("Fetched worker details for id={}", workerId);
         WorkerModel model = workerMapper.toModel(workerEntity);
         return workerMapper.modelToWorkerDetailDto(model);
     }
@@ -113,6 +117,7 @@ public class WorkerServiceImpl implements WorkerService {
         }
 
         Worker updatedWorker = workerWriteRepository.save(foundWorker);
+        log.info("Updated worker details for id={} email={}", workerId, updatedWorker.getEmail());
         WorkerModel updatedModel = workerMapper.toModel(updatedWorker);
         return workerMapper.modelToWorkerDetailDto(updatedModel);
     }

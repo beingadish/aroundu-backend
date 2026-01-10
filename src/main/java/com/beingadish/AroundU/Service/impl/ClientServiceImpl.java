@@ -13,6 +13,7 @@ import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
 import com.beingadish.AroundU.Repository.Client.ClientWriteRepository;
 import com.beingadish.AroundU.Service.ClientService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,10 +21,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ClientServiceImpl implements ClientService {
 
     private final ClientMapper clientMapper;
@@ -48,18 +48,18 @@ public class ClientServiceImpl implements ClientService {
         clientModel.setHashedPassword(passwordEncoder.encode(requestDTO.getPassword()));
         // Save the client entity in the database
         clientWriteRepository.save(clientMapper.modelToEntity(clientModel));
+        log.info("Registered client with email={} (id assigned by DB)", clientModel.getEmail());
     }
 
     @Override
     @Transactional(readOnly = true)
     public ClientDetailsResponseDTO getClientDetails(Long clientId) {
-        Optional<Client> clientOptional = clientReadRepository.findById(clientId);
-        if (clientOptional.isPresent()) {
-            ClientModel model = clientMapper.entityToModel(clientOptional.get());
-            return clientMapper.modelToClientDetailsResponseDto(model);
-        } else {
-            throw new ClientNotFoundException("Client with id %d does not exists".formatted(clientId));
-        }
+        Client clientEntity = clientReadRepository.findById(clientId)
+                .orElseThrow(() -> new ClientNotFoundException("Client with id %d does not exists".formatted(clientId)));
+
+        log.debug("Fetched client details for id={}", clientId);
+        ClientModel model = clientMapper.entityToModel(clientEntity);
+        return clientMapper.modelToClientDetailsResponseDto(model);
     }
 
     @Override
@@ -96,6 +96,7 @@ public class ClientServiceImpl implements ClientService {
         }
 
         Client updatedClientEntity = clientWriteRepository.save(foundClientEntity);
+        log.info("Updated client details for id={} email={}", clientId, updatedClientEntity.getEmail());
         ClientModel updatedModel = clientMapper.entityToModel(updatedClientEntity);
         return clientMapper.modelToClientDetailsResponseDto(updatedModel);
     }
