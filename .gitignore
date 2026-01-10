@@ -33,3 +33,5 @@ build/
 .vscode/
 AroundU_POC.pdf
 AroundU_Text_Poc.txt
+logs/**
+*.log
