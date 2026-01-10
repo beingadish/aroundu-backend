@@ -3,6 +3,7 @@ package com.beingadish.AroundU.Service;
 import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterResponseDTO;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,7 @@ public interface ClientService {
     // For getting the client details
     ClientDetailsResponseDTO getClientDetails(Long clientId);
 
-    ResponseEntity<List<ClientDetailsResponseDTO>> getAllClients();
+    Page<ClientDetailsResponseDTO> getAllClients(int page, int size);
 
 //    ClientResponseDTO updateClientDetails(ClientRequestDTO clientRequestDTO);
 

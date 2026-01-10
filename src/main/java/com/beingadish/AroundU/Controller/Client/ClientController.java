@@ -4,9 +4,13 @@ import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterResponseDTO;
 import com.beingadish.AroundU.Service.ClientService;
+import com.beingadish.AroundU.Utilities.PageResponse;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +23,7 @@ import static com.beingadish.AroundU.Constants.URIConstants.REGISTER;
 @RequiredArgsConstructor
 public class ClientController {
 
-    private ClientService clientService;
+    private final ClientService clientService;
 
     @PostMapping(REGISTER)
     public ResponseEntity<ClientRegisterResponseDTO> registerClient(@RequestBody ClientRegisterRequestDTO request) {
@@ -27,13 +31,18 @@ public class ClientController {
     }
 
     @GetMapping("/{clientId}")
+    @PreAuthorize("#clientId == authentication.principal.id or hasRole('ADMIN')")
     public ResponseEntity<ClientDetailsResponseDTO> getClientDetails(@PathVariable Long clientId) {
         ClientDetailsResponseDTO clientDetails = clientService.getClientDetails(clientId);
         return ResponseEntity.ok(clientDetails);
     }
 
-    public ResponseEntity<List<ClientDetailsResponseDTO>> getAllClients() {
-        return clientService.getAllClients();
+
+    @GetMapping("/all")
+    public ResponseEntity<PageResponse<ClientDetailsResponseDTO>> getAllClients(@RequestParam int page, @RequestParam int size) {
+        Page<ClientDetailsResponseDTO> p = clientService.getAllClients(page, size);
+        PageResponse<ClientDetailsResponseDTO> response = new PageResponse<>(p);
+        return ResponseEntity.ok(response);
     }
 //
 //    @Override

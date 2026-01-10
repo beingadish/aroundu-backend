@@ -22,6 +22,28 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String[] AUTH_WHITELIST = {
+            "/api/v1/auth/**",
+            "/api/v1/client/register",
+            "/api/v1/worker/register"
+    };
+    private static final String[] ADMIN_LIST = {
+            "/api/v1/admin/**",
+            "/api/v1/jobs/**",
+            "/api/v1/payments/**"
+    };
+    private static final String[] CLIENT_LIST = {
+            "/api/v1/client/**",
+            "/api/v1/jobs/**",          // e.g., create/list jobs
+            "/api/v1/bids/**",          // if clients view bids on their jobs
+            "/api/v1/payments/**"       // if clients manage payments
+    };
+    private static final String[] WORKER_LIST = {
+            "/api/v1/worker/**",
+            "/api/v1/bids/**",          // place/manage bids
+            "/api/v1/jobs/**",          // jobs assigned to them / browse allowed subset
+            "/api/v1/payments/**"       // payouts etc.
+    };
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
@@ -50,16 +72,20 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authorizeHttpRequests(auth ->
-                        auth
-                        .requestMatchers("/api/v1/auth/**", "/api/v1/client/register", "/api/v1/worker/register")
-                        .permitAll()
-                        .requestMatchers("/api/v1/client/**")
-                        .hasRole("CLIENT")
-                        .requestMatchers("/api/v1/worker/**")
-                        .hasRole("WORKER")
-                        .anyRequest()
-                        .authenticated()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(AUTH_WHITELIST).permitAll()
+                        // Admin-only endpoints first
+                        .requestMatchers("/api/v1/client/all", "/api/v1/worker/all").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // Allow both admin and client on client endpoints
+                        .requestMatchers("/api/v1/client/**").hasAnyRole("CLIENT", "ADMIN")
+                        // Allow both admin and worker on worker endpoints
+                        .requestMatchers("/api/v1/worker/**").hasAnyRole("WORKER", "ADMIN")
+                        // Shared resources: allow admin or relevant role
+                        .requestMatchers("/api/v1/jobs/**").hasAnyRole("CLIENT", "WORKER", "ADMIN")
+                        .requestMatchers("/api/v1/bids/**").hasAnyRole("CLIENT", "WORKER", "ADMIN")
+                        .requestMatchers("/api/v1/payments/**").hasAnyRole("CLIENT", "WORKER", "ADMIN")
+                        .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

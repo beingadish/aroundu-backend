@@ -11,6 +11,9 @@ import com.beingadish.AroundU.Models.ClientModel;
 import com.beingadish.AroundU.Repository.Client.ClientRepository;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -60,8 +63,10 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<List<ClientDetailsResponseDTO>> getAllClients() {
-        return null;
+    public Page<ClientDetailsResponseDTO> getAllClients(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Client> pageData = clientRepository.findAll(pageable);
+        return pageData.map(clientMapper::entityToModel).map(clientMapper::modelToClientDetailsResponseDto);
     }
 
 //    @Override
