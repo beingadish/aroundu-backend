@@ -2,6 +2,7 @@ package com.beingadish.AroundU.Controller.Client;
 
 import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
+import com.beingadish.AroundU.DTO.Client.Update.ClientUpdateRequestDTO;
 import com.beingadish.AroundU.DTO.Common.ApiResponse;
 import com.beingadish.AroundU.Service.ClientService;
 import com.beingadish.AroundU.Utilities.PageResponse;
@@ -42,23 +43,10 @@ public class ClientController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-//    @PatchMapping("/update/{clientId}")
-//    @PreAuthorize("#clientId == authentication.principal.id or hasRole('ADMIN')")
-//    public ResponseEntity<ClientResponseDTO> updateClientDetails(@PathVariable Long clientId, @RequestBody ClientRequestDTO clientRequestDTO) {
-//        return ResponseEntity.status(HttpStatus.OK).body(clientService.updateClientDetails(clientRequestDTO));
-//    }
-
-
-//
-//    @Override
-//    @GetMapping("/getDetails")
-//    public ResponseEntity<ClientResponseDTO> getClientDetails(@RequestParam(value="email") String clientEmail) {
-//        ClientRequestDTO clientRequestDTO = ClientRequestDTO
-//                .builder()
-//                .clientEmail(clientEmail)
-//                .build();
-//        return ResponseEntity.status(HttpStatus.OK).body(clientService.getClientDetails(clientRequestDTO));
-//    }
-//
-//    @Override
+    @PatchMapping("/update/{clientId}")
+    @PreAuthorize("#clientId == authentication.principal.id or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> updateClientDetails(@PathVariable Long clientId, @RequestBody ClientUpdateRequestDTO updateRequestDetails) {
+        ClientDetailsResponseDTO updated = clientService.updateClientDetails(clientId, updateRequestDetails);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(updated));
+    }
 }

@@ -1,13 +1,17 @@
-package com.beingadish.AroundU.Service;
+package com.beingadish.AroundU.Service.impl;
 
 import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
+import com.beingadish.AroundU.DTO.Client.Update.ClientUpdateRequestDTO;
 import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
 import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
+import com.beingadish.AroundU.Exceptions.Client.ClientValidationException;
 import com.beingadish.AroundU.Mappers.User.Client.ClientMapper;
 import com.beingadish.AroundU.Models.ClientModel;
-import com.beingadish.AroundU.Repository.Client.ClientRepository;
+import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
+import com.beingadish.AroundU.Repository.Client.ClientWriteRepository;
+import com.beingadish.AroundU.Service.ClientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,7 +27,8 @@ import java.util.Optional;
 public class ClientServiceImpl implements ClientService {
 
     private final ClientMapper clientMapper;
-    private final ClientRepository clientRepository;
+    private final ClientReadRepository clientReadRepository;
+    private final ClientWriteRepository clientWriteRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -32,7 +37,7 @@ public class ClientServiceImpl implements ClientService {
         ClientModel clientModel = clientMapper.registerRequestDtoToModel(requestDTO);
 
         // Validating if Client does not already exist
-        Optional<Client> alreadyExistClient = clientRepository.findByEmail(clientModel.getEmail());
+        Optional<Client> alreadyExistClient = clientReadRepository.findByEmail(clientModel.getEmail());
 
         if (alreadyExistClient.isPresent()) {
             throw new ClientAlreadyExistException("Client with the given email already exist.");
@@ -40,13 +45,13 @@ public class ClientServiceImpl implements ClientService {
 
         clientModel.setHashedPassword(passwordEncoder.encode(requestDTO.getPassword()));
         // Save the client entity in the database
-        Client savedClient = clientRepository.save(clientMapper.modelToEntity(clientModel));
+        clientWriteRepository.save(clientMapper.modelToEntity(clientModel));
     }
 
     @Override
     @Transactional(readOnly = true)
     public ClientDetailsResponseDTO getClientDetails(Long clientId) {
-        Optional<Client> clientOptional = clientRepository.findById(clientId);
+        Optional<Client> clientOptional = clientReadRepository.findById(clientId);
         if (clientOptional.isPresent()) {
             ClientModel model = clientMapper.entityToModel(clientOptional.get());
             return clientMapper.modelToClientDetailsResponseDto(model);
@@ -59,40 +64,37 @@ public class ClientServiceImpl implements ClientService {
     @Transactional(readOnly = true)
     public Page<ClientDetailsResponseDTO> getAllClients(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Client> pageData = clientRepository.findAll(pageable);
+        Page<Client> pageData = clientReadRepository.findAll(pageable);
         return pageData.map(clientMapper::entityToModel).map(clientMapper::modelToClientDetailsResponseDto);
     }
 
-//    @Override
-//    public ClientResponseDTO getClientDetails(@NonNull ClientRequestDTO clientRequestDTO) {
-//        // Extract email from the request DTO
-//        String email = clientRequestDTO.getClientEmail();
-//        String password = clientRequestDTO.getPassword();
-//
-//        // Use the repository method to fetch client details
-//        ClientEntity clientEntity = clientRepository.findByEmail(email).orElseThrow(() -> new ClientNotFoundException("Client not found"));
-//
-//        // Convert the client entity to ClientResponseDTO and return
-//        return DTOConversionUtil.clientEntityToClientResponseDto(clientEntity, "Client found");
-//    }
-//
-//    @Override
-//    public ClientResponseDTO updateClientDetails(@NonNull ClientRequestDTO clientRequestDTO) {
-//        // Extract details from clientRequestDTO
-//        Long clientId = clientRequestDTO.getClientId();
-//
-//        // Finding the Client Entity using Email & Password
-//        ClientEntity foundClientEntity = clientRepository.findById(clientId).orElseThrow(() -> new ClientValidationException("Cannot update, client not found"));
-//
-//        // If found then set the incoming name
-//        foundClientEntity.setClientName(clientRequestDTO.getClientName());
-//        foundClientEntity.setClientEmail(clientRequestDTO.getClientEmail());
-//        foundClientEntity.setPassword(clientRequestDTO.getPassword());
-//
-//        // Update it in the Database
-//        ClientEntity updatedClientEntity = clientRepository.save(foundClientEntity);
-//
-//        // Convert the updated entity to a DTO and return
-//        return DTOConversionUtil.clientEntityToClientResponseDto(updatedClientEntity, "Client Updated Successfully");
-//    }
+    @Override
+    @Transactional
+    public ClientDetailsResponseDTO updateClientDetails(Long clientId, ClientUpdateRequestDTO updateRequest) {
+
+        Client foundClientEntity = clientReadRepository.findById(clientId).orElseThrow(() -> new ClientValidationException("Cannot update, client not found"));
+
+        if (updateRequest.getName() != null) {
+            foundClientEntity.setName(updateRequest.getName());
+        }
+
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(foundClientEntity.getEmail())) {
+            if (clientReadRepository.existsByEmail(updateRequest.getEmail())) {
+                throw new ClientValidationException("Email already in use");
+            }
+            foundClientEntity.setEmail(updateRequest.getEmail());
+        }
+
+        if (updateRequest.getPhoneNumber() != null) {
+            foundClientEntity.setPhoneNumber(updateRequest.getPhoneNumber());
+        }
+
+        if (updateRequest.getProfileImageUrl() != null) {
+            foundClientEntity.setProfileImageUrl(updateRequest.getProfileImageUrl());
+        }
+
+        Client updatedClientEntity = clientWriteRepository.save(foundClientEntity);
+        ClientModel updatedModel = clientMapper.entityToModel(updatedClientEntity);
+        return clientMapper.modelToClientDetailsResponseDto(updatedModel);
+    }
 }
