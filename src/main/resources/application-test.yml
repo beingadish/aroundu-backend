@@ -1,0 +1,47 @@
+server:
+  port: ${SERVER_PORT:0}
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:aroundu;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  sql:
+    init:
+      mode: always
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  redis:
+    host: ${TEST_REDIS_HOST:localhost}
+    port: ${TEST_REDIS_PORT:6379}
+    password: ""
+  cache:
+    type: none
+
+logging:
+  level:
+    root: WARN
+    org.springframework: INFO
+    org.springframework.security: INFO
+
+jwt:
+  expiration:
+    ms: 900000
+  refresh:
+    expiration:
+      ms: 3600000
+
+feature:
+  enable-dummy-data: true
+  enable-swagger: true
+  enable-debug-security: false

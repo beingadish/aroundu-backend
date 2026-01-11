@@ -1,0 +1,37 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  datasource:
+    url: ${PROD_DB_URL}
+    username: ${PROD_DB_USERNAME}
+    password: ${PROD_DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  redis:
+    host: ${PROD_REDIS_HOST}
+    port: ${PROD_REDIS_PORT}
+    password: ${PROD_REDIS_PASSWORD}
+
+logging:
+  level:
+    root: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+
+jwt:
+  expiration:
+    ms: ${PROD_JWT_EXPIRATION_MS:172800000}
+  refresh:
+    expiration:
+      ms: ${PROD_JWT_REFRESH_EXPIRATION_MS:2592000000}
+
+feature:
+  enable-dummy-data: false
+  enable-swagger: false
+  enable-debug-security: false
