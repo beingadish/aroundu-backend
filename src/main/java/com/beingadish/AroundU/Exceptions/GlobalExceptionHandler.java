@@ -4,6 +4,8 @@ import com.beingadish.AroundU.DTO.Common.ApiResponse;
 import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
 import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
 import com.beingadish.AroundU.Exceptions.Client.ClientValidationException;
+import com.beingadish.AroundU.Exceptions.Job.JobNotFoundException;
+import com.beingadish.AroundU.Exceptions.Job.JobValidationException;
 import com.beingadish.AroundU.Exceptions.Worker.WorkerAlreadyExistException;
 import com.beingadish.AroundU.Exceptions.Worker.WorkerNotFoundException;
 import com.beingadish.AroundU.Exceptions.Worker.WorkerValidationException;
@@ -41,6 +43,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleClientNotFoundException(ClientNotFoundException ex) {
         log.warn("Client not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(JobNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleJobNotFound(JobNotFoundException ex) {
+        log.warn("Job not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(JobValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handleJobValidation(JobValidationException ex) {
+        log.warn("Job validation error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(WorkerAlreadyExistException.class)

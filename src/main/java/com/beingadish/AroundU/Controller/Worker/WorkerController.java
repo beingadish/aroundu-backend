@@ -80,4 +80,17 @@ public class WorkerController {
         WorkerDetailDTO updated = workerService.updateWorkerDetails(workerId, updateRequestDetails);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(updated));
     }
+
+    @DeleteMapping("/{workerId}")
+    @PreAuthorize("hasRole('ADMIN') or #workerId == authentication.principal.id")
+    @Operation(summary = "Delete worker", description = "Deletes worker and related data", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<ApiResponse<String>> deleteWorker(@PathVariable Long workerId) {
+        workerService.deleteWorker(workerId);
+        return ResponseEntity.ok(ApiResponse.success("Worker deleted successfully"));
+    }
 }

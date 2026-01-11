@@ -15,4 +15,6 @@ public interface WorkerService {
     Page<WorkerDetailDTO> getAllWorkers(int page, int size);
 
     WorkerDetailDTO updateWorkerDetails(Long workerId, WorkerUpdateRequestDTO updateRequest);
+
+    void deleteWorker(Long workerId);
 }

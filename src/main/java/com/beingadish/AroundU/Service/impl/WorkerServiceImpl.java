@@ -121,4 +121,14 @@ public class WorkerServiceImpl implements WorkerService {
         WorkerModel updatedModel = workerMapper.toModel(updatedWorker);
         return workerMapper.modelToWorkerDetailDto(updatedModel);
     }
+
+    @Override
+    @Transactional
+    public void deleteWorker(Long workerId) {
+        Worker worker = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new WorkerNotFoundException("Worker with id %d does not exist".formatted(workerId)));
+
+        workerWriteRepository.deleteById(workerId);
+        log.info("Deleted worker id={} email={}", workerId, worker.getEmail());
+    }
 }

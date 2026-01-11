@@ -80,4 +80,17 @@ public class ClientController {
         ClientDetailsResponseDTO updated = clientService.updateClientDetails(clientId, updateRequestDetails);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(updated));
     }
+
+    @DeleteMapping("/{clientId}")
+    @PreAuthorize("hasRole('ADMIN') or #clientId == authentication.principal.id")
+    @Operation(summary = "Delete client", description = "Deletes client and related data", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<ApiResponse<String>> deleteClient(@PathVariable Long clientId) {
+        clientService.deleteClient(clientId);
+        return ResponseEntity.ok(ApiResponse.success("Client deleted successfully"));
+    }
 }

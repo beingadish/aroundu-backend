@@ -100,4 +100,14 @@ public class ClientServiceImpl implements ClientService {
         ClientModel updatedModel = clientMapper.entityToModel(updatedClientEntity);
         return clientMapper.modelToClientDetailsResponseDto(updatedModel);
     }
+
+    @Override
+    @Transactional
+    public void deleteClient(Long clientId) {
+        Client client = clientReadRepository.findById(clientId)
+                .orElseThrow(() -> new ClientNotFoundException("Client with id %d does not exists".formatted(clientId)));
+
+        clientWriteRepository.deleteById(clientId);
+        log.info("Deleted client id={} email={}", clientId, client.getEmail());
+    }
 }

@@ -46,6 +46,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-retry -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
