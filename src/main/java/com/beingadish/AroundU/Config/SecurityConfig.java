@@ -33,14 +33,22 @@ public class SecurityConfig {
     private static final String WORKER = "WORKER";
 
     private static final String[] AUTH_WHITELIST = {
-            "/api/v1/auth/**",
-            "/api/v1/client/register",
-            "/api/v1/worker/register",
-            "/v3/api-docs/**",
-            "/api-docs/**",
-            "/docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html"
+        "/",
+        "/index.html",
+        "/frontend/**",
+        "/favicon.ico",
+        "/css/**",
+        "/js/**",
+        "/images/**",
+        "/webjars/**",
+        "/api/v1/auth/**",
+        "/api/v1/client/register",
+        "/api/v1/worker/register",
+        "/v3/api-docs/**",
+        "/api-docs/**",
+        "/docs/**",
+        "/swagger-ui/**",
+        "/swagger-ui.html"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -69,26 +77,26 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .exceptionHandling(exception -> exception
-                        .accessDeniedHandler(new CustomAccessDeniedHandler())
-                        .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                .accessDeniedHandler(new CustomAccessDeniedHandler())
+                .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(AUTH_WHITELIST).permitAll()
-                        // Admin-only endpoints first
-                        .requestMatchers("/api/v1/client/all", "/api/v1/worker/all").hasRole(ADMIN)
-                        .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
-                        // Allow both admin and client on client endpoints
-                        .requestMatchers("/api/v1/client/**").hasAnyRole(CLIENT, ADMIN)
-                        // Allow both admin and worker on worker endpoints
-                        .requestMatchers("/api/v1/worker/**").hasAnyRole(WORKER, ADMIN)
-                        // Shared resources: allow admin or relevant role
-                        .requestMatchers("/api/v1/jobs/**").hasAnyRole(ADMIN, CLIENT, WORKER)
-                        .requestMatchers("/api/v1/bids/**").hasAnyRole(ADMIN, CLIENT, WORKER)
-                        .requestMatchers("/api/v1/payments/**").hasAnyRole(ADMIN, CLIENT, WORKER)
-                        .anyRequest().authenticated()
+                .requestMatchers(AUTH_WHITELIST).permitAll()
+                // Admin-only endpoints first
+                .requestMatchers("/api/v1/client/all", "/api/v1/worker/all").hasRole(ADMIN)
+                .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
+                // Allow both admin and client on client endpoints
+                .requestMatchers("/api/v1/client/**").hasAnyRole(CLIENT, ADMIN)
+                // Allow both admin and worker on worker endpoints
+                .requestMatchers("/api/v1/worker/**").hasAnyRole(WORKER, ADMIN)
+                // Shared resources: allow admin or relevant role
+                .requestMatchers("/api/v1/jobs/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                .requestMatchers("/api/v1/bids/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                .requestMatchers("/api/v1/payments/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
