@@ -18,6 +18,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import static com.beingadish.AroundU.Constants.URIConstants.REGISTER;
@@ -55,6 +57,15 @@ public class WorkerController {
         return ResponseEntity.ok(ApiResponse.success(workerDetailDTO));
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('WORKER')")
+    @Operation(summary = "Get current worker details", description = "Fetch worker profile for the authenticated worker", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<WorkerDetailDTO>> getMyWorkerDetails() {
+        Long workerId = authenticationPrincipalId();
+        WorkerDetailDTO details = workerService.getWorkerDetails(workerId);
+        return ResponseEntity.ok(ApiResponse.success(details));
+    }
+
     @GetMapping("/all")
     @Operation(summary = "List workers", description = "Paged listing of workers (admin only)", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
@@ -79,6 +90,15 @@ public class WorkerController {
     public ResponseEntity<ApiResponse<WorkerDetailDTO>> updateWorkerDetails(@PathVariable Long workerId, @RequestBody WorkerUpdateRequestDTO updateRequestDetails) {
         WorkerDetailDTO updated = workerService.updateWorkerDetails(workerId, updateRequestDetails);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(updated));
+    }
+
+    private Long authenticationPrincipalId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication != null ? authentication.getPrincipal() : null;
+        if (principal instanceof com.beingadish.AroundU.Security.UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return Long.parseLong(authentication.getName());
     }
 
     @DeleteMapping("/{workerId}")

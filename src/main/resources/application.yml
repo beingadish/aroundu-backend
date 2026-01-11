@@ -44,7 +44,7 @@ springdoc:
 
 jwt:
   secret:
-    key: ${JWT_SECRET:change-me-in-env}
+    key: ${JWT_SECRET}
   expiration:
     ms: ${JWT_EXPIRATION_MS:86400000}
   refresh:

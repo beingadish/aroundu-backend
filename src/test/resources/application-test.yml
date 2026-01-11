@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:aroundu;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  main:
+    allow-bean-definition-overriding: true
+  data:
+    redis:
+      repositories:
+        enabled: false
+jwt:
+  secret:
+    key: "6c4d9e78b643fa2d6c4d9e78b643fa2d" # 32+ chars for HMAC key
+  expiration:
+    ms: 3600000
+logging:
+  level:
+    org.springframework.security: ERROR

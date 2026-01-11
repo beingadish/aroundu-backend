@@ -18,6 +18,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import static com.beingadish.AroundU.Constants.URIConstants.CLIENT_BASE;
@@ -53,6 +55,24 @@ public class ClientController {
     public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> getClientDetails(@PathVariable Long clientId) {
         ClientDetailsResponseDTO details = clientService.getClientDetails(clientId);
         return ResponseEntity.ok(ApiResponse.success(details));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('CLIENT')")
+    @Operation(summary = "Get current client details", description = "Fetch client profile for the authenticated client", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> getMyClientDetails() {
+        Long clientId = authenticationPrincipalId();
+        ClientDetailsResponseDTO details = clientService.getClientDetails(clientId);
+        return ResponseEntity.ok(ApiResponse.success(details));
+    }
+
+    private Long authenticationPrincipalId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication != null ? authentication.getPrincipal() : null;
+        if (principal instanceof com.beingadish.AroundU.Security.UserPrincipal userPrincipal) {
+            return userPrincipal.getId();
+        }
+        return Long.parseLong(authentication.getName());
     }
 
     @GetMapping("/all")
