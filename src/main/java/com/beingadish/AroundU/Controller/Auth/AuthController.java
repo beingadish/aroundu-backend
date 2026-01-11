@@ -1,7 +1,7 @@
 package com.beingadish.AroundU.Controller.Auth;
 
 import com.beingadish.AroundU.DTO.Auth.LoginRequestDTO;
-import com.beingadish.AroundU.DTO.LoginResponseDTO;
+import com.beingadish.AroundU.DTO.Auth.LoginResponseDTO;
 import com.beingadish.AroundU.Entities.Admin;
 import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Entities.Worker;
@@ -58,11 +58,11 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String role = authentication.getAuthorities().stream().findFirst().map(GrantedAuthority::getAuthority).orElse("USER");
         Long userId = resolveUserId(loginRequest.getEmail(), role);
-        String jwt = tokenProvider.generateToken(userId, loginRequest.getEmail());
+        String jwt = tokenProvider.generateToken(userId, loginRequest.getEmail(), role);
 
-        log.info("User authenticated email={} role={}", loginRequest.getEmail(), role);
+        log.info("User authenticated email={} role={} id={}", loginRequest.getEmail(), role, userId);
 
-        return ResponseEntity.ok(new LoginResponseDTO(jwt, "Bearer", loginRequest.getEmail(), role));
+        return ResponseEntity.ok(new LoginResponseDTO(userId, jwt, "Bearer", loginRequest.getEmail(), role));
     }
 
     private Long resolveUserId(String email, String role) {

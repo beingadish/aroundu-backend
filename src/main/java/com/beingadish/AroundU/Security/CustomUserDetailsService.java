@@ -6,6 +6,7 @@ import com.beingadish.AroundU.Entities.Worker;
 import com.beingadish.AroundU.Repository.Admin.AdminRepository;
 import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
+import com.beingadish.AroundU.Security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,19 +32,19 @@ public class CustomUserDetailsService implements UserDetailsService {
         // Try to check for client
         Optional<Client> client = findClient(identifier);
         if (client.isPresent()) {
-            return User.builder().username(client.get().getEmail()).password(client.get().getHashedPassword()).authorities(CLIENT).build();
+            return buildPrincipal(client.get().getId(), client.get().getEmail(), client.get().getHashedPassword(), CLIENT);
         }
 
         // Try to check for worker
         Optional<Worker> worker = findWorker(identifier);
         if (worker.isPresent()) {
-            return User.builder().username(worker.get().getEmail()).password(worker.get().getHashedPassword()).authorities(WORKER).build();
+            return buildPrincipal(worker.get().getId(), worker.get().getEmail(), worker.get().getHashedPassword(), WORKER);
         }
 
         // Try to check for admin
         Optional<Admin> admin = findAdmin(identifier);
         if (admin.isPresent()) {
-            return User.builder().username(admin.get().getEmail()).password(admin.get().getHashedPassword()).authorities(ADMIN).build();
+            return buildPrincipal(admin.get().getId(), admin.get().getEmail(), admin.get().getHashedPassword(), ADMIN);
         }
 
         throw new UsernameNotFoundException("User not found with identifier: " + identifier);
@@ -73,5 +74,14 @@ public class CustomUserDetailsService implements UserDetailsService {
         } catch (NumberFormatException ex) {
             return adminRepository.findByEmail(identifier);
         }
+    }
+
+    private UserDetails buildPrincipal(Long id, String email, String password, String authority) {
+        return UserPrincipal.builder()
+                .id(id)
+                .email(email)
+                .password(password)
+                .authorities(User.builder().username(email).password(password).authorities(authority).build().getAuthorities())
+                .build();
     }
 }

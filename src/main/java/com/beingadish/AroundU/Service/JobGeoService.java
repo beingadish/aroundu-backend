@@ -2,12 +2,10 @@ package com.beingadish.AroundU.Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.geo.Circle;
-import org.springframework.data.geo.Distance;
-import org.springframework.data.geo.Metrics;
-import org.springframework.data.geo.Point;
+import org.springframework.data.geo.*;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -50,15 +48,16 @@ public class JobGeoService {
         GeoOperations<String, String> ops = stringRedisTemplate.opsForGeo();
         Circle within = new Circle(new Point(longitude, latitude), new Distance(radiusKm, Metrics.KILOMETERS));
         var results = ops.radius(OPEN_JOBS_GEO_KEY, within);
-        if (results == null || results.isEmpty()) {
+        if (results == null || results.getContent().isEmpty()) {
             return Collections.emptyList();
         }
         return results.getContent()
-            .stream()
-            .limit(Math.max(limit, 0))
-            .map(result -> result.getContent())
-            .filter(Objects::nonNull)
-            .map(Long::valueOf)
-            .collect(Collectors.toList());
+                .stream()
+                .limit(Math.max(limit, 0))
+                .map(GeoResult::getContent)
+                .map(GeoLocation::getName)
+                .filter(Objects::nonNull)
+                .map(Long::valueOf)
+                .collect(Collectors.toList());
     }
 }

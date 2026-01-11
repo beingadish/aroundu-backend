@@ -145,17 +145,17 @@ public class JobServiceImpl implements JobService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         List<JobStatus> statuses = (filterRequest.getStatuses() == null || filterRequest.getStatuses().isEmpty()) ? ACTIVE_STATUSES : filterRequest.getStatuses();
 
-        Page<Job> page;
+        Page<Job> jobPage;
         if (filterRequest.getStartDate() != null && filterRequest.getEndDate() != null) {
             LocalDate start = filterRequest.getStartDate();
             LocalDate end = filterRequest.getEndDate();
             LocalDateTime startDateTime = start.atStartOfDay();
             LocalDateTime endDateTime = end.atTime(LocalTime.MAX);
-            page = jobRepository.findByCreatedByIdAndJobStatusInAndCreatedAtBetween(clientId, statuses, startDateTime, endDateTime, pageable);
+            jobPage = jobRepository.findByCreatedByIdAndJobStatusInAndCreatedAtBetween(clientId, statuses, startDateTime, endDateTime, pageable);
         } else {
-            page = jobRepository.findByCreatedByIdAndJobStatusIn(clientId, statuses, pageable);
+            jobPage = jobRepository.findByCreatedByIdAndJobStatusIn(clientId, statuses, pageable);
         }
-        return page.map(jobMapper::toSummaryDto);
+        return jobPage.map(jobMapper::toSummaryDto);
     }
 
     @Override
