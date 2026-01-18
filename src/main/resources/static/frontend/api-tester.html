@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AroundU API Tester</title>
+  <style>
+    :root { --bg:#0f172a; --panel:#111827; --card:#1f2937; --accent:#38bdf8; --text:#e5e7eb; --muted:#94a3b8; --danger:#f87171; --success:#34d399; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:"Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--text); }
+    header { padding:16px 20px; border-bottom:1px solid #1f2937; display:flex; justify-content:space-between; align-items:center; }
+    h1 { margin:0; font-size:20px; letter-spacing:0.5px; }
+    .pill { padding:6px 10px; border-radius:20px; border:1px solid #1f2937; color:var(--muted); }
+    main { display:grid; grid-template-columns:320px 1fr; gap:16px; padding:16px; }
+    .panel { background:var(--panel); border:1px solid #1f2937; border-radius:10px; padding:14px; }
+    .panel h2 { margin:0 0 10px 0; font-size:15px; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); }
+    label { display:block; font-size:12px; color:var(--muted); margin:10px 0 4px; }
+    input, textarea, select { width:100%; padding:8px 10px; border-radius:8px; border:1px solid #374151; background:var(--card); color:var(--text); font-size:13px; }
+    textarea { resize:vertical; min-height:60px; }
+    .row { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    .actions { margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+    button { padding:9px 12px; border:none; border-radius:8px; font-weight:600; cursor:pointer; color:#0b1021; }
+    .primary { background:var(--accent); }
+    .ghost { background:transparent; border:1px solid #374151; color:var(--text); }
+    .danger { background:var(--danger); color:#0b1021; }
+    .success { background:var(--success); color:#0b1021; }
+    .tabs { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+    .tab { padding:8px 12px; border-radius:8px; background:#1f2937; color:var(--text); border:1px solid #1f2937; cursor:pointer; font-weight:600; font-size:13px; }
+    .tab.active { background:var(--accent); color:#0b1021; }
+    .section { display:none; }
+    .section.active { display:block; }
+    .console { background:var(--card); border-radius:10px; border:1px solid #1f2937; padding:12px; font-family:SFMono-Regular,Consolas,monospace; font-size:12px; white-space:pre-wrap; word-break:break-word; min-height:220px; }
+    .badge { display:inline-block; padding:2px 6px; border-radius:6px; font-size:11px; background:#0b1021; color:var(--muted); margin-left:6px; }
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    a { color:var(--accent); text-decoration:none; }
+    @media (max-width: 1080px) { main { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>AroundU API Tester</h1>
+      <div class="pill">Browser-only • HTML/CSS/JS • Bearer auth</div>
+    </div>
+    <div class="pill">Set token and base URL, then hit any endpoint</div>
+  </header>
+
+  <main>
+    <section class="panel" id="config">
+      <h2>Config</h2>
+      <label>Base URL (default: /api/v1)</label>
+      <input id="baseUrl" value="/api/v1" placeholder="https://localhost:8080/api/v1" />
+      <label>Alternate Base URL (for Bid endpoints, default: /api)</label>
+      <input id="altBaseUrl" value="/api" placeholder="https://localhost:8080/api" />
+      <label>Bearer Token</label>
+      <textarea id="token" placeholder="Paste JWT here"></textarea>
+      <div class="row">
+        <div><label>Client Id (for quick fill)</label><input id="clientId" type="number" /></div>
+        <div><label>Worker Id (for quick fill)</label><input id="workerId" type="number" /></div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="saveConfig">Save Config</button>
+        <button class="ghost" id="clearConfig">Clear</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;">Config is kept in localStorage when you hit Save.</p>
+    </section>
+
+    <section>
+      <div class="tabs" id="tabs"></div>
+      <div id="sections"></div>
+      <div class="panel" style="margin-top:14px;">
+        <h2>Console</h2>
+        <div id="console" class="console">Ready. Set base URL + token, then run a call.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const tabs = [
+      { id:"jobs-client", label:"Jobs (Client)" },
+      { id:"jobs-worker", label:"Jobs (Worker/Public)" },
+      { id:"bids", label:"Bids" },
+      { id:"codes", label:"Codes" }
+    ];
+
+    const consoleEl = document.getElementById("console");
+    const sectionsEl = document.getElementById("sections");
+    const tabsEl = document.getElementById("tabs");
+
+    function log(message, data) {
+      const time = new Date().toLocaleTimeString();
+      const formatted = data ? `\n${JSON.stringify(data, null, 2)}` : "";
+      consoleEl.textContent = `[${time}] ${message}${formatted}`;
+    }
+
+    function loadConfig() {
+      const stored = JSON.parse(localStorage.getItem("au-api-config") || "{}");
+      if (stored.baseUrl) document.getElementById("baseUrl").value = stored.baseUrl;
+      if (stored.altBaseUrl) document.getElementById("altBaseUrl").value = stored.altBaseUrl;
+      if (stored.token) document.getElementById("token").value = stored.token;
+      if (stored.clientId) document.getElementById("clientId").value = stored.clientId;
+      if (stored.workerId) document.getElementById("workerId").value = stored.workerId;
+    }
+
+    function saveConfig() {
+      const cfg = {
+        baseUrl: document.getElementById("baseUrl").value.trim() || "/api/v1",
+        altBaseUrl: document.getElementById("altBaseUrl").value.trim() || "/api",
+        token: document.getElementById("token").value.trim(),
+        clientId: document.getElementById("clientId").value.trim(),
+        workerId: document.getElementById("workerId").value.trim()
+      };
+      localStorage.setItem("au-api-config", JSON.stringify(cfg));
+      log("Config saved", cfg);
+    }
+
+    function clearConfig() {
+      localStorage.removeItem("au-api-config");
+      ["baseUrl","altBaseUrl","token","clientId","workerId"].forEach(id => document.getElementById(id).value = "");
+      document.getElementById("baseUrl").value = "/api/v1";
+      document.getElementById("altBaseUrl").value = "/api";
+      log("Config cleared");
+    }
+
+    document.getElementById("saveConfig").onclick = saveConfig;
+    document.getElementById("clearConfig").onclick = clearConfig;
+    loadConfig();
+
+    function parseCSV(value) {
+      return (value || "").split(',').map(v => v.trim()).filter(Boolean).map(v => isNaN(v) ? v : Number(v));
+    }
+
+    async function request({ method, path, body, useAltBase = false }) {
+      const baseUrl = (useAltBase ? document.getElementById("altBaseUrl").value : document.getElementById("baseUrl").value) || "";
+      const token = document.getElementById("token").value.trim();
+      const url = baseUrl.replace(/\/$/, "") + path;
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const init = { method, headers };
+      if (body && method !== "GET") init.body = JSON.stringify(body);
+      const started = performance.now();
+      log(`${method} ${url}\nPayload: ${body ? JSON.stringify(body) : "-"}`);
+      try {
+        const res = await fetch(url, init);
+        const elapsed = Math.round(performance.now() - started);
+        const text = await res.text();
+        let json;
+        try { json = JSON.parse(text); } catch (_) { json = text; }
+        log(`${method} ${url} -> ${res.status} (${elapsed} ms)`, { headers, body, response: json });
+        return { res, json };
+      } catch (err) {
+        log(`Error calling ${url}: ${err}`);
+        throw err;
+      }
+    }
+
+    function buildFormSection(id, title, contentHtml) {
+      return `<section class="panel section" id="${id}">\n<h2>${title}</h2>\n${contentHtml}\n</section>`;
+    }
+
+    function activateTabs() {
+      tabsEl.innerHTML = tabs.map((t, i) => `<button class="tab ${i===0 ? "active" : ""}" data-tab="${t.id}">${t.label}</button>`).join("");
+      tabs.forEach((t, i) => { document.getElementById(t.id).classList.toggle("active", i===0); });
+      tabsEl.onclick = (e) => {
+        const btn = e.target.closest('button.tab');
+        if (!btn) return;
+        const id = btn.dataset.tab;
+        tabsEl.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        tabs.forEach(t => { document.getElementById(t.id).classList.toggle('active', t.id === id); });
+      };
+    }
+
+    const jobsClientHtml = `
+      <form id="jobCreate">
+        <div class="row">
+          <div><label>Client Id</label><input name="clientId" type="number" placeholder="client id" /></div>
+          <div><label>Job Location Id</label><input name="jobLocationId" type="number" required /></div>
+        </div>
+        <label>Title</label><input name="title" required />
+        <label>Short Description</label><input name="shortDescription" />
+        <label>Long Description</label><textarea name="longDescription" required></textarea>
+        <div class="row">
+          <div><label>Price Amount</label><input name="price.amount" type="number" step="0.01" required /></div>
+          <div><label>Price Currency</label><input name="price.currency" placeholder="USD" required /></div>
+        </div>
+        <div class="row">
+          <div><label>Urgency</label><input name="jobUrgency" placeholder="HIGH|MEDIUM|LOW" required /></div>
+          <div><label>Payment Mode</label><input name="paymentMode" placeholder="CASH|CARD" required /></div>
+        </div>
+        <label>Required Skill Ids (comma separated)</label><input name="requiredSkillIds" placeholder="1,2,3" required />
+        <div class="actions">
+          <button class="primary" type="submit">Create Job</button>
+        </div>
+      </form>
+      <form id="jobUpdate" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Job Id</label><input name="jobId" type="number" required /></div>
+          <div><label>Client Id</label><input name="clientId" type="number" /></div>
+        </div>
+        <label>Title</label><input name="title" />
+        <label>Short Description</label><input name="shortDescription" />
+        <label>Long Description</label><textarea name="longDescription"></textarea>
+        <label>Job Location Id</label><input name="jobLocationId" type="number" />
+        <label>Required Skill Ids (comma separated)</label><input name="requiredSkillIds" placeholder="1,2" />
+        <div class="actions">
+          <button class="primary" type="submit">Update Job</button>
+        </div>
+      </form>
+      <form id="jobStatus" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Job Id</label><input name="jobId" type="number" required /></div>
+          <div><label>Client Id</label><input name="clientId" type="number" /></div>
+        </div>
+        <label>New Status</label>
+        <select name="newStatus" required>
+          <option>OPEN_FOR_BIDS</option>
+          <option>BID_SELECTED_AWAITING_HANDSHAKE</option>
+          <option>READY_TO_START</option>
+          <option>IN_PROGRESS</option>
+          <option>COMPLETED</option>
+          <option>CANCELLED</option>
+        </select>
+        <div class="actions">
+          <button class="primary" type="submit">Update Status</button>
+        </div>
+      </form>
+      <form id="jobDelete" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Job Id</label><input name="jobId" type="number" required /></div>
+          <div><label>Client Id</label><input name="clientId" type="number" /></div>
+        </div>
+        <div class="actions">
+          <button class="danger" type="submit">Delete Job</button>
+        </div>
+      </form>
+      <form id="jobClientList" style="margin-top:14px;">
+        <label>Client Id</label><input name="clientId" type="number" />
+        <label>Statuses (comma separated)</label><input name="statuses" placeholder="OPEN_FOR_BIDS,IN_PROGRESS" />
+        <div class="row">
+          <div><label>Start Date (yyyy-mm-dd)</label><input name="startDate" /></div>
+          <div><label>End Date (yyyy-mm-dd)</label><input name="endDate" /></div>
+        </div>
+        <div class="row">
+          <div><label>Page</label><input name="page" type="number" value="0" /></div>
+          <div><label>Size</label><input name="size" type="number" value="20" /></div>
+        </div>
+        <div class="actions">
+          <button class="ghost" type="submit">List Client Jobs</button>
+        </div>
+      </form>
+      <form id="jobClientPast" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Client Id</label><input name="clientId" type="number" /></div>
+          <div><label>Page</label><input name="page" type="number" value="0" /></div>
+          <div><label>Size</label><input name="size" type="number" value="20" /></div>
+        </div>
+        <div class="actions">
+          <button class="ghost" type="submit">List Past Jobs</button>
+        </div>
+      </form>
+    `;
+
+    const jobsWorkerHtml = `
+      <form id="jobPublicDetail">
+        <label>Job Id</label><input name="jobId" type="number" required />
+        <div class="actions">
+          <button class="ghost" type="submit">Get Public Job</button>
+        </div>
+      </form>
+      <form id="jobSearch" style="margin-top:14px;">
+        <div class="row">
+          <div><label>City</label><input name="city" /></div>
+          <div><label>Area</label><input name="area" /></div>
+        </div>
+        <label>Skill Ids (comma separated)</label><input name="skillIds" placeholder="1,2,3" />
+        <div class="actions"><button class="ghost" type="submit">Search Jobs</button></div>
+      </form>
+      <form id="jobWorkerFeed" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Worker Id</label><input name="workerId" type="number" /></div>
+          <div><label>Radius Km</label><input name="radiusKm" type="number" step="0.1" value="25" /></div>
+        </div>
+        <label>Skill Ids (comma separated)</label><input name="skillIds" placeholder="1,2,3" />
+        <div class="row">
+          <div><label>Page</label><input name="page" type="number" value="0" /></div>
+          <div><label>Size</label><input name="size" type="number" value="20" /></div>
+        </div>
+        <div class="actions"><button class="primary" type="submit">Worker Feed</button></div>
+      </form>
+      <form id="jobWorkerDetail" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Worker Id</label><input name="workerId" type="number" /></div>
+          <div><label>Job Id</label><input name="jobId" type="number" /></div>
+        </div>
+        <div class="actions"><button class="ghost" type="submit">Worker Job Detail</button></div>
+      </form>
+    `;
+
+    const bidsHtml = `
+      <form id="bidPlace">
+        <div class="row">
+          <div><label>Job Id</label><input name="jobId" type="number" required /></div>
+          <div><label>Worker Id</label><input name="workerId" type="number" /></div>
+        </div>
+        <label>Bid Amount</label><input name="bidAmount" type="number" step="0.01" required />
+        <label>Partner Name</label><input name="partnerName" />
+        <label>Partner Fee</label><input name="partnerFee" type="number" step="0.01" />
+        <label>Notes</label><textarea name="notes"></textarea>
+        <div class="actions"><button class="primary" type="submit">Place Bid</button></div>
+      </form>
+      <form id="bidList" style="margin-top:14px;">
+        <label>Job Id</label><input name="jobId" type="number" required />
+        <div class="actions"><button class="ghost" type="submit">List Bids</button></div>
+      </form>
+      <form id="bidAccept" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Bid Id</label><input name="bidId" type="number" required /></div>
+          <div><label>Client Id</label><input name="clientId" type="number" /></div>
+        </div>
+        <div class="actions"><button class="success" type="submit">Accept Bid</button></div>
+      </form>
+      <form id="bidHandshake" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Bid Id</label><input name="bidId" type="number" required /></div>
+          <div><label>Worker Id</label><input name="workerId" type="number" /></div>
+        </div>
+        <label><input type="checkbox" name="accepted" checked /> Accepted by worker</label>
+        <div class="actions"><button class="primary" type="submit">Handshake</button></div>
+      </form>
+      <p style="color:var(--muted);font-size:12px;">Bid endpoints live under /api (no /v1). This form uses the Alt Base URL.</p>
+    `;
+
+    const codesHtml = `
+      <form id="codeGenerate">
+        <div class="row">
+          <div><label>Job Id</label><input name="jobId" type="number" required /></div>
+          <div><label>Client Id</label><input name="clientId" type="number" /></div>
+        </div>
+        <div class="actions"><button class="primary" type="submit">Generate Start/Release Codes</button></div>
+      </form>
+      <form id="codeVerifyStart" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Job Id</label><input name="jobId" type="number" required /></div>
+          <div><label>Worker Id</label><input name="workerId" type="number" /></div>
+        </div>
+        <label>Start Code</label><input name="code" required />
+        <div class="actions"><button class="primary" type="submit">Verify Start</button></div>
+      </form>
+      <form id="codeVerifyRelease" style="margin-top:14px;">
+        <div class="row">
+          <div><label>Job Id</label><input name="jobId" type="number" required /></div>
+          <div><label>Client Id</label><input name="clientId" type="number" /></div>
+        </div>
+        <label>Release Code</label><input name="code" required />
+        <div class="actions"><button class="success" type="submit">Verify Release</button></div>
+      </form>
+    `;
+
+    sectionsEl.innerHTML = [
+      buildFormSection("jobs-client", "Jobs (Client)", jobsClientHtml),
+      buildFormSection("jobs-worker", "Jobs (Worker/Public)", jobsWorkerHtml),
+      buildFormSection("bids", "Bids", bidsHtml),
+      buildFormSection("codes", "Codes", codesHtml)
+    ].join("");
+
+    activateTabs();
+
+    function fillDefaults(form) {
+      const clientId = document.getElementById("clientId").value;
+      const workerId = document.getElementById("workerId").value;
+      if (form.querySelector('[name="clientId"]') && clientId) form.querySelectorAll('[name="clientId"]').forEach(i => { if (!i.value) i.value = clientId; });
+      if (form.querySelector('[name="workerId"]') && workerId) form.querySelectorAll('[name="workerId"]').forEach(i => { if (!i.value) i.value = workerId; });
+    }
+
+    document.getElementById("jobCreate").onsubmit = async (e) => {
+      e.preventDefault();
+      fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const body = {
+        title: f.get("title"),
+        shortDescription: f.get("shortDescription"),
+        longDescription: f.get("longDescription"),
+        price: { amount: Number(f.get("price.amount")), currency: f.get("price.currency") },
+        jobLocationId: Number(f.get("jobLocationId")),
+        jobUrgency: f.get("jobUrgency"),
+        requiredSkillIds: parseCSV(f.get("requiredSkillIds")).map(Number),
+        paymentMode: f.get("paymentMode")
+      };
+      const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      await request({ method:"POST", path:`/jobs?clientId=${clientId}`, body });
+    };
+
+    document.getElementById("jobUpdate").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const jobId = f.get("jobId"); const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      const body = {
+        title: f.get("title") || null,
+        shortDescription: f.get("shortDescription") || null,
+        longDescription: f.get("longDescription") || null,
+        jobLocationId: f.get("jobLocationId") ? Number(f.get("jobLocationId")) : null,
+        requiredSkillIds: f.get("requiredSkillIds") ? parseCSV(f.get("requiredSkillIds")).map(Number) : null
+      };
+      await request({ method:"PATCH", path:`/jobs/${jobId}?clientId=${clientId}`, body });
+    };
+
+    document.getElementById("jobStatus").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const jobId = f.get("jobId"); const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      const body = { newStatus: f.get("newStatus") };
+      await request({ method:"PATCH", path:`/jobs/${jobId}/status?clientId=${clientId}`, body });
+    };
+
+    document.getElementById("jobDelete").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const jobId = f.get("jobId"); const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      await request({ method:"DELETE", path:`/jobs/${jobId}?clientId=${clientId}` });
+    };
+
+    document.getElementById("jobClientList").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      const params = new URLSearchParams();
+      if (f.get("statuses")) parseCSV(f.get("statuses")).forEach(s => params.append("statuses", s));
+      if (f.get("startDate")) params.set("startDate", f.get("startDate"));
+      if (f.get("endDate")) params.set("endDate", f.get("endDate"));
+      params.set("page", f.get("page") || 0);
+      params.set("size", f.get("size") || 20);
+      await request({ method:"GET", path:`/jobs/client/${clientId}?${params.toString()}` });
+    };
+
+    document.getElementById("jobClientPast").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      const page = f.get("page") || 0; const size = f.get("size") || 20;
+      await request({ method:"GET", path:`/jobs/client/${clientId}/past?page=${page}&size=${size}` });
+    };
+
+    document.getElementById("jobPublicDetail").onsubmit = async (e) => {
+      e.preventDefault();
+      const jobId = new FormData(e.target).get("jobId");
+      await request({ method:"GET", path:`/jobs/${jobId}` });
+    };
+
+    document.getElementById("jobSearch").onsubmit = async (e) => {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      const params = new URLSearchParams();
+      if (f.get("city")) params.set("city", f.get("city"));
+      if (f.get("area")) params.set("area", f.get("area"));
+      if (f.get("skillIds")) parseCSV(f.get("skillIds")).forEach(id => params.append("skillIds", id));
+      await request({ method:"GET", path:`/jobs?${params.toString()}` });
+    };
+
+    document.getElementById("jobWorkerFeed").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const workerId = f.get("workerId") || document.getElementById("workerId").value;
+      const params = new URLSearchParams();
+      if (f.get("skillIds")) parseCSV(f.get("skillIds")).forEach(id => params.append("skillIds", id));
+      if (f.get("radiusKm")) params.set("radiusKm", f.get("radiusKm"));
+      params.set("page", f.get("page") || 0);
+      params.set("size", f.get("size") || 20);
+      await request({ method:"GET", path:`/jobs/worker/${workerId}/feed?${params.toString()}` });
+    };
+
+    document.getElementById("jobWorkerDetail").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const workerId = f.get("workerId") || document.getElementById("workerId").value;
+      const jobId = f.get("jobId");
+      await request({ method:"GET", path:`/jobs/worker/${workerId}/${jobId}` });
+    };
+
+    document.getElementById("bidPlace").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const jobId = f.get("jobId"); const workerId = f.get("workerId") || document.getElementById("workerId").value;
+      const body = {
+        bidAmount: Number(f.get("bidAmount")),
+        partnerName: f.get("partnerName") || null,
+        partnerFee: f.get("partnerFee") ? Number(f.get("partnerFee")) : null,
+        notes: f.get("notes") || null
+      };
+      await request({ method:"POST", path:`/jobs/${jobId}/bids?workerId=${workerId}`, body, useAltBase:true });
+    };
+
+    document.getElementById("bidList").onsubmit = async (e) => {
+      e.preventDefault();
+      const jobId = new FormData(e.target).get("jobId");
+      await request({ method:"GET", path:`/jobs/${jobId}/bids`, useAltBase:true });
+    };
+
+    document.getElementById("bidAccept").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const bidId = f.get("bidId"); const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      await request({ method:"POST", path:`/bids/${bidId}/accept?clientId=${clientId}`, useAltBase:true });
+    };
+
+    document.getElementById("bidHandshake").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const bidId = f.get("bidId"); const workerId = f.get("workerId") || document.getElementById("workerId").value;
+      const body = { accepted: f.get("accepted") === "on" };
+      await request({ method:"POST", path:`/bids/${bidId}/handshake?workerId=${workerId}`, body, useAltBase:true });
+    };
+
+    document.getElementById("codeGenerate").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const jobId = f.get("jobId"); const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      await request({ method:"POST", path:`/jobs/${jobId}/codes?clientId=${clientId}` });
+    };
+
+    document.getElementById("codeVerifyStart").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const jobId = f.get("jobId"); const workerId = f.get("workerId") || document.getElementById("workerId").value;
+      const body = { code: f.get("code") };
+      await request({ method:"POST", path:`/jobs/${jobId}/codes/start?workerId=${workerId}`, body });
+    };
+
+    document.getElementById("codeVerifyRelease").onsubmit = async (e) => {
+      e.preventDefault(); fillDefaults(e.target);
+      const f = new FormData(e.target);
+      const jobId = f.get("jobId"); const clientId = f.get("clientId") || document.getElementById("clientId").value;
+      const body = { code: f.get("code") };
+      await request({ method:"POST", path:`/jobs/${jobId}/codes/release?clientId=${clientId}`, body });
+    };
+
+    log("Loaded. Set base URLs and token, then run.");
+  </script>
+</body>
+</html>

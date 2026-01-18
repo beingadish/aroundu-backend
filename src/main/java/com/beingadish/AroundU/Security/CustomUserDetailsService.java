@@ -1,9 +1,12 @@
 package com.beingadish.AroundU.Security;
 
+import com.beingadish.AroundU.Entities.Admin;
 import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Entities.Worker;
-import com.beingadish.AroundU.Repository.Client.ClientRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import com.beingadish.AroundU.Repository.Admin.AdminRepository;
+import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
+import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
+import com.beingadish.AroundU.Security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,23 +20,68 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final ClientRepository clientRepository;
-    private final WorkerRepository workerRepository;
+    private static final String ADMIN = "ROLE_ADMIN";
+    private static final String CLIENT = "ROLE_CLIENT";
+    private static final String WORKER = "ROLE_WORKER";
+    private final ClientReadRepository clientRepository;
+    private final WorkerReadRepository workerRepository;
+    private final AdminRepository adminRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // Try finding in Client repository
-        Optional<Client> client = clientRepository.findByEmail(email);
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+        // Try to check for client
+        Optional<Client> client = findClient(identifier);
         if (client.isPresent()) {
-            return User.builder().username(client.get().getEmail()).password(client.get().getHashedPassword()).authorities("ROLE_CLIENT").build();
+            return buildPrincipal(client.get().getId(), client.get().getEmail(), client.get().getHashedPassword(), CLIENT);
         }
 
-        // Try finding in Worker repository
-        Optional<Worker> worker = workerRepository.findByEmail(email);
+        // Try to check for worker
+        Optional<Worker> worker = findWorker(identifier);
         if (worker.isPresent()) {
-            return User.builder().username(worker.get().getEmail()).password(worker.get().getHashedPassword()).authorities("ROLE_WORKER").build();
+            return buildPrincipal(worker.get().getId(), worker.get().getEmail(), worker.get().getHashedPassword(), WORKER);
         }
 
-        throw new UsernameNotFoundException("User not found with email: " + email);
+        // Try to check for admin
+        Optional<Admin> admin = findAdmin(identifier);
+        if (admin.isPresent()) {
+            return buildPrincipal(admin.get().getId(), admin.get().getEmail(), admin.get().getHashedPassword(), ADMIN);
+        }
+
+        throw new UsernameNotFoundException("User not found with identifier: " + identifier);
+    }
+
+    private Optional<Client> findClient(String identifier) {
+        try {
+            return clientRepository.findById(Long.parseLong(identifier));
+        } catch (NumberFormatException ex) {
+            return clientRepository.findByEmail(identifier);
+        }
+    }
+
+    private Optional<Worker> findWorker(String identifier) {
+        try {
+            Long id = Long.parseLong(identifier);
+            return workerRepository.findById(id);
+        } catch (NumberFormatException ex) {
+            return workerRepository.findByEmail(identifier);
+        }
+    }
+
+    private Optional<Admin> findAdmin(String identifier) {
+        try {
+            Long id = Long.parseLong(identifier);
+            return adminRepository.findById(id);
+        } catch (NumberFormatException ex) {
+            return adminRepository.findByEmail(identifier);
+        }
+    }
+
+    private UserDetails buildPrincipal(Long id, String email, String password, String authority) {
+        return UserPrincipal.builder()
+                .id(id)
+                .email(email)
+                .password(password)
+                .authorities(User.builder().username(email).password(password).authorities(authority).build().getAuthorities())
+                .build();
     }
 }

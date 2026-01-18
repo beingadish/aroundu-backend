@@ -3,7 +3,6 @@ package com.beingadish.AroundU.Security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -22,24 +21,30 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    public String generateToken(Authentication authentication) {
-        String email = authentication.getName();
+    public String generateToken(Long userId, String email, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
-        return Jwts.builder().subject(email).issuedAt(now).expiration(expiryDate).signWith(getSigningKey()).compact();
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .claim("email", email)
+                .claim("role", role)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
     }
 
-    public String generateTokenFromEmail(String email) {
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-
-        return Jwts.builder().subject(email).issuedAt(now).expiration(expiryDate).signWith(getSigningKey()).compact();
+    public String getUserIdFromToken(String token) {
+        return parseClaims(token).getSubject();
     }
 
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
-        return claims.getSubject();
+        return parseClaims(token).get("email", String.class);
+    }
+
+    public String getRoleFromToken(String token) {
+        return parseClaims(token).get("role", String.class);
     }
 
     public boolean validateToken(String authToken) {
@@ -56,5 +61,9 @@ public class JwtTokenProvider {
             // JWT claims string is empty
         }
         return false;
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
     }
 }

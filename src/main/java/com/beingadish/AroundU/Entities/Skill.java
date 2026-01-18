@@ -26,5 +26,6 @@ public class Skill {
     private String name;
 
     @ManyToMany(mappedBy = "skillSet")
+    @Builder.Default
     private Set<Job> jobs = new HashSet<>();
 }

@@ -2,23 +2,23 @@ package com.beingadish.AroundU.Service;
 
 import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
-import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterResponseDTO;
-import org.springframework.http.ResponseEntity;
+import com.beingadish.AroundU.DTO.Client.Update.ClientUpdateRequestDTO;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public interface ClientService {
 
     // For registering the client
-    ClientRegisterResponseDTO registerClient(ClientRegisterRequestDTO clientRequestDTO);
+    void registerClient(ClientRegisterRequestDTO clientRequestDTO);
 
     // For getting the client details
     ClientDetailsResponseDTO getClientDetails(Long clientId);
 
-    ResponseEntity<List<ClientDetailsResponseDTO>> getAllClients();
+    Page<ClientDetailsResponseDTO> getAllClients(int page, int size);
 
-//    ClientResponseDTO updateClientDetails(ClientRequestDTO clientRequestDTO);
+    ClientDetailsResponseDTO updateClientDetails(Long clientId, ClientUpdateRequestDTO updateRequest);
+
+    void deleteClient(Long clientId);
 
 }

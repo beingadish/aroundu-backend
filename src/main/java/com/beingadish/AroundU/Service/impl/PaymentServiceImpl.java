@@ -1,0 +1,63 @@
+package com.beingadish.AroundU.Service.impl;
+
+import com.beingadish.AroundU.Constants.Enums.PaymentStatus;
+import com.beingadish.AroundU.DTO.Payment.PaymentLockRequest;
+import com.beingadish.AroundU.DTO.Payment.PaymentReleaseRequest;
+import com.beingadish.AroundU.Entities.Client;
+import com.beingadish.AroundU.Entities.Job;
+import com.beingadish.AroundU.Entities.PaymentTransaction;
+import com.beingadish.AroundU.Entities.Worker;
+import com.beingadish.AroundU.Mappers.Payment.PaymentTransactionMapper;
+import com.beingadish.AroundU.Repository.Client.ClientRepository;
+import com.beingadish.AroundU.Repository.Job.JobRepository;
+import com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository;
+import com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository;
+import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import com.beingadish.AroundU.Service.PaymentService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class PaymentServiceImpl implements PaymentService {
+
+    private final PaymentTransactionRepository paymentTransactionRepository;
+    private final JobRepository jobRepository;
+    private final ClientRepository clientRepository;
+    private final WorkerRepository workerRepository;
+    private final PaymentTransactionMapper paymentTransactionMapper;
+    private final JobConfirmationCodeRepository jobConfirmationCodeRepository;
+
+    @Override
+    public PaymentTransaction lockEscrow(Long jobId, Long clientId, PaymentLockRequest request) {
+        Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found"));
+        Client client = clientRepository.findById(clientId).orElseThrow(() -> new EntityNotFoundException("Client not found"));
+        if (job.getAssignedTo() == null) {
+            throw new IllegalStateException("Cannot lock payment before worker assignment");
+        }
+        Worker worker = job.getAssignedTo();
+        PaymentTransaction tx = paymentTransactionMapper.toEntity(request, job, client, worker);
+        return paymentTransactionRepository.save(tx);
+    }
+
+    @Override
+    public PaymentTransaction releaseEscrow(Long jobId, Long clientId, PaymentReleaseRequest request) {
+        Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found"));
+        if (!job.getCreatedBy().getId().equals(clientId)) {
+            throw new IllegalStateException("Client does not own this job");
+        }
+        var codes = jobConfirmationCodeRepository.findByJob(job).orElseThrow(() -> new EntityNotFoundException("Confirmation codes not found"));
+        if (!codes.getReleaseCode().equals(request.getReleaseCode())) {
+            throw new IllegalArgumentException("Invalid release code");
+        }
+        PaymentTransaction tx = paymentTransactionRepository.findByJob(job).orElseThrow(() -> new EntityNotFoundException("Payment transaction not found"));
+        if (tx.getStatus() != PaymentStatus.ESCROW_LOCKED) {
+            throw new IllegalStateException("Payment is not locked in escrow");
+        }
+        tx.setStatus(PaymentStatus.RELEASED);
+        return paymentTransactionRepository.save(tx);
+    }
+}

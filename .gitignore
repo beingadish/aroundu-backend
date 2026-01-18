@@ -29,5 +29,12 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+.waylog
+.env
+
 ### VS Code ###
 .vscode/
+AroundU_POC.pdf
+AroundU_Text_Poc.txt
+logs/**
+*.log
