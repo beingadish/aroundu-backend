@@ -2,6 +2,7 @@ package com.beingadish.AroundU.DTO.Job;
 
 import com.beingadish.AroundU.Constants.Enums.JobStatus;
 import com.beingadish.AroundU.Constants.Enums.JobUrgency;
+import com.beingadish.AroundU.Constants.Enums.PaymentMode;
 import com.beingadish.AroundU.DTO.Common.AddressDTO;
 import com.beingadish.AroundU.DTO.Common.PriceDTO;
 import com.beingadish.AroundU.DTO.Common.SkillDTO;
@@ -21,6 +22,7 @@ public class JobDetailDTO {
     private AddressDTO jobLocation;
     private JobStatus jobStatus;
     private JobUrgency jobUrgency;
+    private PaymentMode paymentMode;
     private List<SkillDTO> requiredSkills;
     private UserSummaryDTO createdBy;
     private WorkerBriefDTO assignedTo;

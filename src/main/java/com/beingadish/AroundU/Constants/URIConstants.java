@@ -1,11 +1,22 @@
 package com.beingadish.AroundU.Constants;
 
 public class URIConstants {
+    // API versioning
+    private static final String API = "/api";
+    private static final String V1 = "/v1";
+    private static final String BASE = API + V1;
 
-    // Base Path
-    public static final String CLIENT_BASE_MAPPING_URI_V1 = "/api/v1/client";
-    public static final String WORKER_BASE_MAPPING_URI_V1 = "/api/v1/worker";
+    // Base paths
+    public static final String AUTH_BASE = BASE + "/auth";
+    public static final String CLIENT_BASE = BASE + "/client";
+    public static final String WORKER_BASE = BASE + "/worker";
+    public static final String JOB_BASE = BASE + "/jobs";
 
-    // Common Functionalities
+    // Auth endpoints
     public static final String REGISTER = "/register";
+    public static final String LOGIN = "/login";
+
+    // Job endpoints
+    public static final String JOB_CREATE = JOB_BASE + "/create";
+    public static final String JOB_BY_ID = JOB_BASE + "/{id}";
 }

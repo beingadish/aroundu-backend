@@ -1,4 +1,4 @@
-package com.beingadish.AroundU.DTO;
+package com.beingadish.AroundU.DTO.Auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

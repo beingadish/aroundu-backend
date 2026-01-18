@@ -1,0 +1,38 @@
+server:
+  port: ${SERVER_PORT:20232}
+
+spring:
+  datasource:
+    url: ${DEV_DB_URL:jdbc:postgresql://localhost:5432/aroundu_dev}
+    username: ${DEV_DB_USERNAME:aroundu_dev}
+    password: ${DEV_DB_PASSWORD:devpassword}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+  redis:
+    host: localhost
+    port: 6379
+    password: ""
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+jwt:
+  expiration:
+    ms: 3600000
+  refresh:
+    expiration:
+      ms: 86400000
+
+feature:
+  enable-dummy-data: true
+  enable-swagger: true
+  enable-debug-security: true

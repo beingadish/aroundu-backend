@@ -1,4 +1,4 @@
-package com.beingadish.AroundU.DTO;
+package com.beingadish.AroundU.DTO.Auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class LoginResponseDTO {
+    private Long userId;
     private String token;
     private String type = "Bearer";
     private String email;

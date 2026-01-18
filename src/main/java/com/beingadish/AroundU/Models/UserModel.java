@@ -13,4 +13,5 @@ public class UserModel {
     private AddressModel currentAddress;
     private VerificationStatusModel verificationStatus;
     private String hashedPassword;
+    private String profileImageUrl;
 }
