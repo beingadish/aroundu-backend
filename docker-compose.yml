@@ -10,8 +10,12 @@ services:
       SERVER_PORT: ${SERVER_PORT:-8080}
       DEV_DB_URL: ${DEV_DB_URL:-jdbc:postgresql://db:5432/aroundu_dev}
       DEV_DB_USERNAME: ${DEV_DB_USERNAME:-aroundu_dev}
-          SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
-          SERVER_PORT: ${SERVER_PORT:-8080}
+      DEV_DB_PASSWORD: ${DEV_DB_PASSWORD:-devpassword}
+    ports:
+      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
+    depends_on:
+      - db
+      - redis
   db:
     image: postgres:18
     container_name: aroundu-postgres

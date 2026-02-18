@@ -10,6 +10,10 @@ import java.util.List;
 
 @Repository
 public interface BidRepository extends JpaRepository<Bid, Long> {
+
     List<Bid> findByJob(Job job);
+
     List<Bid> findByWorker(Worker worker);
+
+    long countByJobId(Long jobId);
 }

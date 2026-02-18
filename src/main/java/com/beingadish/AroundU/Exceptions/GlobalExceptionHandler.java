@@ -81,6 +81,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access denied"));
     }
 
+    @ExceptionHandler(InvalidSortFieldException.class)
+    public ResponseEntity<ApiResponse<?>> handleInvalidSortField(InvalidSortFieldException ex) {
+        log.warn("Invalid sort field: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult()

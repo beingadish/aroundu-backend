@@ -2,6 +2,7 @@ package com.beingadish.AroundU.Service.impl;
 
 import com.beingadish.AroundU.Config.RedisConfig;
 import com.beingadish.AroundU.Constants.Enums.JobStatus;
+import com.beingadish.AroundU.Constants.Enums.SortDirection;
 import com.beingadish.AroundU.DTO.Job.JobCreateRequest;
 import com.beingadish.AroundU.DTO.Job.JobDetailDTO;
 import com.beingadish.AroundU.DTO.Job.JobFilterRequest;
@@ -18,6 +19,7 @@ import com.beingadish.AroundU.Exceptions.Job.JobNotFoundException;
 import com.beingadish.AroundU.Exceptions.Job.JobValidationException;
 import com.beingadish.AroundU.Mappers.Job.JobMapper;
 import com.beingadish.AroundU.Repository.Address.AddressRepository;
+import com.beingadish.AroundU.Repository.Bid.BidRepository;
 import com.beingadish.AroundU.Repository.Client.ClientRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Skill.SkillRepository;
@@ -25,6 +27,9 @@ import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
 import com.beingadish.AroundU.Service.JobGeoService;
 import com.beingadish.AroundU.Service.JobService;
 import com.beingadish.AroundU.Service.MetricsService;
+import com.beingadish.AroundU.Utilities.DistanceUtils;
+import com.beingadish.AroundU.Utilities.PopularityUtils;
+import com.beingadish.AroundU.Utilities.SortValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -42,6 +47,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -69,6 +75,7 @@ public class JobServiceImpl implements JobService {
     private final AddressRepository addressRepository;
     private final SkillRepository skillRepository;
     private final WorkerReadRepository workerReadRepository;
+    private final BidRepository bidRepository;
     private final JobMapper jobMapper;
     private final JobGeoService jobGeoService;
     private final MetricsService metricsService;
@@ -146,9 +153,22 @@ public class JobServiceImpl implements JobService {
     @Transactional(readOnly = true)
     @Cacheable(value = RedisConfig.CACHE_CLIENT_JOBS, key = "#clientId + ':' + #filterRequest.hashCode()")
     public Page<JobSummaryDTO> getClientJobs(Long clientId, JobFilterRequest filterRequest) {
+        // Validate sort fields against whitelist
+        SortValidator.validate(filterRequest.getSortBy(), filterRequest.getSortDirection(), SortValidator.JOB_FIELDS);
+        if (filterRequest.getSecondarySortBy() != null) {
+            SortValidator.validate(filterRequest.getSecondarySortBy(), filterRequest.getSecondarySortDirection(), SortValidator.JOB_FIELDS);
+        }
+
         int page = Optional.ofNullable(filterRequest.getPage()).orElse(0);
         int size = Optional.ofNullable(filterRequest.getSize()).orElse(20);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        // Build sort — virtual fields (distance, bidCount) yield Sort.unsorted()
+        Sort sort = SortValidator.buildMultiSort(
+                filterRequest.getSortBy(), filterRequest.getSortDirection(),
+                filterRequest.getSecondarySortBy(), filterRequest.getSecondarySortDirection(),
+                SortValidator.JOB_FIELDS);
+
+        Pageable pageable = PageRequest.of(page, size, sort);
         List<JobStatus> statuses = (filterRequest.getStatuses() == null || filterRequest.getStatuses().isEmpty()) ? ACTIVE_STATUSES : filterRequest.getStatuses();
 
         Page<Job> jobPage;
@@ -161,6 +181,26 @@ public class JobServiceImpl implements JobService {
         } else {
             jobPage = jobRepository.findByCreatedByIdAndJobStatusIn(clientId, statuses, pageable);
         }
+
+        // Apply virtual field sorting (distance / popularity) in-memory
+        boolean distanceSorting = Boolean.TRUE.equals(filterRequest.getSortByDistance())
+                || "distance".equalsIgnoreCase(filterRequest.getSortBy());
+        boolean popularitySorting = "bidcount".equalsIgnoreCase(filterRequest.getSortBy())
+                || "viewcount".equalsIgnoreCase(filterRequest.getSortBy());
+
+        if (distanceSorting || popularitySorting) {
+            List<JobSummaryDTO> dtos = jobPage.getContent().stream()
+                    .map(job -> {
+                        JobSummaryDTO dto = jobMapper.toSummaryDto(job);
+                        enrichWithDistance(dto, job, filterRequest.getDistanceLatitude(), filterRequest.getDistanceLongitude());
+                        enrichWithPopularity(dto, job);
+                        return dto;
+                    })
+                    .sorted(buildVirtualComparator(filterRequest.getSortBy(), filterRequest.getSortDirection(), distanceSorting))
+                    .toList();
+            return new PageImpl<>(dtos, pageable, jobPage.getTotalElements());
+        }
+
         return jobPage.map(jobMapper::toSummaryDto);
     }
 
@@ -206,17 +246,25 @@ public class JobServiceImpl implements JobService {
     @Cacheable(value = RedisConfig.CACHE_WORKER_FEED, key = "#workerId + ':' + #request.hashCode()")
     public Page<JobSummaryDTO> getWorkerFeed(Long workerId, WorkerJobFeedRequest request) {
         Worker worker = workerReadRepository.findById(workerId).orElseThrow(() -> new JobValidationException("Worker not found"));
+
+        // Validate sort fields against whitelist
+        SortValidator.validate(request.getSortBy(), request.getSortDirection(), SortValidator.JOB_FIELDS);
+
         double radius = Optional.ofNullable(request.getRadiusKm()).orElse(25.0);
         int page = Optional.ofNullable(request.getPage()).orElse(0);
         int size = Optional.ofNullable(request.getSize()).orElse(20);
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        List<Long> geoJobIds = jobGeoService.findNearbyOpenJobs(
-                worker.getCurrentAddress() != null ? worker.getCurrentAddress().getLatitude() : null,
-                worker.getCurrentAddress() != null ? worker.getCurrentAddress().getLongitude() : null,
-                radius,
-                size * 3
-        );
+        Sort sort = SortValidator.buildMultiSort(
+                request.getSortBy(), request.getSortDirection(),
+                request.getSecondarySortBy(), request.getSecondarySortDirection(),
+                SortValidator.JOB_FIELDS);
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Double workerLat = worker.getCurrentAddress() != null ? worker.getCurrentAddress().getLatitude() : null;
+        Double workerLon = worker.getCurrentAddress() != null ? worker.getCurrentAddress().getLongitude() : null;
+
+        List<Long> geoJobIds = jobGeoService.findNearbyOpenJobs(workerLat, workerLon, radius, size * 3);
 
         Page<Job> jobsPage;
         if (!geoJobIds.isEmpty()) {
@@ -237,8 +285,30 @@ public class JobServiceImpl implements JobService {
             }
         }
 
-        Page<Job> finalPage = new PageImpl<>(filtered, pageable, jobsPage.getTotalElements());
-        return finalPage.map(jobMapper::toSummaryDto);
+        // Apply virtual sorting (distance / popularity) in-memory
+        boolean distanceSorting = Boolean.TRUE.equals(request.getSortByDistance())
+                || "distance".equalsIgnoreCase(request.getSortBy());
+
+        List<JobSummaryDTO> dtos = filtered.stream()
+                .map(job -> {
+                    JobSummaryDTO dto = jobMapper.toSummaryDto(job);
+                    // Always enrich worker feed with distance when worker location is available
+                    if (workerLat != null && workerLon != null) {
+                        enrichWithDistance(dto, job, workerLat, workerLon);
+                    }
+                    enrichWithPopularity(dto, job);
+                    return dto;
+                })
+                .toList();
+
+        if (distanceSorting || "bidcount".equalsIgnoreCase(request.getSortBy())) {
+            dtos = dtos.stream()
+                    .sorted(buildVirtualComparator(request.getSortBy(), request.getSortDirection(), distanceSorting))
+                    .toList();
+        }
+
+        Page<JobSummaryDTO> finalPage = new PageImpl<>(dtos, pageable, jobsPage.getTotalElements());
+        return finalPage;
     }
 
     @Override
@@ -298,5 +368,57 @@ public class JobServiceImpl implements JobService {
         } else if (!wasOpen && nowOpen && job.getJobLocation() != null) {
             jobGeoService.addOrUpdateOpenJob(job.getId(), job.getJobLocation().getLatitude(), job.getJobLocation().getLongitude());
         }
+    }
+
+    // ── Sorting helpers ──────────────────────────────────────────
+    /**
+     * Enriches a DTO with the distance (in km) from the given reference point.
+     */
+    private void enrichWithDistance(JobSummaryDTO dto, Job job, Double refLat, Double refLon) {
+        if (refLat == null || refLon == null) {
+            return;
+        }
+        Address loc = job.getJobLocation();
+        if (loc != null && loc.getLatitude() != null && loc.getLongitude() != null) {
+            double km = DistanceUtils.haversine(refLat, refLon, loc.getLatitude(), loc.getLongitude());
+            dto.setDistanceKm(Math.round(km * 100.0) / 100.0); // 2 decimal places
+        }
+    }
+
+    /**
+     * Enriches a DTO with a popularity score based on bid count.
+     */
+    private void enrichWithPopularity(JobSummaryDTO dto, Job job) {
+        long bidCount = bidRepository.countByJobId(job.getId());
+        dto.setPopularityScore(PopularityUtils.calculateJobPopularityScore((int) bidCount, null));
+    }
+
+    /**
+     * Builds a comparator for in-memory (virtual field) sorting of
+     * {@link JobSummaryDTO}.
+     */
+    private Comparator<JobSummaryDTO> buildVirtualComparator(String sortBy, SortDirection direction, boolean distanceSorting) {
+        SortDirection dir = direction != null ? direction : SortDirection.DESC;
+        Comparator<JobSummaryDTO> comparator;
+
+        if (distanceSorting || "distance".equalsIgnoreCase(sortBy)) {
+            comparator = Comparator.comparing(
+                    JobSummaryDTO::getDistanceKm,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+        } else if ("bidcount".equalsIgnoreCase(sortBy) || "viewcount".equalsIgnoreCase(sortBy)) {
+            comparator = Comparator.comparing(
+                    JobSummaryDTO::getPopularityScore,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+        } else {
+            // fallback: createdAt DESC
+            comparator = Comparator.comparing(
+                    JobSummaryDTO::getCreatedAt,
+                    Comparator.nullsLast(Comparator.naturalOrder())
+            );
+        }
+
+        return dir == SortDirection.DESC ? comparator.reversed() : comparator;
     }
 }
