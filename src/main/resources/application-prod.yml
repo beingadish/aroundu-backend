@@ -13,10 +13,11 @@ spring:
     properties:
       hibernate:
         format_sql: false
-  redis:
-    host: ${PROD_REDIS_HOST}
-    port: ${PROD_REDIS_PORT}
-    password: ${PROD_REDIS_PASSWORD}
+  data:
+    redis:
+      host: ${PROD_REDIS_HOST}
+      port: ${PROD_REDIS_PORT}
+      password: ${PROD_REDIS_PASSWORD}
 
 logging:
   level:
@@ -30,6 +31,16 @@ jwt:
   refresh:
     expiration:
       ms: ${PROD_JWT_REFRESH_EXPIRATION_MS:2592000000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
 
 feature:
   enable-dummy-data: false

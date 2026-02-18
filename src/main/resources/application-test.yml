@@ -21,12 +21,13 @@ spring:
     console:
       enabled: true
       path: /h2-console
-  redis:
-    host: ${TEST_REDIS_HOST:localhost}
-    port: ${TEST_REDIS_PORT:6379}
-    password: ""
   cache:
     type: none
+  data:
+    redis:
+      host: ${TEST_REDIS_HOST:localhost}
+      password: ""
+      port: ${TEST_REDIS_PORT:6379}
 
 logging:
   level:
@@ -40,6 +41,19 @@ jwt:
   refresh:
     expiration:
       ms: 3600000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: false
 
 feature:
   enable-dummy-data: true

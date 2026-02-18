@@ -15,6 +15,7 @@ import com.beingadish.AroundU.Repository.Client.ClientRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
 import com.beingadish.AroundU.Service.BidService;
+import com.beingadish.AroundU.Service.MetricsService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,20 +33,24 @@ public class BidServiceImpl implements BidService {
     private final WorkerRepository workerRepository;
     private final ClientRepository clientRepository;
     private final BidMapper bidMapper;
+    private final MetricsService metricsService;
 
     @Override
     public BidResponseDTO placeBid(Long jobId, Long workerId, BidCreateRequest request) {
-        Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found"));
-        Worker worker = workerRepository.findById(workerId).orElseThrow(() -> new EntityNotFoundException("Worker not found"));
-        if (job.getJobStatus() != JobStatus.OPEN_FOR_BIDS) {
-            throw new IllegalStateException("Job is not open for bids");
-        }
-        if (!Boolean.TRUE.equals(worker.getIsOnDuty())) {
-            throw new IllegalStateException("Worker is not on duty");
-        }
-        Bid bid = bidMapper.toEntity(request, job, worker);
-        Bid saved = bidRepository.save(bid);
-        return bidMapper.toDto(saved);
+        return metricsService.recordTimer(metricsService.getBidPlacementTimer(), () -> {
+            Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found"));
+            Worker worker = workerRepository.findById(workerId).orElseThrow(() -> new EntityNotFoundException("Worker not found"));
+            if (job.getJobStatus() != JobStatus.OPEN_FOR_BIDS) {
+                throw new IllegalStateException("Job is not open for bids");
+            }
+            if (!Boolean.TRUE.equals(worker.getIsOnDuty())) {
+                throw new IllegalStateException("Worker is not on duty");
+            }
+            Bid bid = bidMapper.toEntity(request, job, worker);
+            Bid saved = bidRepository.save(bid);
+            metricsService.getBidsPlacedCounter().increment();
+            return bidMapper.toDto(saved);
+        });
     }
 
     @Override
@@ -68,12 +73,16 @@ public class BidServiceImpl implements BidService {
         }
         bid.setStatus(BidStatus.SELECTED);
         bidRepository.save(bid);
-        bidRepository.findByJob(job).stream().filter(b -> !b.getId().equals(bidId)).forEach(other -> {
+        long rejectedCount = bidRepository.findByJob(job).stream().filter(b -> !b.getId().equals(bidId)).peek(other -> {
             other.setStatus(BidStatus.REJECTED);
             bidRepository.save(other);
-        });
+        }).count();
         job.setJobStatus(JobStatus.BID_SELECTED_AWAITING_HANDSHAKE);
         jobRepository.save(job);
+        metricsService.getBidsAcceptedCounter().increment();
+        for (int i = 0; i < rejectedCount; i++) {
+            metricsService.getBidsRejectedCounter().increment();
+        }
         return bidMapper.toDto(bid);
     }
 

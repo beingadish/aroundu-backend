@@ -48,7 +48,9 @@ public class SecurityConfig {
         "/api-docs/**",
         "/docs/**",
         "/swagger-ui/**",
-        "/swagger-ui.html"
+        "/swagger-ui.html",
+        "/actuator/health",
+        "/actuator/info"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -85,6 +87,8 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers(AUTH_WHITELIST).permitAll()
+                // Actuator endpoints restricted to ADMIN
+                .requestMatchers("/actuator/**").hasRole(ADMIN)
                 // Admin-only endpoints first
                 .requestMatchers("/api/v1/client/all", "/api/v1/worker/all").hasRole(ADMIN)
                 .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)

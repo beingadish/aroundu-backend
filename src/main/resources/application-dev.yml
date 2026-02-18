@@ -13,10 +13,11 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
-  redis:
-    host: localhost
-    port: 6379
-    password: ""
+  data:
+    redis:
+      port: 6379
+      password: ""
+      host: localhost
 
 logging:
   level:
@@ -31,6 +32,16 @@ jwt:
   refresh:
     expiration:
       ms: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
 
 feature:
   enable-dummy-data: true

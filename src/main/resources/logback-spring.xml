@@ -4,9 +4,15 @@
     <property name="MAX_HISTORY" value="14"/>
     <property name="TOTAL_SIZE_CAP" value="1GB"/>
 
+    <!-- Shared log pattern: timestamp | level | thread | logger | MDC request ID | message -->
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5level] [%thread] [%logger{36}] [RequestID:%X{RequestID:-none}] %msg%n"/>
+
+    <!-- ======================== Appenders ======================== -->
+
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
@@ -19,14 +25,37 @@
             <totalSizeCap>${TOTAL_SIZE_CAP}</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <root level="INFO">
+    <!-- =================== Async appenders =================== -->
+    <!-- Wraps CONSOLE so log calls never block the request thread -->
+    <appender name="ASYNC_CONSOLE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <!-- Include caller data for MDC propagation -->
+        <includeCallerData>false</includeCallerData>
         <appender-ref ref="CONSOLE"/>
+    </appender>
+
+    <!-- Wraps ROLLING so file I/O never blocks the request thread -->
+    <appender name="ASYNC_ROLLING" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
         <appender-ref ref="ROLLING"/>
+    </appender>
+
+    <!-- ======================== Loggers ======================== -->
+
+    <root level="INFO">
+        <appender-ref ref="ASYNC_CONSOLE"/>
+        <appender-ref ref="ASYNC_ROLLING"/>
     </root>
+
+    <!-- Interceptor / request-logging namespace -->
+    <logger name="com.beingadish.AroundU.Config.Interceptors" level="INFO"/>
 
     <logger name="org.hibernate.SQL" level="WARN"/>
     <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="WARN"/>

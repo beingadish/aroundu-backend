@@ -13,10 +13,11 @@ spring:
     properties:
       hibernate:
         format_sql: false
-  redis:
-    host: ${PREPROD_REDIS_HOST:preprod-redis}
-    port: ${PREPROD_REDIS_PORT:6379}
-    password: ${PREPROD_REDIS_PASSWORD:}
+  data:
+    redis:
+      port: ${PREPROD_REDIS_PORT:6379}
+      host: ${PREPROD_REDIS_HOST:preprod-redis}
+      password: ${PREPROD_REDIS_PASSWORD:}
 
 logging:
   level:
@@ -30,6 +31,15 @@ jwt:
   refresh:
     expiration:
       ms: ${PREPROD_JWT_REFRESH_EXPIRATION_MS:1209600000}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
 
 feature:
   enable-dummy-data: false
