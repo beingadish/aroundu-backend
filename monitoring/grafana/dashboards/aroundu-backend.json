@@ -1,0 +1,354 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Application Health",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "up{job=\"aroundu-backend\"}",
+          "legendFormat": "App Status",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "HTTP Request Rate (5m)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 0 },
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "{{method}} {{uri}} {{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "HTTP Request Duration (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 18, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{job=\"aroundu-backend\"}[5m]))",
+          "legendFormat": "{{uri}} p95",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Active Jobs",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "aroundu_jobs_active{job=\"aroundu-backend\"}",
+          "legendFormat": "Active Jobs",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 100 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Jobs Created (rate/5m)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(aroundu_jobs_created_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Created",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(aroundu_jobs_completed_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Completed",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(aroundu_jobs_cancelled_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Cancelled",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Job Creation Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "rate(aroundu_jobs_creation_duration_seconds_sum{job=\"aroundu-backend\"}[5m]) / rate(aroundu_jobs_creation_duration_seconds_count{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Avg Duration",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Bids (rate/5m)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "rate(aroundu_bids_placed_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Placed",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(aroundu_bids_accepted_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Accepted",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(aroundu_bids_rejected_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Rejected",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Bid Placement Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "rate(aroundu_bids_placement_duration_seconds_sum{job=\"aroundu-backend\"}[5m]) / rate(aroundu_bids_placement_duration_seconds_count{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Avg Duration",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Escrow Operations (rate/5m)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "targets": [
+        {
+          "expr": "rate(aroundu_payments_escrow_locked_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Locked",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(aroundu_payments_escrow_released_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Released",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(aroundu_payments_failures_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Failures",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Escrow Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "targets": [
+        {
+          "expr": "rate(aroundu_payments_escrow_lock_duration_seconds_sum{job=\"aroundu-backend\"}[5m]) / rate(aroundu_payments_escrow_lock_duration_seconds_count{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Lock Avg",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(aroundu_payments_escrow_release_duration_seconds_sum{job=\"aroundu-backend\"}[5m]) / rate(aroundu_payments_escrow_release_duration_seconds_count{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Release Avg",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "Auth Events (rate/5m)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "targets": [
+        {
+          "expr": "rate(aroundu_auth_login_success_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Login Success",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(aroundu_auth_login_failure_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Login Failure",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(aroundu_auth_registrations_total{job=\"aroundu-backend\"}[5m])",
+          "legendFormat": "Registrations",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "JVM Heap Memory",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{job=\"aroundu-backend\", area=\"heap\"}",
+          "legendFormat": "Used {{id}}",
+          "refId": "A"
+        },
+        {
+          "expr": "jvm_memory_max_bytes{job=\"aroundu-backend\", area=\"heap\"}",
+          "legendFormat": "Max {{id}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "HikariCP Active Connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 40 },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active{job=\"aroundu-backend\"}",
+          "legendFormat": "Active",
+          "refId": "A"
+        },
+        {
+          "expr": "hikaricp_connections_idle{job=\"aroundu-backend\"}",
+          "legendFormat": "Idle",
+          "refId": "B"
+        },
+        {
+          "expr": "hikaricp_connections_max{job=\"aroundu-backend\"}",
+          "legendFormat": "Max",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "title": "JVM Thread States",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 },
+      "targets": [
+        {
+          "expr": "jvm_threads_states_threads{job=\"aroundu-backend\"}",
+          "legendFormat": "{{state}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["aroundu", "spring-boot", "java"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AroundU Backend Monitoring",
+  "uid": "aroundu-backend",
+  "version": 1
+}
