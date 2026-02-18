@@ -29,3 +29,6 @@ jwt:
 logging:
   level:
     org.springframework.security: ERROR
+
+rate-limit:
+  enabled: false

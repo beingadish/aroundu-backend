@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import com.beingadish.AroundU.RateLimit.RateLimit;
+
 import static com.beingadish.AroundU.Constants.URIConstants.JOB_BASE;
 
 @RestController
@@ -39,10 +41,11 @@ public class JobController {
     @PostMapping
     @Operation(summary = "Create job", description = "Client creates a job with required skills and location")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Job created"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Job created"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     @PreAuthorize("hasRole('ADMIN') or #clientId == authentication.principal.id")
+    @RateLimit(capacity = 5, refillTokens = 5, refillMinutes = 60)
     public ResponseEntity<ApiResponse<JobDetailDTO>> createJob(@RequestParam Long clientId, @Valid @RequestBody JobCreateRequest request) {
         JobDetailDTO dto = jobService.createJob(clientId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
@@ -68,9 +71,9 @@ public class JobController {
     @PreAuthorize("hasRole('ADMIN') or #clientId == authentication.principal.id")
     @Operation(summary = "Delete job", description = "Client deletes a job they created", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<ApiResponse<String>> deleteJob(@PathVariable Long jobId, @RequestParam Long clientId) {
         jobService.deleteJob(jobId, clientId);
@@ -104,6 +107,7 @@ public class JobController {
     @GetMapping("/worker/{workerId}/feed")
     @PreAuthorize("hasRole('ADMIN') or #workerId == authentication.principal.id")
     @Operation(summary = "Worker feed", description = "Open jobs filtered by skills and proximity", security = @SecurityRequirement(name = "bearerAuth"))
+    @RateLimit(capacity = 30, refillTokens = 30, refillMinutes = 1)
     public ResponseEntity<ApiResponse<PageResponse<JobSummaryDTO>>> getWorkerFeed(@PathVariable Long workerId, @Valid @ModelAttribute WorkerJobFeedRequest request) {
         Page<JobSummaryDTO> page = jobService.getWorkerFeed(workerId, request);
         return ResponseEntity.ok(ApiResponse.success(new PageResponse<>(page)));

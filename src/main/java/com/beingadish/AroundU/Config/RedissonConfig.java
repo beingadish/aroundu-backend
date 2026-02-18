@@ -11,13 +11,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 /**
- * Configures Redisson client and Bloom filters for efficient duplicate detection.
+ * Configures Redisson client and Bloom filters for efficient duplicate
+ * detection.
  * <p>
  * Three Bloom filters are initialized:
  * <ul>
- *   <li><b>bidBloomFilter</b> – detects duplicate bids (worker+job)</li>
- *   <li><b>profileViewBloomFilter</b> – tracks hourly profile views</li>
- *   <li><b>emailRegistrationBloomFilter</b> – pre-checks email uniqueness</li>
+ * <li><b>bidBloomFilter</b> – detects duplicate bids (worker+job)</li>
+ * <li><b>profileViewBloomFilter</b> – tracks hourly profile views</li>
+ * <li><b>emailRegistrationBloomFilter</b> – pre-checks email uniqueness</li>
  * </ul>
  */
 @Configuration

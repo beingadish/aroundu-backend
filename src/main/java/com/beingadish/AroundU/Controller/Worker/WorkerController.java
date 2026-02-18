@@ -22,6 +22,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import com.beingadish.AroundU.RateLimit.RateLimit;
+
 import static com.beingadish.AroundU.Constants.URIConstants.REGISTER;
 import static com.beingadish.AroundU.Constants.URIConstants.WORKER_BASE;
 
@@ -36,8 +38,8 @@ public class WorkerController {
     @PostMapping(REGISTER)
     @Operation(summary = "Register worker", description = "Creates a worker account. Requires name, email, phoneNumber, password, currency, and a full currentAddress object.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Worker registered"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Worker registered"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ResponseEntity<ApiResponse<String>> registerWorker(@Valid @RequestBody WorkerSignupRequestDTO workerSignupRequestDTO) {
         workerService.registerWorker(workerSignupRequestDTO);
@@ -48,10 +50,11 @@ public class WorkerController {
     @PreAuthorize("hasRole('ADMIN') or #workerId == authentication.principal.id")
     @Operation(summary = "Get worker details", description = "Fetch worker profile by id", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Worker found"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Worker found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
+    @RateLimit(capacity = 100, refillTokens = 100, refillMinutes = 60)
     public ResponseEntity<ApiResponse<WorkerDetailDTO>> getWorkerDetails(@PathVariable Long workerId) {
         WorkerDetailDTO workerDetailDTO = workerService.getWorkerDetails(workerId);
         return ResponseEntity.ok(ApiResponse.success(workerDetailDTO));
@@ -69,8 +72,8 @@ public class WorkerController {
     @GetMapping("/all")
     @Operation(summary = "List workers", description = "Paged listing of workers (admin only)", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Page returned"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Page returned"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
     })
     public ResponseEntity<ApiResponse<PageResponse<WorkerDetailDTO>>> getAllWorkers(@RequestParam int page, @RequestParam int size) {
         Page<WorkerDetailDTO> workersPage = workerService.getAllWorkers(page, size);
@@ -82,10 +85,10 @@ public class WorkerController {
     @PreAuthorize("#workerId == authentication.principal.id or hasRole('ADMIN')")
     @Operation(summary = "Update worker details", description = "Partial update of worker profile fields", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Updated"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Updated"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<ApiResponse<WorkerDetailDTO>> updateWorkerDetails(@PathVariable Long workerId, @RequestBody WorkerUpdateRequestDTO updateRequestDetails) {
         WorkerDetailDTO updated = workerService.updateWorkerDetails(workerId, updateRequestDetails);
@@ -105,9 +108,9 @@ public class WorkerController {
     @PreAuthorize("hasRole('ADMIN') or #workerId == authentication.principal.id")
     @Operation(summary = "Delete worker", description = "Deletes worker and related data", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<ApiResponse<String>> deleteWorker(@PathVariable Long workerId) {
         workerService.deleteWorker(workerId);

@@ -16,8 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Production implementation of {@link BloomFilterMetricsService}.
  * <p>
  * Registers Micrometer gauges for each Bloom filter's estimated size and
- * counters for false-positive events. A scheduled task runs every 5 minutes
- * to check whether any filter exceeds 80% capacity.
+ * counters for false-positive events. A scheduled task runs every 5 minutes to
+ * check whether any filter exceeds 80% capacity.
  */
 @Service
 @Profile("!test")

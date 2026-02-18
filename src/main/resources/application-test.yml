@@ -59,3 +59,6 @@ feature:
   enable-dummy-data: true
   enable-swagger: true
   enable-debug-security: false
+
+rate-limit:
+  enabled: false
