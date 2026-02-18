@@ -5,9 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.GeoResult;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
-import org.springframework.data.geo.GeoResult;
+import org.springframework.data.redis.connection.RedisGeoCommands;
 import org.springframework.data.redis.core.GeoOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.domain.geo.GeoLocation;
@@ -66,13 +67,20 @@ public class RedisJobGeoService implements JobGeoService {
         try {
             GeoOperations<String, String> ops = stringRedisTemplate.opsForGeo();
             Circle within = new Circle(new Point(longitude, latitude), new Distance(radiusKm, Metrics.KILOMETERS));
-            var results = ops.radius(OPEN_JOBS_GEO_KEY, within);
+
+            // Sort ascending (nearest first) and limit at the Redis level so we
+            // always get the closest N jobs, not an arbitrary subset.
+            RedisGeoCommands.GeoRadiusCommandArgs args = RedisGeoCommands.GeoRadiusCommandArgs
+                    .newGeoRadiusArgs()
+                    .sortAscending()
+                    .limit(Math.max(limit, 1));
+
+            var results = ops.radius(OPEN_JOBS_GEO_KEY, within, args);
             if (results == null || results.getContent().isEmpty()) {
                 return Collections.emptyList();
             }
             return results.getContent()
                     .stream()
-                    .limit(Math.max(limit, 0))
                     .map(GeoResult::getContent)
                     .map(GeoLocation::getName)
                     .filter(Objects::nonNull)

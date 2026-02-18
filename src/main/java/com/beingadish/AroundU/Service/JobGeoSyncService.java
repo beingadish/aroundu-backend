@@ -1,8 +1,11 @@
 package com.beingadish.AroundU.Service;
 
 import com.beingadish.AroundU.Constants.Enums.JobStatus;
+import com.beingadish.AroundU.Entities.Address;
+import com.beingadish.AroundU.Entities.FailedGeoSync;
 import com.beingadish.AroundU.Entities.Job;
 import com.beingadish.AroundU.Events.JobModifiedEvent;
+import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +20,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,6 +30,7 @@ import java.util.stream.Collectors;
  * <ul>
  * <li>On startup → bulk-sync all OPEN_FOR_BIDS jobs into the geo-index</li>
  * <li>Daily at 02:00 → prune stale entries from the geo-index</li>
+ * <li>Every 5 minutes → retry failed geo-sync operations</li>
  * <li>After each job mutation commits → granular cache eviction</li>
  * </ul>
  */
@@ -35,9 +40,12 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JobGeoSyncService {
 
+    private static final int MAX_RETRIES = 5;
+
     private final JobRepository jobRepository;
     private final JobGeoService jobGeoService;
     private final CacheEvictionService cacheEvictionService;
+    private final FailedGeoSyncRepository failedGeoSyncRepository;
 
     // ── Startup sync ─────────────────────────────────────────────────────
     /**
@@ -106,6 +114,62 @@ public class JobGeoSyncService {
         log.info("Removed {} stale geo entries in {}ms", removed, elapsed);
     }
 
+    // ── Retry failed geo-sync operations ─────────────────────────────────
+    /**
+     * Every 5 minutes, retry pending {@link FailedGeoSync} records that haven't
+     * exceeded the maximum retry count.
+     */
+    @Scheduled(fixedDelay = 300_000, initialDelay = 60_000)
+    public void retryFailedGeoSyncs() {
+        List<FailedGeoSync> pending = failedGeoSyncRepository
+                .findByResolvedFalseAndRetryCountLessThanOrderByCreatedAtAsc(MAX_RETRIES);
+
+        if (pending.isEmpty()) {
+            return;
+        }
+
+        log.info("Retrying {} failed geo-sync operations...", pending.size());
+        int succeeded = 0;
+        int failed = 0;
+
+        for (FailedGeoSync record : pending) {
+            try {
+                switch (record.getOperation()) {
+                    case ADD, UPDATE -> {
+                        // Verify the job still exists and is OPEN_FOR_BIDS
+                        Optional<Job> jobOpt = jobRepository.findById(record.getJobId());
+                        if (jobOpt.isPresent() && jobOpt.get().getJobStatus() == JobStatus.OPEN_FOR_BIDS) {
+                            Job job = jobOpt.get();
+                            Address loc = job.getJobLocation();
+                            Double lat = record.getLatitude() != null ? record.getLatitude()
+                                    : (loc != null ? loc.getLatitude() : null);
+                            Double lon = record.getLongitude() != null ? record.getLongitude()
+                                    : (loc != null ? loc.getLongitude() : null);
+                            jobGeoService.addOrUpdateOpenJob(record.getJobId(), lat, lon);
+                        }
+                        // Mark resolved even if job no longer exists/is open
+                        record.setResolved(true);
+                        succeeded++;
+                    }
+                    case REMOVE -> {
+                        jobGeoService.removeOpenJob(record.getJobId());
+                        record.setResolved(true);
+                        succeeded++;
+                    }
+                }
+            } catch (Exception ex) {
+                record.setRetryCount(record.getRetryCount() + 1);
+                record.setLastError(ex.getMessage());
+                failed++;
+                log.warn("Retry {} failed for jobId={} op={}: {}",
+                        record.getRetryCount(), record.getJobId(), record.getOperation(), ex.getMessage());
+            }
+            failedGeoSyncRepository.save(record);
+        }
+
+        log.info("Geo-sync retry complete: {} succeeded, {} failed", succeeded, failed);
+    }
+
     // ── Event-driven cache eviction (runs AFTER transaction commits) ─────
     /**
      * Granular cache eviction triggered after a job mutation commits.
@@ -127,8 +191,8 @@ public class JobGeoSyncService {
         // Evict only the affected client's list caches (pattern scan)
         cacheEvictionService.evictClientJobsCaches(event.clientId());
 
-        // Worker feed eviction for structural changes only
-        if (event.type() != JobModifiedEvent.Type.UPDATED) {
+        // Worker feed eviction for structural changes or location updates
+        if (event.type() != JobModifiedEvent.Type.UPDATED || event.locationChanged()) {
             cacheEvictionService.evictWorkerFeedCaches();
         }
     }
