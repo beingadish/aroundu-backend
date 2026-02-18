@@ -155,6 +155,10 @@ class ClientControllerTest {
     @MockitoBean
     private AddressRepository addressRepository;
 
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
+
     @BeforeEach
     void stubEntityManager() {
         when(sharedEntityManager.getDelegate()).thenReturn(new Object());

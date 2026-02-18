@@ -131,6 +131,10 @@ class AuthControllerTest {
     private AddressRepository addressRepository;
 
     @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
+
+    @SuppressWarnings("unused")
     @MockitoBean(name = "entityManagerFactory")
     private EntityManagerFactory entityManagerFactory;
 
