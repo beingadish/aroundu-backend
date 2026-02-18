@@ -12,6 +12,7 @@ import com.beingadish.AroundU.Exceptions.Worker.WorkerNotFoundException;
 import com.beingadish.AroundU.Exceptions.Worker.WorkerValidationException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -32,6 +33,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleDuplicateBid(DuplicateBidException ex) {
         log.warn("Duplicate bid: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiResponse<?>> handleRateLimitExceeded(RateLimitExceededException ex) {
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-RateLimit-Limit", String.valueOf(ex.getLimit()));
+        headers.set("X-RateLimit-Remaining", "0");
+        headers.set("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .headers(headers)
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(ClientAlreadyExistException.class)

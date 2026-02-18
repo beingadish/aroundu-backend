@@ -35,7 +35,8 @@ import static org.mockito.Mockito.*;
 class BloomFilterServiceTest {
 
     // ─── Shared mocks ────────────────────────────────────────────────────
-    @Mock private BloomFilterMetricsService bloomFilterMetricsService;
+    @Mock
+    private BloomFilterMetricsService bloomFilterMetricsService;
 
     // =====================================================================
     //  BidDuplicateCheckService tests
@@ -44,8 +45,10 @@ class BloomFilterServiceTest {
     @DisplayName("BidDuplicateCheckService")
     class BidDuplicateCheckTests {
 
-        @Mock private RBloomFilter<String> bidBloomFilter;
-        @Mock private BidRepository bidRepository;
+        @Mock
+        private RBloomFilter<String> bidBloomFilter;
+        @Mock
+        private BidRepository bidRepository;
 
         private BidDuplicateCheckServiceImpl service;
 
@@ -118,9 +121,12 @@ class BloomFilterServiceTest {
     @DisplayName("ProfileViewTrackingService")
     class ProfileViewTrackingTests {
 
-        @Mock private RBloomFilter<String> profileViewBloomFilter;
-        @Mock private StringRedisTemplate stringRedisTemplate;
-        @Mock private ValueOperations<String, String> valueOps;
+        @Mock
+        private RBloomFilter<String> profileViewBloomFilter;
+        @Mock
+        private StringRedisTemplate stringRedisTemplate;
+        @Mock
+        private ValueOperations<String, String> valueOps;
 
         private ProfileViewTrackingServiceImpl service;
 
@@ -200,9 +206,12 @@ class BloomFilterServiceTest {
     @DisplayName("RegistrationValidationService")
     class RegistrationValidationTests {
 
-        @Mock private RBloomFilter<String> emailRegistrationBloomFilter;
-        @Mock private ClientReadRepository clientReadRepository;
-        @Mock private WorkerReadRepository workerReadRepository;
+        @Mock
+        private RBloomFilter<String> emailRegistrationBloomFilter;
+        @Mock
+        private ClientReadRepository clientReadRepository;
+        @Mock
+        private WorkerReadRepository workerReadRepository;
 
         private RegistrationValidationServiceImpl service;
 
@@ -297,8 +306,10 @@ class BloomFilterServiceTest {
     @DisplayName("Filter Size & Performance")
     class FilterSizeTests {
 
-        @Mock private RBloomFilter<String> bidBloomFilter;
-        @Mock private BidRepository bidRepository;
+        @Mock
+        private RBloomFilter<String> bidBloomFilter;
+        @Mock
+        private BidRepository bidRepository;
 
         private BidDuplicateCheckServiceImpl service;
 

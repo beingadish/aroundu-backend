@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.beingadish.AroundU.RateLimit.RateLimit;
+
 import java.util.List;
 
 @RestController
@@ -20,6 +22,7 @@ public class BidController {
     private final BidService bidService;
 
     @PostMapping("/jobs/{jobId}/bids")
+    @RateLimit(capacity = 20, refillTokens = 20, refillMinutes = 60)
     public ResponseEntity<BidResponseDTO> placeBid(@PathVariable Long jobId, @RequestParam Long workerId, @Valid @RequestBody BidCreateRequest request) {
         return new ResponseEntity<>(bidService.placeBid(jobId, workerId, request), HttpStatus.CREATED);
     }

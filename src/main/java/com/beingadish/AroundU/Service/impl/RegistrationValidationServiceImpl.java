@@ -15,12 +15,13 @@ import org.springframework.stereotype.Service;
  * <p>
  * Flow:
  * <ol>
- *   <li>Normalise email to lowercase</li>
- *   <li>Check Bloom filter – if "definitely not present", email is new (fast path)</li>
- *   <li>If "possibly present", query Client and Worker repositories</li>
- *   <li>If DB confirms the email exists → return {@code true}</li>
- *   <li>If false positive → log, return {@code false}</li>
- *   <li>After successful registration call {@link #recordRegistration}</li>
+ * <li>Normalise email to lowercase</li>
+ * <li>Check Bloom filter – if "definitely not present", email is new (fast
+ * path)</li>
+ * <li>If "possibly present", query Client and Worker repositories</li>
+ * <li>If DB confirms the email exists → return {@code true}</li>
+ * <li>If false positive → log, return {@code false}</li>
+ * <li>After successful registration call {@link #recordRegistration}</li>
  * </ol>
  */
 @Service

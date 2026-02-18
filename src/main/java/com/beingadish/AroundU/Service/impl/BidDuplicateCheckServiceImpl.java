@@ -15,11 +15,13 @@ import org.springframework.stereotype.Service;
  * <p>
  * Flow:
  * <ol>
- *   <li>Check Bloom filter (O(1)) – if "definitely not present", allow bid</li>
- *   <li>If "possibly present", query the database for confirmation</li>
- *   <li>If DB confirms duplicate → throw {@link DuplicateBidException}</li>
- *   <li>If DB says no duplicate (false positive) → allow bid, log the false positive</li>
- *   <li>After successful bid creation, add to Bloom filter via {@link #recordBid}</li>
+ * <li>Check Bloom filter (O(1)) – if "definitely not present", allow bid</li>
+ * <li>If "possibly present", query the database for confirmation</li>
+ * <li>If DB confirms duplicate → throw {@link DuplicateBidException}</li>
+ * <li>If DB says no duplicate (false positive) → allow bid, log the false
+ * positive</li>
+ * <li>After successful bid creation, add to Bloom filter via
+ * {@link #recordBid}</li>
  * </ol>
  */
 @Service

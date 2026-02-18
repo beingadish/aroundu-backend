@@ -47,3 +47,26 @@ feature:
   enable-dummy-data: true
   enable-swagger: true
   enable-debug-security: true
+
+rate-limit:
+  enabled: true
+  job-creation:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  bid-placement:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  worker-feed:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  profile-view:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  auth:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1

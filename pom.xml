@@ -151,6 +151,19 @@
             <version>3.25.0</version>
         </dependency>
 
+        <!-- Bucket4j rate limiting with Redis backend -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-redis</artifactId>
+            <version>8.7.0</version>
+        </dependency>
+
+        <!-- Spring AOP for @RateLimit aspect -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <!-- Monitoring & Observability -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

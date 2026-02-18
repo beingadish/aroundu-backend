@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Tracks profile views using a Bloom filter to dedup repeated views by the
- * same viewer within the same hour.
+ * Tracks profile views using a Bloom filter to dedup repeated views by the same
+ * viewer within the same hour.
  * <p>
  * The Bloom filter key includes the current hour bucket, e.g.:
  * {@code view:42:profile:99:hour:2026021814}

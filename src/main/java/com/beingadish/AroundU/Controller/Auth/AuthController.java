@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.beingadish.AroundU.RateLimit.RateLimit;
+
 import static com.beingadish.AroundU.Constants.URIConstants.AUTH_BASE;
 import static com.beingadish.AroundU.Constants.URIConstants.LOGIN;
 
@@ -46,11 +48,12 @@ public class AuthController {
     private final AdminRepository adminRepository;
 
     @PostMapping(LOGIN)
+    @RateLimit(capacity = 5, refillTokens = 5, refillMinutes = 15)
     @Operation(summary = "Authenticate user", description = "Authenticate by email/password and receive JWT", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, content = @Content(schema = @Schema(implementation = LoginRequestDTO.class))))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Authenticated", content = @Content(schema = @Schema(implementation = LoginResponseDTO.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Authenticated", content = @Content(schema = @Schema(implementation = LoginResponseDTO.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
     })
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDTO loginRequest) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
@@ -67,16 +70,20 @@ public class AuthController {
 
     private Long resolveUserId(String email, String role) {
         return switch (role) {
-            case "ROLE_CLIENT" -> clientReadRepository.findByEmail(email).map(Client::getId)
-                    .orElseThrow(() -> new UsernameNotFoundException("Client not found for email: " + email));
-            case "ROLE_WORKER" -> workerRepository.findByEmail(email).map(Worker::getId)
-                    .orElseThrow(() -> new UsernameNotFoundException("Worker not found for email: " + email));
-            case "ROLE_ADMIN" -> adminRepository.findByEmail(email).map(Admin::getId)
-                    .orElseThrow(() -> new UsernameNotFoundException("Admin not found for email: " + email));
-            default -> clientReadRepository.findByEmail(email).map(Client::getId)
-                    .or(() -> workerRepository.findByEmail(email).map(Worker::getId))
-                    .or(() -> adminRepository.findByEmail(email).map(Admin::getId))
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found for email: " + email));
+            case "ROLE_CLIENT" ->
+                clientReadRepository.findByEmail(email).map(Client::getId)
+                .orElseThrow(() -> new UsernameNotFoundException("Client not found for email: " + email));
+            case "ROLE_WORKER" ->
+                workerRepository.findByEmail(email).map(Worker::getId)
+                .orElseThrow(() -> new UsernameNotFoundException("Worker not found for email: " + email));
+            case "ROLE_ADMIN" ->
+                adminRepository.findByEmail(email).map(Admin::getId)
+                .orElseThrow(() -> new UsernameNotFoundException("Admin not found for email: " + email));
+            default ->
+                clientReadRepository.findByEmail(email).map(Client::getId)
+                .or(() -> workerRepository.findByEmail(email).map(Worker::getId))
+                .or(() -> adminRepository.findByEmail(email).map(Admin::getId))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found for email: " + email));
         };
     }
 }
