@@ -79,6 +79,7 @@ public class ClientController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "List clients", description = "Paged listing of clients (admin only)", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Page returned"),
@@ -99,7 +100,7 @@ public class ClientController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> updateClientDetails(@PathVariable Long clientId, @RequestBody ClientUpdateRequestDTO updateRequestDetails) {
+    public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> updateClientDetails(@PathVariable Long clientId, @Valid @RequestBody ClientUpdateRequestDTO updateRequestDetails) {
         ClientDetailsResponseDTO updated = clientService.updateClientDetails(clientId, updateRequestDetails);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(updated));
     }

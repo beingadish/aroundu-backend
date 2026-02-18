@@ -14,6 +14,7 @@ import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Skill.SkillRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
+import com.beingadish.AroundU.Service.CacheEvictionService;
 import com.beingadish.AroundU.Service.JobGeoService;
 import com.beingadish.AroundU.Service.MetricsService;
 import com.beingadish.AroundU.Service.impl.JobServiceImpl;
@@ -67,6 +68,8 @@ class JobServiceImplTest {
     private MetricsService metricsService;
     @Mock
     private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private CacheEvictionService cacheEvictionService;
 
     @InjectMocks
     private JobServiceImpl jobService;
@@ -366,7 +369,7 @@ class JobServiceImplTest {
             when(jobRepository.findByIdInAndJobStatus(anyCollection(), eq(JobStatus.OPEN_FOR_BIDS), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of(job)));
             when(jobMapper.toSummaryDto(any(Job.class))).thenReturn(new JobSummaryDTO());
-            when(bidRepository.countByJobId(anyLong())).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(10L, TestFixtures.workerFeedRequest());
 
@@ -383,7 +386,7 @@ class JobServiceImplTest {
             when(jobRepository.findOpenJobsBySkills(eq(JobStatus.OPEN_FOR_BIDS), anyCollection(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of(job)));
             when(jobMapper.toSummaryDto(any(Job.class))).thenReturn(new JobSummaryDTO());
-            when(bidRepository.countByJobId(anyLong())).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(10L, TestFixtures.workerFeedRequest());
 

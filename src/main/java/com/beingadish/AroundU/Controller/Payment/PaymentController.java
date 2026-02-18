@@ -2,7 +2,8 @@ package com.beingadish.AroundU.Controller.Payment;
 
 import com.beingadish.AroundU.DTO.Payment.PaymentLockRequest;
 import com.beingadish.AroundU.DTO.Payment.PaymentReleaseRequest;
-import com.beingadish.AroundU.Entities.PaymentTransaction;
+import com.beingadish.AroundU.DTO.Payment.PaymentResponseDTO;
+import com.beingadish.AroundU.Mappers.Payment.PaymentTransactionMapper;
 import com.beingadish.AroundU.Service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +19,15 @@ import static com.beingadish.AroundU.Constants.URIConstants.JOB_BASE;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentTransactionMapper paymentTransactionMapper;
 
     @PostMapping("/{jobId}/payments/lock")
-    public ResponseEntity<PaymentTransaction> lock(@PathVariable Long jobId, @RequestParam Long clientId, @Valid @RequestBody PaymentLockRequest request) {
-        return new ResponseEntity<>(paymentService.lockEscrow(jobId, clientId, request), HttpStatus.CREATED);
+    public ResponseEntity<PaymentResponseDTO> lock(@PathVariable Long jobId, @RequestParam Long clientId, @Valid @RequestBody PaymentLockRequest request) {
+        return new ResponseEntity<>(paymentTransactionMapper.toDto(paymentService.lockEscrow(jobId, clientId, request)), HttpStatus.CREATED);
     }
 
     @PostMapping("/{jobId}/payments/release")
-    public ResponseEntity<PaymentTransaction> release(@PathVariable Long jobId, @RequestParam Long clientId, @Valid @RequestBody PaymentReleaseRequest request) {
-        return ResponseEntity.ok(paymentService.releaseEscrow(jobId, clientId, request));
+    public ResponseEntity<PaymentResponseDTO> release(@PathVariable Long jobId, @RequestParam Long clientId, @Valid @RequestBody PaymentReleaseRequest request) {
+        return ResponseEntity.ok(paymentTransactionMapper.toDto(paymentService.releaseEscrow(jobId, clientId, request)));
     }
 }

@@ -14,8 +14,10 @@ import com.beingadish.AroundU.RateLimit.RateLimit;
 
 import java.util.List;
 
+import static com.beingadish.AroundU.Constants.URIConstants.BID_BASE;
+
 @RestController
-@RequestMapping("/api/v1/bid")
+@RequestMapping(BID_BASE)
 @RequiredArgsConstructor
 public class BidController {
 

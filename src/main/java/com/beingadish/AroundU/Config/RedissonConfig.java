@@ -39,10 +39,10 @@ public class RedissonConfig {
     private static final long EMAIL_EXPECTED_INSERTIONS = 1_000_000L;
     private static final double EMAIL_FALSE_POSITIVE_RATE = 0.01;
 
-    @Value("${spring.data.redis.host:localhost}")
+    @Value("${spring.data.redis.host}")
     private String redisHost;
 
-    @Value("${spring.data.redis.port:6379}")
+    @Value("${spring.data.redis.port}")
     private int redisPort;
 
     @Value("${spring.data.redis.password:}")

@@ -59,8 +59,8 @@ public class UserCleanupScheduler {
             var inactiveClients = clientRepository.findInactiveClientsBefore(cutoff);
             inactiveClients.forEach(client -> {
                 client.setDeleted(true);
-                client.setEmail("deleted@aroundu.local");
-                client.setPhoneNumber("0000000000");
+                client.setEmail("deleted-" + client.getId() + "@aroundu.local");
+                client.setPhoneNumber("DEL" + client.getId());
             });
             clientRepository.saveAll(inactiveClients);
             cleaned += inactiveClients.size();
@@ -69,8 +69,8 @@ public class UserCleanupScheduler {
             var inactiveWorkers = workerRepository.findInactiveWorkersBefore(cutoff);
             inactiveWorkers.forEach(worker -> {
                 worker.setDeleted(true);
-                worker.setEmail("deleted@aroundu.local");
-                worker.setPhoneNumber("0000000000");
+                worker.setEmail("deleted-" + worker.getId() + "@aroundu.local");
+                worker.setPhoneNumber("DEL" + worker.getId());
             });
             workerRepository.saveAll(inactiveWorkers);
             cleaned += inactiveWorkers.size();

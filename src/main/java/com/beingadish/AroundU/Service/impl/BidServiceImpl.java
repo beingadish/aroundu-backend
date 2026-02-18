@@ -14,6 +14,7 @@ import com.beingadish.AroundU.Repository.Bid.BidRepository;
 import com.beingadish.AroundU.Repository.Client.ClientRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import com.beingadish.AroundU.Service.BidDuplicateCheckService;
 import com.beingadish.AroundU.Service.BidService;
 import com.beingadish.AroundU.Service.MetricsService;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,6 +35,7 @@ public class BidServiceImpl implements BidService {
     private final ClientRepository clientRepository;
     private final BidMapper bidMapper;
     private final MetricsService metricsService;
+    private final BidDuplicateCheckService bidDuplicateCheckService;
 
     @Override
     public BidResponseDTO placeBid(Long jobId, Long workerId, BidCreateRequest request) {
@@ -46,8 +48,10 @@ public class BidServiceImpl implements BidService {
             if (!Boolean.TRUE.equals(worker.getIsOnDuty())) {
                 throw new IllegalStateException("Worker is not on duty");
             }
+            bidDuplicateCheckService.validateNoDuplicateBid(workerId, jobId);
             Bid bid = bidMapper.toEntity(request, job, worker);
             Bid saved = bidRepository.save(bid);
+            bidDuplicateCheckService.recordBid(workerId, jobId);
             metricsService.getBidsPlacedCounter().increment();
             return bidMapper.toDto(saved);
         });
@@ -73,10 +77,7 @@ public class BidServiceImpl implements BidService {
         }
         bid.setStatus(BidStatus.SELECTED);
         bidRepository.save(bid);
-        long rejectedCount = bidRepository.findByJob(job).stream().filter(b -> !b.getId().equals(bidId)).peek(other -> {
-            other.setStatus(BidStatus.REJECTED);
-            bidRepository.save(other);
-        }).count();
+        int rejectedCount = bidRepository.rejectOtherBids(job, bidId);
         job.setJobStatus(JobStatus.BID_SELECTED_AWAITING_HANDSHAKE);
         jobRepository.save(job);
         metricsService.getBidsAcceptedCounter().increment();

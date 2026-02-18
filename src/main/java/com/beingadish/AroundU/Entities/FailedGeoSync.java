@@ -3,11 +3,13 @@ package com.beingadish.AroundU.Entities;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * Records a failed Redis geo-index operation so it can be retried later.
@@ -20,7 +22,8 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "failed_geo_syncs")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -84,5 +87,22 @@ public class FailedGeoSync {
         ADD,
         REMOVE,
         UPDATE
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        FailedGeoSync that = (FailedGeoSync) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

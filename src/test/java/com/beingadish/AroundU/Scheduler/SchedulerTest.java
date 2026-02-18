@@ -28,11 +28,11 @@ import static org.mockito.Mockito.*;
 /**
  * Comprehensive unit tests for all five schedulers:
  * <ul>
- *   <li>UserCleanupScheduler</li>
- *   <li>JobExpirationScheduler</li>
- *   <li>ReminderScheduler</li>
- *   <li>CacheSyncScheduler</li>
- *   <li>AnalyticsScheduler</li>
+ * <li>UserCleanupScheduler</li>
+ * <li>JobExpirationScheduler</li>
+ * <li>ReminderScheduler</li>
+ * <li>CacheSyncScheduler</li>
+ * <li>AnalyticsScheduler</li>
  * </ul>
  * Uses {@link Clock#fixed} for deterministic time control and verifies lock
  * acquisition, database effects, event publishing, and metrics recording.
@@ -55,7 +55,6 @@ class SchedulerTest {
     // =====================================================================
     //  1 · LockService (no-op for tests)
     // =====================================================================
-
     @Nested
     @DisplayName("LockServiceBase")
     class LockServiceBaseTests {
@@ -73,18 +72,19 @@ class SchedulerTest {
     // =====================================================================
     //  2 · UserCleanupScheduler
     // =====================================================================
-
     @Nested
     @DisplayName("UserCleanupScheduler")
     class UserCleanupTests {
 
-        @Mock private ClientRepository clientRepository;
-        @Mock private WorkerRepository workerRepository;
+        @Mock
+        private ClientRepository clientRepository;
+        @Mock
+        private WorkerRepository workerRepository;
         private StubLockService lockService;
         private UserCleanupScheduler scheduler;
 
-        private static final Instant FIXED_INSTANT =
-                LocalDateTime.of(2026, 2, 18, 2, 0).toInstant(ZoneOffset.UTC);
+        private static final Instant FIXED_INSTANT
+                = LocalDateTime.of(2026, 2, 18, 2, 0).toInstant(ZoneOffset.UTC);
 
         @BeforeEach
         void setUp() {
@@ -99,6 +99,7 @@ class SchedulerTest {
         @DisplayName("cleans up inactive clients and workers")
         void cleansInactiveUsers() {
             Client inactive = Client.builder()
+                    .id(42L)
                     .name("Old User")
                     .email("old@test.com")
                     .phoneNumber("+1234567890")
@@ -107,6 +108,7 @@ class SchedulerTest {
                     .deleted(false)
                     .build();
             Worker inactiveWorker = Worker.builder()
+                    .id(77L)
                     .name("Old Worker")
                     .email("oldworker@test.com")
                     .phoneNumber("+0987654321")
@@ -122,12 +124,12 @@ class SchedulerTest {
 
             // Verify soft-delete + anonymisation
             assertThat(inactive.getDeleted()).isTrue();
-            assertThat(inactive.getEmail()).isEqualTo("deleted@aroundu.local");
-            assertThat(inactive.getPhoneNumber()).isEqualTo("0000000000");
+            assertThat(inactive.getEmail()).isEqualTo("deleted-42@aroundu.local");
+            assertThat(inactive.getPhoneNumber()).isEqualTo("DEL42");
 
             assertThat(inactiveWorker.getDeleted()).isTrue();
-            assertThat(inactiveWorker.getEmail()).isEqualTo("deleted@aroundu.local");
-            assertThat(inactiveWorker.getPhoneNumber()).isEqualTo("0000000000");
+            assertThat(inactiveWorker.getEmail()).isEqualTo("deleted-77@aroundu.local");
+            assertThat(inactiveWorker.getPhoneNumber()).isEqualTo("DEL77");
 
             verify(clientRepository).saveAll(List.of(inactive));
             verify(workerRepository).saveAll(List.of(inactiveWorker));
@@ -203,19 +205,21 @@ class SchedulerTest {
     // =====================================================================
     //  3 · JobExpirationScheduler
     // =====================================================================
-
     @Nested
     @DisplayName("JobExpirationScheduler")
     class JobExpirationTests {
 
-        @Mock private JobRepository jobRepository;
-        @Mock private JobGeoService jobGeoService;
-        @Mock private ApplicationEventPublisher eventPublisher;
+        @Mock
+        private JobRepository jobRepository;
+        @Mock
+        private JobGeoService jobGeoService;
+        @Mock
+        private ApplicationEventPublisher eventPublisher;
         private StubLockService lockService;
         private JobExpirationScheduler scheduler;
 
-        private static final Instant FIXED_INSTANT =
-                LocalDateTime.of(2026, 2, 18, 12, 0).toInstant(ZoneOffset.UTC);
+        private static final Instant FIXED_INSTANT
+                = LocalDateTime.of(2026, 2, 18, 12, 0).toInstant(ZoneOffset.UTC);
 
         @BeforeEach
         void setUp() {
@@ -319,18 +323,19 @@ class SchedulerTest {
     // =====================================================================
     //  4 · ReminderScheduler
     // =====================================================================
-
     @Nested
     @DisplayName("ReminderScheduler")
     class ReminderTests {
 
-        @Mock private JobRepository jobRepository;
-        @Mock private EmailService emailService;
+        @Mock
+        private JobRepository jobRepository;
+        @Mock
+        private EmailService emailService;
         private StubLockService lockService;
         private ReminderScheduler scheduler;
 
-        private static final Instant FIXED_INSTANT =
-                LocalDateTime.of(2026, 2, 18, 6, 0).toInstant(ZoneOffset.UTC);
+        private static final Instant FIXED_INSTANT
+                = LocalDateTime.of(2026, 2, 18, 6, 0).toInstant(ZoneOffset.UTC);
 
         @BeforeEach
         void setUp() {
@@ -422,13 +427,14 @@ class SchedulerTest {
     // =====================================================================
     //  5 · CacheSyncScheduler
     // =====================================================================
-
     @Nested
     @DisplayName("CacheSyncScheduler")
     class CacheSyncTests {
 
-        @Mock private JobRepository jobRepository;
-        @Mock private JobGeoService jobGeoService;
+        @Mock
+        private JobRepository jobRepository;
+        @Mock
+        private JobGeoService jobGeoService;
         private StubLockService lockService;
         private CacheSyncScheduler scheduler;
 
@@ -520,20 +526,23 @@ class SchedulerTest {
     // =====================================================================
     //  6 · AnalyticsScheduler
     // =====================================================================
-
     @Nested
     @DisplayName("AnalyticsScheduler")
     class AnalyticsTests {
 
-        @Mock private JobRepository jobRepository;
-        @Mock private BidRepository bidRepository;
-        @Mock private PaymentTransactionRepository paymentRepository;
-        @Mock private AggregatedMetricsRepository metricsRepository;
+        @Mock
+        private JobRepository jobRepository;
+        @Mock
+        private BidRepository bidRepository;
+        @Mock
+        private PaymentTransactionRepository paymentRepository;
+        @Mock
+        private AggregatedMetricsRepository metricsRepository;
         private StubLockService lockService;
         private AnalyticsScheduler scheduler;
 
-        private static final Instant FIXED_INSTANT =
-                LocalDateTime.of(2026, 2, 18, 3, 0).toInstant(ZoneOffset.UTC);
+        private static final Instant FIXED_INSTANT
+                = LocalDateTime.of(2026, 2, 18, 3, 0).toInstant(ZoneOffset.UTC);
 
         @BeforeEach
         void setUp() {
@@ -634,7 +643,6 @@ class SchedulerTest {
     // =====================================================================
     //  7 · SchedulerMetricsService
     // =====================================================================
-
     @Nested
     @DisplayName("SchedulerMetricsService")
     class SchedulerMetricsTests {
@@ -688,14 +696,16 @@ class SchedulerTest {
     // =====================================================================
     //  8 · Cross-cutting: disabled scheduler
     // =====================================================================
-
     @Nested
     @DisplayName("Disabled scheduler master switch")
     class DisabledSchedulerTests {
 
-        @Mock private JobRepository jobRepository;
-        @Mock private JobGeoService jobGeoService;
-        @Mock private ApplicationEventPublisher eventPublisher;
+        @Mock
+        private JobRepository jobRepository;
+        @Mock
+        private JobGeoService jobGeoService;
+        @Mock
+        private ApplicationEventPublisher eventPublisher;
 
         @Test
         @DisplayName("JobExpirationScheduler does nothing when disabled")
@@ -716,13 +726,14 @@ class SchedulerTest {
     // =====================================================================
     //  9 · Time mocking verification
     // =====================================================================
-
     @Nested
     @DisplayName("Clock-based time control")
     class TimeControlTests {
 
-        @Mock private ClientRepository clientRepository;
-        @Mock private WorkerRepository workerRepository;
+        @Mock
+        private ClientRepository clientRepository;
+        @Mock
+        private WorkerRepository workerRepository;
 
         @Test
         @DisplayName("advancing Clock.fixed changes the cutoff date")
@@ -765,9 +776,11 @@ class SchedulerTest {
     // =====================================================================
     //  Helpers
     // =====================================================================
-
-    /** Stub lock service that grants or denies all lock requests. */
+    /**
+     * Stub lock service that grants or denies all lock requests.
+     */
     static class StubLockService extends LockServiceBase {
+
         final boolean grant;
         int acquireCount = 0;
         int releaseCount = 0;
@@ -797,7 +810,9 @@ class SchedulerTest {
                 .build();
     }
 
-    /** Set private {@code id} field via reflection for entities without setters. */
+    /**
+     * Set private {@code id} field via reflection for entities without setters.
+     */
     private static void setId(Object entity, Long id) {
         try {
             java.lang.reflect.Field idField = findIdField(entity.getClass());

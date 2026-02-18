@@ -12,8 +12,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "workers")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
