@@ -82,6 +82,50 @@ management:
       export:
         enabled: true
 
+# ── Resilience4j defaults (overridden per profile) ──────────────────
+resilience:
+  circuitbreaker:
+    payment-gateway:
+      failure-rate-threshold: 50
+      wait-duration-in-open-state-seconds: 30
+      slow-call-duration-threshold-seconds: 5
+      slow-call-rate-threshold: 100
+      minimum-number-of-calls: 5
+      sliding-window-size: 10
+      permitted-number-of-calls-in-half-open-state: 3
+    email-service:
+      failure-rate-threshold: 70
+      wait-duration-in-open-state-seconds: 60
+      slow-call-duration-threshold-seconds: 10
+      slow-call-rate-threshold: 100
+      minimum-number-of-calls: 5
+      sliding-window-size: 10
+      permitted-number-of-calls-in-half-open-state: 3
+    image-upload:
+      failure-rate-threshold: 60
+      wait-duration-in-open-state-seconds: 30
+      slow-call-duration-threshold-seconds: 10
+      slow-call-rate-threshold: 100
+      minimum-number-of-calls: 5
+      sliding-window-size: 10
+      permitted-number-of-calls-in-half-open-state: 3
+  retry:
+    payment-gateway:
+      max-attempts: 3
+      wait-duration-ms: 500
+      multiplier: 2.0
+      randomization-factor: 0.1
+    email-service:
+      max-attempts: 5
+      wait-duration-ms: 1000
+      multiplier: 2.0
+      randomization-factor: 0.1
+    image-upload:
+      max-attempts: 2
+      wait-duration-ms: 200
+      multiplier: 2.0
+      randomization-factor: 0.1
+
 admin:
   email: ${ADMIN_EMAIL:admin@aroundu.com}
   password: ${ADMIN_PASSWORD:arounduadmin}

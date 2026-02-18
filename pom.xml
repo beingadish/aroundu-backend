@@ -62,6 +62,12 @@
             <artifactId>resilience4j-circuitbreaker</artifactId>
             <version>2.3.0</version>
         </dependency>
+        <!-- Resilience4j Micrometer integration for circuit breaker / retry metrics -->
+        <dependency>
+            <groupId>io.github.resilience4j</groupId>
+            <artifactId>resilience4j-micrometer</artifactId>
+            <version>2.3.0</version>
+        </dependency>
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
