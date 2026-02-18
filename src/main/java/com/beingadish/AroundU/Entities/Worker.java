@@ -7,6 +7,7 @@ import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -17,6 +18,13 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 public class Worker extends User {
+
+    @Column
+    private LocalDateTime lastLoginAt;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
 
     @OneToMany(mappedBy = "assignedTo")
     private List<Job> engagedJobList;

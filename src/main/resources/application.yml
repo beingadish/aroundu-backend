@@ -126,6 +126,18 @@ resilience:
       multiplier: 2.0
       randomization-factor: 0.1
 
+# ── Scheduler defaults (overridden per profile) ─────────────────────
+scheduler:
+  enabled: true
+  user-cleanup-cron: "0 0 2 * * ?"
+  job-expiration-cron: "0 0 * * * ?"
+  reminder-cron: "0 0 */6 * * ?"
+  cache-sync-cron: "0 */30 * * * ?"
+  analytics-cron: "0 0 3 * * ?"
+  user-inactive-years: 2
+  job-expiration-days: 30
+  reminder-threshold-hours: 24
+
 admin:
   email: ${ADMIN_EMAIL:admin@aroundu.com}
   password: ${ADMIN_PASSWORD:arounduadmin}

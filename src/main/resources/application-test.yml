@@ -63,6 +63,13 @@ feature:
 rate-limit:
   enabled: false
 
+# ── Scheduler (disabled for tests — invoke directly) ─────────────
+scheduler:
+  enabled: false
+  user-inactive-years: 2
+  job-expiration-days: 30
+  reminder-threshold-hours: 24
+
 # ── Resilience4j (very lenient / effectively disabled for tests) ──
 resilience:
   circuitbreaker:

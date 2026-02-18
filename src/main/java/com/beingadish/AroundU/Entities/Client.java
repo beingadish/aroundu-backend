@@ -11,6 +11,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -21,6 +22,13 @@ import java.util.List;
 @AllArgsConstructor
 @SuperBuilder
 public class Client extends User {
+
+    @jakarta.persistence.Column
+    private LocalDateTime lastLoginAt;
+
+    @jakarta.persistence.Column(nullable = false)
+    @lombok.Builder.Default
+    private Boolean deleted = false;
 
     // List of created jobs
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)

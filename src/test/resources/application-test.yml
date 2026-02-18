@@ -32,3 +32,9 @@ logging:
 
 rate-limit:
   enabled: false
+
+scheduler:
+  enabled: false
+  user-inactive-years: 2
+  job-expiration-days: 30
+  reminder-threshold-hours: 24

@@ -74,6 +74,9 @@ public class Job {
     @JoinColumn(name = "assigned_to")
     private Worker assignedTo;
 
+    @Column
+    private LocalDateTime scheduledStartTime;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

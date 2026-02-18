@@ -34,6 +34,7 @@ public interface JobMapper {
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "scheduledStartTime", ignore = true)
     Job toEntity(JobCreateRequest request, Address jobLocation, Set<Skill> skills, Client creator);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -48,6 +49,7 @@ public interface JobMapper {
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "scheduledStartTime", ignore = true)
     void updateEntity(JobUpdateRequest request, @MappingTarget Job job, Address jobLocation, Set<Skill> skills);
 
     @Mapping(target = "requiredSkills", source = "skillSet")

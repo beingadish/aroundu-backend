@@ -70,6 +70,18 @@ rate-limit:
     refill-tokens: 5
     refill-minutes: 15
 
+# ── Scheduler (conservative, avoid peak hours) ──────────────────
+scheduler:
+  enabled: true
+  user-cleanup-cron: "0 0 2 * * ?"
+  job-expiration-cron: "0 0 * * * ?"
+  reminder-cron: "0 0 */6 * * ?"
+  cache-sync-cron: "0 */30 * * * ?"
+  analytics-cron: "0 0 3 * * ?"
+  user-inactive-years: 2
+  job-expiration-days: 30
+  reminder-threshold-hours: 24
+
 # ── Resilience4j (strict for prod) ───────────────────────────────
 resilience:
   circuitbreaker:
