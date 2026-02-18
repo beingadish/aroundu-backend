@@ -16,6 +16,7 @@ import com.beingadish.AroundU.Repository.Bid.BidRepository;
 import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
+import com.beingadish.AroundU.Service.CacheEvictionService;
 import com.beingadish.AroundU.Service.impl.JobServiceImpl;
 import com.beingadish.AroundU.Utilities.DistanceUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -95,6 +96,8 @@ class GeoSearchTest {
     private MetricsService metricsService;
     @Mock
     private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private CacheEvictionService cacheEvictionService;
 
     // Unused by getWorkerFeed but required by @InjectMocks
     @Mock
@@ -234,7 +237,7 @@ class GeoSearchTest {
 
             when(jobMapper.toSummaryDto(job1)).thenReturn(summaryDto(10L));
             when(jobMapper.toSummaryDto(job2)).thenReturn(summaryDto(20L));
-            when(bidRepository.countByJobId(anyLong())).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             WorkerJobFeedRequest request = feedRequest(5.0);
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, request);
@@ -263,7 +266,7 @@ class GeoSearchTest {
                     .thenReturn(jobPage);
 
             when(jobMapper.toSummaryDto(boundaryJob)).thenReturn(summaryDto(30L));
-            when(bidRepository.countByJobId(30L)).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(5.0));
 
@@ -286,7 +289,7 @@ class GeoSearchTest {
                     .thenReturn(skillPage);
 
             when(jobMapper.toSummaryDto(skillJob)).thenReturn(summaryDto(50L));
-            when(bidRepository.countByJobId(50L)).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(5.0));
 
@@ -320,7 +323,7 @@ class GeoSearchTest {
             when(jobMapper.toSummaryDto(near)).thenReturn(summaryDto(1L));
             when(jobMapper.toSummaryDto(mid)).thenReturn(summaryDto(2L));
             when(jobMapper.toSummaryDto(far)).thenReturn(summaryDto(3L));
-            when(bidRepository.countByJobId(anyLong())).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             WorkerJobFeedRequest req = feedRequest(25.0);
             req.setSortByDistance(true);
@@ -449,7 +452,7 @@ class GeoSearchTest {
                     .thenReturn(jobPage);
 
             when(jobMapper.toSummaryDto(job1)).thenReturn(summaryDto(1L));
-            when(bidRepository.countByJobId(anyLong())).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             WorkerJobFeedRequest req = feedRequest(25.0);
             req.setSkillIds(List.of(10L)); // Only plumbing
@@ -487,7 +490,7 @@ class GeoSearchTest {
                 Job j = inv.getArgument(0);
                 return summaryDto(j.getId());
             });
-            when(bidRepository.countByJobId(anyLong())).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             WorkerJobFeedRequest req = feedRequest(25.0);
             req.setSkillIds(List.of(10L)); // Only plumbing
@@ -695,7 +698,7 @@ class GeoSearchTest {
 
             JobSummaryDTO dto = summaryDto(1L);
             when(jobMapper.toSummaryDto(job)).thenReturn(dto);
-            when(bidRepository.countByJobId(1L)).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(25.0));
 
@@ -720,7 +723,7 @@ class GeoSearchTest {
 
             JobSummaryDTO dto = summaryDto(1L);
             when(jobMapper.toSummaryDto(job)).thenReturn(dto);
-            when(bidRepository.countByJobId(1L)).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(null));
 

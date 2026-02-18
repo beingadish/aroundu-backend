@@ -27,6 +27,7 @@ import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Skill.SkillRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
+import com.beingadish.AroundU.Service.CacheEvictionService;
 import com.beingadish.AroundU.Service.JobGeoService;
 import com.beingadish.AroundU.Service.JobService;
 import com.beingadish.AroundU.Service.MetricsService;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -60,7 +62,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
+@Transactional(readOnly = true)
 public class JobServiceImpl implements JobService {
 
     private static final List<JobStatus> ACTIVE_STATUSES = List.of(
@@ -84,8 +86,10 @@ public class JobServiceImpl implements JobService {
     private final JobGeoService jobGeoService;
     private final MetricsService metricsService;
     private final ApplicationEventPublisher eventPublisher;
+    private final CacheEvictionService cacheEvictionService;
 
     @Override
+    @Transactional
     public JobDetailDTO createJob(Long clientId, JobCreateRequest request) {
         return metricsService.recordTimer(metricsService.getJobCreationTimer(), () -> {
             Client client = clientRepository.findById(clientId).orElseThrow(() -> new JobValidationException("Client not found"));
@@ -104,11 +108,14 @@ public class JobServiceImpl implements JobService {
             metricsService.incrementActiveJobs();
             log.info("Created job id={} for client={}", saved.getId(), clientId);
             eventPublisher.publishEvent(new JobModifiedEvent(saved.getId(), clientId, JobModifiedEvent.Type.CREATED, false));
+            cacheEvictionService.evictClientJobsCaches(clientId);
+            cacheEvictionService.evictWorkerFeedCaches();
             return jobMapper.toDetailDto(saved);
         });
     }
 
     @Override
+    @Transactional
     public JobDetailDTO updateJob(Long jobId, Long clientId, JobUpdateRequest request) {
         Job job = jobRepository.findById(jobId).orElseThrow(() -> new JobNotFoundException("Job not found"));
         if (!Objects.equals(job.getCreatedBy().getId(), clientId)) {
@@ -134,6 +141,11 @@ public class JobServiceImpl implements JobService {
             locationChanged = true;
         }
         eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.UPDATED, locationChanged));
+        cacheEvictionService.evictJobDetail(jobId);
+        cacheEvictionService.evictClientJobsCaches(clientId);
+        if (locationChanged) {
+            cacheEvictionService.evictWorkerFeedCaches();
+        }
         return jobMapper.toDetailDto(saved);
     }
 
@@ -197,11 +209,12 @@ public class JobServiceImpl implements JobService {
                 || "viewcount".equalsIgnoreCase(filterRequest.getSortBy());
 
         if (distanceSorting || popularitySorting) {
+            Map<Long, Long> bidCountsMap = fetchBidCounts(jobPage.getContent());
             List<JobSummaryDTO> dtos = jobPage.getContent().stream()
                     .map(job -> {
                         JobSummaryDTO dto = jobMapper.toSummaryDto(job);
                         enrichWithDistance(dto, job, filterRequest.getDistanceLatitude(), filterRequest.getDistanceLongitude());
-                        enrichWithPopularity(dto, job);
+                        enrichWithPopularity(dto, job, bidCountsMap);
                         return dto;
                     })
                     .sorted(buildVirtualComparator(filterRequest.getSortBy(), filterRequest.getSortDirection(), distanceSorting))
@@ -229,6 +242,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional
     public JobDetailDTO updateJobStatus(Long jobId, Long clientId, JobStatusUpdateRequest request) {
         Job job = jobRepository.findByIdAndCreatedById(jobId, clientId).orElseThrow(() -> new JobNotFoundException("Job not found for client"));
         validateStatusTransition(job.getJobStatus(), request.getNewStatus());
@@ -246,6 +260,9 @@ public class JobServiceImpl implements JobService {
         }
         log.info("Job id={} status updated from {} to {} by client {}", jobId, oldStatus, request.getNewStatus(), clientId);
         eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.STATUS_CHANGED, false));
+        cacheEvictionService.evictJobDetail(jobId);
+        cacheEvictionService.evictClientJobsCaches(clientId);
+        cacheEvictionService.evictWorkerFeedCaches();
         return jobMapper.toDetailDto(saved);
     }
 
@@ -297,6 +314,7 @@ public class JobServiceImpl implements JobService {
         boolean distanceSorting = Boolean.TRUE.equals(request.getSortByDistance())
                 || "distance".equalsIgnoreCase(request.getSortBy());
 
+        Map<Long, Long> bidCountsMap = fetchBidCounts(filtered);
         List<JobSummaryDTO> dtos = filtered.stream()
                 .map(job -> {
                     JobSummaryDTO dto = jobMapper.toSummaryDto(job);
@@ -304,7 +322,7 @@ public class JobServiceImpl implements JobService {
                     if (workerLat != null && workerLon != null) {
                         enrichWithDistance(dto, job, workerLat, workerLon);
                     }
-                    enrichWithPopularity(dto, job);
+                    enrichWithPopularity(dto, job, bidCountsMap);
                     return dto;
                 })
                 .toList();
@@ -332,6 +350,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional
     public void deleteJob(Long jobId, Long clientId) {
         Job job = jobRepository.findById(jobId).orElseThrow(() -> new JobNotFoundException("Job not found"));
         if (!Objects.equals(job.getCreatedBy().getId(), clientId)) {
@@ -344,6 +363,9 @@ public class JobServiceImpl implements JobService {
             safeGeoRemove(jobId);
         }
         eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.DELETED, false));
+        cacheEvictionService.evictJobDetail(jobId);
+        cacheEvictionService.evictClientJobsCaches(clientId);
+        cacheEvictionService.evictWorkerFeedCaches();
         log.info("Deleted job id={} for client={}", jobId, clientId);
     }
 
@@ -398,9 +420,24 @@ public class JobServiceImpl implements JobService {
     /**
      * Enriches a DTO with a popularity score based on bid count.
      */
-    private void enrichWithPopularity(JobSummaryDTO dto, Job job) {
-        long bidCount = bidRepository.countByJobId(job.getId());
+    private void enrichWithPopularity(JobSummaryDTO dto, Job job, Map<Long, Long> bidCountsMap) {
+        long bidCount = bidCountsMap.getOrDefault(job.getId(), 0L);
         dto.setPopularityScore(PopularityUtils.calculateJobPopularityScore((int) bidCount, null));
+    }
+
+    /**
+     * Batch-fetches bid counts for a list of jobs.
+     */
+    private Map<Long, Long> fetchBidCounts(List<Job> jobs) {
+        if (jobs.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> jobIds = jobs.stream().map(Job::getId).toList();
+        return bidRepository.countByJobIds(jobIds).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
     }
 
     /**

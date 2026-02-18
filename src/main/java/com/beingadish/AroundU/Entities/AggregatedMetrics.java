@@ -3,12 +3,14 @@ package com.beingadish.AroundU.Entities;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * Stores daily aggregated metrics. One row per day, computed by the
@@ -18,7 +20,8 @@ import java.time.LocalDateTime;
 @Table(name = "aggregated_metrics", uniqueConstraints = {
     @UniqueConstraint(columnNames = "metricDate")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -70,4 +73,21 @@ public class AggregatedMetrics {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime computedAt;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        AggregatedMetrics that = (AggregatedMetrics) o;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

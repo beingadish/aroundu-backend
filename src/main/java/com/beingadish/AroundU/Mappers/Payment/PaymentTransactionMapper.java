@@ -2,6 +2,7 @@ package com.beingadish.AroundU.Mappers.Payment;
 
 import com.beingadish.AroundU.Constants.Enums.PaymentStatus;
 import com.beingadish.AroundU.DTO.Payment.PaymentLockRequest;
+import com.beingadish.AroundU.DTO.Payment.PaymentResponseDTO;
 import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Entities.Job;
 import com.beingadish.AroundU.Entities.PaymentTransaction;
@@ -22,6 +23,11 @@ public interface PaymentTransactionMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     PaymentTransaction toEntity(PaymentLockRequest request, Job job, Client client, Worker worker);
+
+    @Mapping(target = "jobId", source = "job.id")
+    @Mapping(target = "clientId", source = "client.id")
+    @Mapping(target = "workerId", source = "worker.id")
+    PaymentResponseDTO toDto(PaymentTransaction entity);
 
     default PaymentTransaction withStatus(PaymentTransaction tx, PaymentStatus status) {
         tx.setStatus(status);

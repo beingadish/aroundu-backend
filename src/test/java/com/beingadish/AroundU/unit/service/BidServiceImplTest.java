@@ -11,6 +11,7 @@ import com.beingadish.AroundU.Repository.Bid.BidRepository;
 import com.beingadish.AroundU.Repository.Client.ClientRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import com.beingadish.AroundU.Service.BidDuplicateCheckService;
 import com.beingadish.AroundU.Service.MetricsService;
 import com.beingadish.AroundU.Service.impl.BidServiceImpl;
 import com.beingadish.AroundU.fixtures.JobTestBuilder;
@@ -50,6 +51,8 @@ class BidServiceImplTest {
     private BidMapper bidMapper;
     @Mock
     private MetricsService metricsService;
+    @Mock
+    private BidDuplicateCheckService bidDuplicateCheckService;
 
     @InjectMocks
     private BidServiceImpl bidService;
@@ -183,10 +186,9 @@ class BidServiceImplTest {
         @Test
         @DisplayName("success – bid accepted, others rejected, job status transitions")
         void acceptBid_Success() {
-            Bid otherBid = TestFixtures.bid(201L, openJob, TestFixtures.worker(11L));
             when(bidRepository.findById(200L)).thenReturn(Optional.of(bid));
             when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
-            when(bidRepository.findByJob(openJob)).thenReturn(List.of(bid, otherBid));
+            when(bidRepository.rejectOtherBids(openJob, 200L)).thenReturn(0);
             when(bidRepository.save(any(Bid.class))).thenAnswer(inv -> inv.getArgument(0));
             when(jobRepository.save(any(Job.class))).thenAnswer(inv -> inv.getArgument(0));
             when(bidMapper.toDto(any(Bid.class))).thenReturn(bidResponseDTO);

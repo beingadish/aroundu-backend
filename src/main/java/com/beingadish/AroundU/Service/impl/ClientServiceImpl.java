@@ -32,6 +32,7 @@ public class ClientServiceImpl implements ClientService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public void registerClient(ClientRegisterRequestDTO requestDTO) {
         // Convert the RequestDTO to ClientModel
         ClientModel clientModel = clientMapper.registerRequestDtoToModel(requestDTO);

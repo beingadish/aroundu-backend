@@ -187,7 +187,7 @@ class BidControllerTest {
                     .param("workerId", "10")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(TestFixtures.bidCreateRequest(450.0))))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isNotFound());
         }
     }
 
@@ -225,13 +225,13 @@ class BidControllerTest {
         }
 
         @Test
-        @DisplayName("500 – bid not found (EntityNotFoundException falls through)")
+        @DisplayName("404 – bid not found")
         void acceptBid_NotFound() throws Exception {
             when(bidService.acceptBid(999L, 1L))
                     .thenThrow(new EntityNotFoundException("Bid not found"));
 
             mockMvc.perform(post(BASE + "/bids/999/accept").param("clientId", "1"))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isNotFound());
         }
     }
 
