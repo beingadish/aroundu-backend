@@ -56,6 +56,8 @@ public interface JobMapper {
     JobDetailDTO toDetailDto(Job entity);
 
     @Mapping(target = "price", source = "price")
+    @Mapping(target = "distanceKm", ignore = true)
+    @Mapping(target = "popularityScore", ignore = true)
     JobSummaryDTO toSummaryDto(Job entity);
 
     @Mapping(target = "requiredSkills", source = "skillSet")
