@@ -162,6 +162,10 @@ class WorkerControllerTest {
 
     @SuppressWarnings("unused")
     @MockitoBean
+    private com.beingadish.AroundU.Repository.Notification.FailedNotificationRepository failedNotificationRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
     private PaymentTransactionRepository paymentTransactionRepository;
 
     @BeforeEach
