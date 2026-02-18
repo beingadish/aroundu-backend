@@ -42,4 +42,20 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     List<Long> findIdsByJobStatus(@Param("status") JobStatus status);
 
     List<Job> findTop100ByJobStatusOrderByCreatedAtDesc(JobStatus status);
+
+    @Query("SELECT j FROM Job j WHERE j.jobStatus = :status AND "
+            + "(j.scheduledStartTime IS NOT NULL AND j.scheduledStartTime < :now "
+            + "OR j.scheduledStartTime IS NULL AND j.createdAt < :fallback)")
+    List<Job> findExpiredJobs(@Param("status") JobStatus status,
+            @Param("now") LocalDateTime now,
+            @Param("fallback") LocalDateTime fallback);
+
+    @Query("SELECT j FROM Job j WHERE j.jobStatus = :status AND j.createdAt < :before "
+            + "AND (SELECT COUNT(b) FROM Bid b WHERE b.job = j) = 0")
+    List<Job> findJobsWithZeroBids(@Param("status") JobStatus status,
+            @Param("before") LocalDateTime before);
+
+    long countByJobStatusAndCreatedAtBetween(JobStatus status, LocalDateTime start, LocalDateTime end);
+
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

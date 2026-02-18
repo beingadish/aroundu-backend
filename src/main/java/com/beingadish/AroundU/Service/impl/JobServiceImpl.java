@@ -362,7 +362,7 @@ public class JobServiceImpl implements JobService {
                 target == JobStatus.IN_PROGRESS || target == JobStatus.CANCELLED;
             case IN_PROGRESS ->
                 target == JobStatus.COMPLETED || target == JobStatus.CANCELLED;
-            case COMPLETED, CANCELLED ->
+            case COMPLETED, CANCELLED, JOB_CLOSED_DUE_TO_EXPIRATION ->
                 false;
         };
         if (!allowed) {

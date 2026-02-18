@@ -12,7 +12,8 @@ public enum JobStatus {
     READY_TO_START("Worker accepted; ready to start"),
     IN_PROGRESS("Job is in progress"),
     COMPLETED("Job is finished"),
-    CANCELLED("Job is cancelled");
+    CANCELLED("Job is cancelled"),
+    JOB_CLOSED_DUE_TO_EXPIRATION("Job closed due to expiration");
 
     private final String description;
 }

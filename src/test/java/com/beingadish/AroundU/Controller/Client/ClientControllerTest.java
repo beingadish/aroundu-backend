@@ -159,6 +159,10 @@ class ClientControllerTest {
     @MockitoBean
     private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
 
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.Repository.Analytics.AggregatedMetricsRepository aggregatedMetricsRepository;
+
     @BeforeEach
     void stubEntityManager() {
         when(sharedEntityManager.getDelegate()).thenReturn(new Object());

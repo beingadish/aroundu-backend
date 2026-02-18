@@ -158,6 +158,10 @@ class WorkerControllerTest {
 
     @SuppressWarnings("unused")
     @MockitoBean
+    private com.beingadish.AroundU.Repository.Analytics.AggregatedMetricsRepository aggregatedMetricsRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
     private PaymentTransactionRepository paymentTransactionRepository;
 
     @BeforeEach

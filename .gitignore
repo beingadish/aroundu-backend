@@ -31,6 +31,7 @@ build/
 
 .waylog
 .env
+.env.example
 
 ### VS Code ###
 .vscode/

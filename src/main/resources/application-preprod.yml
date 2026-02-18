@@ -69,6 +69,15 @@ rate-limit:
     refill-tokens: 5
     refill-minutes: 15
 
+# ── Scheduler (same as prod) ─────────────────────────────────────
+scheduler:
+  enabled: true
+  user-cleanup-cron: "0 0 2 * * ?"
+  job-expiration-cron: "0 0 * * * ?"
+  reminder-cron: "0 0 */6 * * ?"
+  cache-sync-cron: "0 */30 * * * ?"
+  analytics-cron: "0 0 3 * * ?"
+
 # ── Resilience4j (same as prod) ──────────────────────────────────
 resilience:
   circuitbreaker:
