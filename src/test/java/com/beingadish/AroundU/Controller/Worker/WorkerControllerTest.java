@@ -154,6 +154,10 @@ class WorkerControllerTest {
 
     @SuppressWarnings("unused")
     @MockitoBean
+    private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
     private PaymentTransactionRepository paymentTransactionRepository;
 
     @BeforeEach
