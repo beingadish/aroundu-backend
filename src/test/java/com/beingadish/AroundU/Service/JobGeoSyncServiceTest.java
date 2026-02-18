@@ -4,6 +4,7 @@ import com.beingadish.AroundU.Constants.Enums.JobStatus;
 import com.beingadish.AroundU.Entities.Address;
 import com.beingadish.AroundU.Entities.Job;
 import com.beingadish.AroundU.Events.JobModifiedEvent;
+import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -32,6 +33,8 @@ class JobGeoSyncServiceTest {
     private JobGeoService jobGeoService;
     @Mock
     private CacheEvictionService cacheEvictionService;
+    @Mock
+    private FailedGeoSyncRepository failedGeoSyncRepository;
 
     @InjectMocks
     private JobGeoSyncService geoSyncService;
@@ -151,7 +154,7 @@ class JobGeoSyncServiceTest {
         @Test
         @DisplayName("CREATED event evicts job detail, client jobs, and worker feed")
         void createdEvent() {
-            JobModifiedEvent event = new JobModifiedEvent(10L, 1L, JobModifiedEvent.Type.CREATED);
+            JobModifiedEvent event = new JobModifiedEvent(10L, 1L, JobModifiedEvent.Type.CREATED, false);
 
             geoSyncService.onJobModified(event);
 
@@ -163,7 +166,7 @@ class JobGeoSyncServiceTest {
         @Test
         @DisplayName("UPDATED event evicts job detail and client jobs but NOT worker feed")
         void updatedEvent() {
-            JobModifiedEvent event = new JobModifiedEvent(10L, 1L, JobModifiedEvent.Type.UPDATED);
+            JobModifiedEvent event = new JobModifiedEvent(10L, 1L, JobModifiedEvent.Type.UPDATED, false);
 
             geoSyncService.onJobModified(event);
 
@@ -175,7 +178,7 @@ class JobGeoSyncServiceTest {
         @Test
         @DisplayName("STATUS_CHANGED event evicts all caches")
         void statusChangedEvent() {
-            JobModifiedEvent event = new JobModifiedEvent(10L, 1L, JobModifiedEvent.Type.STATUS_CHANGED);
+            JobModifiedEvent event = new JobModifiedEvent(10L, 1L, JobModifiedEvent.Type.STATUS_CHANGED, false);
 
             geoSyncService.onJobModified(event);
 
@@ -187,7 +190,7 @@ class JobGeoSyncServiceTest {
         @Test
         @DisplayName("DELETED event evicts all caches")
         void deletedEvent() {
-            JobModifiedEvent event = new JobModifiedEvent(10L, 1L, JobModifiedEvent.Type.DELETED);
+            JobModifiedEvent event = new JobModifiedEvent(10L, 1L, JobModifiedEvent.Type.DELETED, false);
 
             geoSyncService.onJobModified(event);
 
@@ -199,8 +202,8 @@ class JobGeoSyncServiceTest {
         @Test
         @DisplayName("events for different jobs are processed independently")
         void independentEvents() {
-            geoSyncService.onJobModified(new JobModifiedEvent(1L, 10L, JobModifiedEvent.Type.UPDATED));
-            geoSyncService.onJobModified(new JobModifiedEvent(2L, 20L, JobModifiedEvent.Type.STATUS_CHANGED));
+            geoSyncService.onJobModified(new JobModifiedEvent(1L, 10L, JobModifiedEvent.Type.UPDATED, false));
+            geoSyncService.onJobModified(new JobModifiedEvent(2L, 20L, JobModifiedEvent.Type.STATUS_CHANGED, false));
 
             verify(cacheEvictionService).evictJobDetail(1L);
             verify(cacheEvictionService).evictJobDetail(2L);

@@ -5,6 +5,7 @@ import com.beingadish.AroundU.Constants.Enums.JobStatus;
 import com.beingadish.AroundU.Entities.Address;
 import com.beingadish.AroundU.Entities.Job;
 import com.beingadish.AroundU.Events.JobModifiedEvent;
+import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -41,6 +42,8 @@ class CacheConsistencyTest {
     private JobGeoService jobGeoService;
     @Mock
     private CacheEvictionService cacheEvictionService;
+    @Mock
+    private FailedGeoSyncRepository failedGeoSyncRepository;
 
     @InjectMocks
     private JobGeoSyncService geoSyncService;
@@ -53,7 +56,7 @@ class CacheConsistencyTest {
         @Test
         @DisplayName("job creation invalidates specific job ID, affected client, and worker feed")
         void jobCreationGranularEviction() {
-            geoSyncService.onJobModified(new JobModifiedEvent(42L, 7L, JobModifiedEvent.Type.CREATED));
+            geoSyncService.onJobModified(new JobModifiedEvent(42L, 7L, JobModifiedEvent.Type.CREATED, false));
 
             verify(cacheEvictionService).evictJobDetail(42L);        // specific key
             verify(cacheEvictionService).evictClientJobsCaches(7L);  // pattern for client 7
@@ -63,7 +66,7 @@ class CacheConsistencyTest {
         @Test
         @DisplayName("job update targets only affected client, other clients unaffected")
         void jobUpdateTargetsSpecificClient() {
-            geoSyncService.onJobModified(new JobModifiedEvent(100L, 5L, JobModifiedEvent.Type.UPDATED));
+            geoSyncService.onJobModified(new JobModifiedEvent(100L, 5L, JobModifiedEvent.Type.UPDATED, false));
 
             verify(cacheEvictionService).evictClientJobsCaches(5L);
             // Client 6, 7, etc. should NOT have their caches evicted
@@ -73,7 +76,7 @@ class CacheConsistencyTest {
         @Test
         @DisplayName("job deletion evicts all relevant caches")
         void jobDeletionEvictsAll() {
-            geoSyncService.onJobModified(new JobModifiedEvent(99L, 3L, JobModifiedEvent.Type.DELETED));
+            geoSyncService.onJobModified(new JobModifiedEvent(99L, 3L, JobModifiedEvent.Type.DELETED, false));
 
             verify(cacheEvictionService).evictJobDetail(99L);
             verify(cacheEvictionService).evictClientJobsCaches(3L);
@@ -83,9 +86,9 @@ class CacheConsistencyTest {
         @Test
         @DisplayName("concurrent updates for different jobs don't leave stale cache")
         void concurrentUpdatesProcessedIndependently() {
-            JobModifiedEvent event1 = new JobModifiedEvent(1L, 10L, JobModifiedEvent.Type.UPDATED);
-            JobModifiedEvent event2 = new JobModifiedEvent(2L, 20L, JobModifiedEvent.Type.STATUS_CHANGED);
-            JobModifiedEvent event3 = new JobModifiedEvent(3L, 10L, JobModifiedEvent.Type.DELETED);
+            JobModifiedEvent event1 = new JobModifiedEvent(1L, 10L, JobModifiedEvent.Type.UPDATED, false);
+            JobModifiedEvent event2 = new JobModifiedEvent(2L, 20L, JobModifiedEvent.Type.STATUS_CHANGED, false);
+            JobModifiedEvent event3 = new JobModifiedEvent(3L, 10L, JobModifiedEvent.Type.DELETED, false);
 
             geoSyncService.onJobModified(event1);
             geoSyncService.onJobModified(event2);
