@@ -62,3 +62,32 @@ feature:
 
 rate-limit:
   enabled: false
+
+# ── Resilience4j (very lenient / effectively disabled for tests) ──
+resilience:
+  circuitbreaker:
+    payment-gateway:
+      failure-rate-threshold: 90
+      wait-duration-in-open-state-seconds: 1
+      minimum-number-of-calls: 100
+      sliding-window-size: 100
+    email-service:
+      failure-rate-threshold: 90
+      wait-duration-in-open-state-seconds: 1
+      minimum-number-of-calls: 100
+      sliding-window-size: 100
+    image-upload:
+      failure-rate-threshold: 90
+      wait-duration-in-open-state-seconds: 1
+      minimum-number-of-calls: 100
+      sliding-window-size: 100
+  retry:
+    payment-gateway:
+      max-attempts: 1
+      wait-duration-ms: 10
+    email-service:
+      max-attempts: 1
+      wait-duration-ms: 10
+    image-upload:
+      max-attempts: 1
+      wait-duration-ms: 10

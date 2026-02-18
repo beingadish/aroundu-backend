@@ -70,3 +70,29 @@ rate-limit:
     capacity: 100
     refill-tokens: 100
     refill-minutes: 1
+
+# ── Resilience4j (lenient for dev) ────────────────────────────────
+resilience:
+  circuitbreaker:
+    payment-gateway:
+      failure-rate-threshold: 70
+      wait-duration-in-open-state-seconds: 10
+      minimum-number-of-calls: 3
+    email-service:
+      failure-rate-threshold: 80
+      wait-duration-in-open-state-seconds: 15
+      minimum-number-of-calls: 3
+    image-upload:
+      failure-rate-threshold: 80
+      wait-duration-in-open-state-seconds: 10
+      minimum-number-of-calls: 3
+  retry:
+    payment-gateway:
+      max-attempts: 2
+      wait-duration-ms: 200
+    email-service:
+      max-attempts: 2
+      wait-duration-ms: 500
+    image-upload:
+      max-attempts: 2
+      wait-duration-ms: 100
