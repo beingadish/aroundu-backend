@@ -24,6 +24,7 @@ import com.beingadish.AroundU.Repository.Skill.SkillRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
 import com.beingadish.AroundU.Service.JobGeoService;
 import com.beingadish.AroundU.Service.JobService;
+import com.beingadish.AroundU.Service.MetricsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -70,24 +71,29 @@ public class JobServiceImpl implements JobService {
     private final WorkerReadRepository workerReadRepository;
     private final JobMapper jobMapper;
     private final JobGeoService jobGeoService;
+    private final MetricsService metricsService;
 
     @Override
     @CacheEvict(value = {RedisConfig.CACHE_JOB_DETAIL, RedisConfig.CACHE_CLIENT_JOBS, RedisConfig.CACHE_WORKER_FEED}, allEntries = true)
     public JobDetailDTO createJob(Long clientId, JobCreateRequest request) {
-        Client client = clientRepository.findById(clientId).orElseThrow(() -> new JobValidationException("Client not found"));
-        Address location = addressRepository.findById(request.getJobLocationId()).orElseThrow(() -> new JobValidationException("Job location not found"));
-        Set<Skill> skills = new HashSet<>(skillRepository.findAllById(request.getRequiredSkillIds()));
-        if (skills.isEmpty()) {
-            throw new JobValidationException("At least one required skill must be provided");
-        }
-        Job job = jobMapper.toEntity(request, location, skills, client);
-        job.setJobStatus(JobStatus.OPEN_FOR_BIDS);
-        Job saved = jobRepository.save(job);
-        if (saved.getJobStatus() == JobStatus.OPEN_FOR_BIDS) {
-            jobGeoService.addOrUpdateOpenJob(saved.getId(), location.getLatitude(), location.getLongitude());
-        }
-        log.info("Created job id={} for client={}", saved.getId(), clientId);
-        return jobMapper.toDetailDto(saved);
+        return metricsService.recordTimer(metricsService.getJobCreationTimer(), () -> {
+            Client client = clientRepository.findById(clientId).orElseThrow(() -> new JobValidationException("Client not found"));
+            Address location = addressRepository.findById(request.getJobLocationId()).orElseThrow(() -> new JobValidationException("Job location not found"));
+            Set<Skill> skills = new HashSet<>(skillRepository.findAllById(request.getRequiredSkillIds()));
+            if (skills.isEmpty()) {
+                throw new JobValidationException("At least one required skill must be provided");
+            }
+            Job job = jobMapper.toEntity(request, location, skills, client);
+            job.setJobStatus(JobStatus.OPEN_FOR_BIDS);
+            Job saved = jobRepository.save(job);
+            if (saved.getJobStatus() == JobStatus.OPEN_FOR_BIDS) {
+                jobGeoService.addOrUpdateOpenJob(saved.getId(), location.getLatitude(), location.getLongitude());
+            }
+            metricsService.getJobsCreatedCounter().increment();
+            metricsService.incrementActiveJobs();
+            log.info("Created job id={} for client={}", saved.getId(), clientId);
+            return jobMapper.toDetailDto(saved);
+        });
     }
 
     @Override
@@ -183,6 +189,14 @@ public class JobServiceImpl implements JobService {
         job.setJobStatus(request.getNewStatus());
         Job saved = jobRepository.save(job);
         handleGeoOnStatusChange(saved, oldStatus, request.getNewStatus());
+        // Record metrics for terminal statuses
+        if (request.getNewStatus() == JobStatus.COMPLETED) {
+            metricsService.getJobsCompletedCounter().increment();
+            metricsService.decrementActiveJobs();
+        } else if (request.getNewStatus() == JobStatus.CANCELLED) {
+            metricsService.getJobsCancelledCounter().increment();
+            metricsService.decrementActiveJobs();
+        }
         log.info("Job id={} status updated from {} to {} by client {}", jobId, oldStatus, request.getNewStatus(), clientId);
         return jobMapper.toDetailDto(saved);
     }
@@ -258,12 +272,18 @@ public class JobServiceImpl implements JobService {
             throw new JobValidationException("Job is already in status " + target);
         }
         boolean allowed = switch (current) {
-            case CREATED -> target == JobStatus.OPEN_FOR_BIDS;
-            case OPEN_FOR_BIDS -> target == JobStatus.BID_SELECTED_AWAITING_HANDSHAKE || target == JobStatus.CANCELLED;
-            case BID_SELECTED_AWAITING_HANDSHAKE -> target == JobStatus.READY_TO_START || target == JobStatus.CANCELLED;
-            case READY_TO_START -> target == JobStatus.IN_PROGRESS || target == JobStatus.CANCELLED;
-            case IN_PROGRESS -> target == JobStatus.COMPLETED || target == JobStatus.CANCELLED;
-            case COMPLETED, CANCELLED -> false;
+            case CREATED ->
+                target == JobStatus.OPEN_FOR_BIDS;
+            case OPEN_FOR_BIDS ->
+                target == JobStatus.BID_SELECTED_AWAITING_HANDSHAKE || target == JobStatus.CANCELLED;
+            case BID_SELECTED_AWAITING_HANDSHAKE ->
+                target == JobStatus.READY_TO_START || target == JobStatus.CANCELLED;
+            case READY_TO_START ->
+                target == JobStatus.IN_PROGRESS || target == JobStatus.CANCELLED;
+            case IN_PROGRESS ->
+                target == JobStatus.COMPLETED || target == JobStatus.CANCELLED;
+            case COMPLETED, CANCELLED ->
+                false;
         };
         if (!allowed) {
             throw new JobValidationException("Invalid status transition from " + current + " to " + target);

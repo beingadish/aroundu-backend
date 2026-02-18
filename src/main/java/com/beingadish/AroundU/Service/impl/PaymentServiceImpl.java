@@ -13,6 +13,7 @@ import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository;
 import com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import com.beingadish.AroundU.Service.MetricsService;
 import com.beingadish.AroundU.Service.PaymentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -30,34 +31,43 @@ public class PaymentServiceImpl implements PaymentService {
     private final WorkerRepository workerRepository;
     private final PaymentTransactionMapper paymentTransactionMapper;
     private final JobConfirmationCodeRepository jobConfirmationCodeRepository;
+    private final MetricsService metricsService;
 
     @Override
     public PaymentTransaction lockEscrow(Long jobId, Long clientId, PaymentLockRequest request) {
-        Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found"));
-        Client client = clientRepository.findById(clientId).orElseThrow(() -> new EntityNotFoundException("Client not found"));
-        if (job.getAssignedTo() == null) {
-            throw new IllegalStateException("Cannot lock payment before worker assignment");
-        }
-        Worker worker = job.getAssignedTo();
-        PaymentTransaction tx = paymentTransactionMapper.toEntity(request, job, client, worker);
-        return paymentTransactionRepository.save(tx);
+        return metricsService.recordTimer(metricsService.getEscrowLockTimer(), () -> {
+            Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found"));
+            Client client = clientRepository.findById(clientId).orElseThrow(() -> new EntityNotFoundException("Client not found"));
+            if (job.getAssignedTo() == null) {
+                throw new IllegalStateException("Cannot lock payment before worker assignment");
+            }
+            Worker worker = job.getAssignedTo();
+            PaymentTransaction tx = paymentTransactionMapper.toEntity(request, job, client, worker);
+            PaymentTransaction saved = paymentTransactionRepository.save(tx);
+            metricsService.getEscrowLockedCounter().increment();
+            return saved;
+        });
     }
 
     @Override
     public PaymentTransaction releaseEscrow(Long jobId, Long clientId, PaymentReleaseRequest request) {
-        Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found"));
-        if (!job.getCreatedBy().getId().equals(clientId)) {
-            throw new IllegalStateException("Client does not own this job");
-        }
-        var codes = jobConfirmationCodeRepository.findByJob(job).orElseThrow(() -> new EntityNotFoundException("Confirmation codes not found"));
-        if (!codes.getReleaseCode().equals(request.getReleaseCode())) {
-            throw new IllegalArgumentException("Invalid release code");
-        }
-        PaymentTransaction tx = paymentTransactionRepository.findByJob(job).orElseThrow(() -> new EntityNotFoundException("Payment transaction not found"));
-        if (tx.getStatus() != PaymentStatus.ESCROW_LOCKED) {
-            throw new IllegalStateException("Payment is not locked in escrow");
-        }
-        tx.setStatus(PaymentStatus.RELEASED);
-        return paymentTransactionRepository.save(tx);
+        return metricsService.recordTimer(metricsService.getEscrowReleaseTimer(), () -> {
+            Job job = jobRepository.findById(jobId).orElseThrow(() -> new EntityNotFoundException("Job not found"));
+            if (!job.getCreatedBy().getId().equals(clientId)) {
+                throw new IllegalStateException("Client does not own this job");
+            }
+            var codes = jobConfirmationCodeRepository.findByJob(job).orElseThrow(() -> new EntityNotFoundException("Confirmation codes not found"));
+            if (!codes.getReleaseCode().equals(request.getReleaseCode())) {
+                throw new IllegalArgumentException("Invalid release code");
+            }
+            PaymentTransaction tx = paymentTransactionRepository.findByJob(job).orElseThrow(() -> new EntityNotFoundException("Payment transaction not found"));
+            if (tx.getStatus() != PaymentStatus.ESCROW_LOCKED) {
+                throw new IllegalStateException("Payment is not locked in escrow");
+            }
+            tx.setStatus(PaymentStatus.RELEASED);
+            PaymentTransaction saved = paymentTransactionRepository.save(tx);
+            metricsService.getEscrowReleasedCounter().increment();
+            return saved;
+        });
     }
 }

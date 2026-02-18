@@ -21,10 +21,11 @@ spring:
     properties:
       hibernate:
         format_sql: false
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
+  data:
+    redis:
+      password: ${REDIS_PASSWORD:}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 logging:
   file:
@@ -56,7 +57,32 @@ feature:
   enable-swagger: ${FEATURE_ENABLE_SWAGGER:true}
   enable-debug-security: ${FEATURE_ENABLE_DEBUG_SECURITY:false}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.90, 0.95, 0.99
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
 admin:
   email: ${ADMIN_EMAIL:admin@aroundu.com}
-  password: ${ADMIN_PASSWORD:changeme}
+  password: ${ADMIN_PASSWORD:arounduadmin}
   name: ${ADMIN_NAME:AroundU Admin}
