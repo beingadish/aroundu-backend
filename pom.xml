@@ -144,6 +144,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Redisson (Bloom Filters + distributed data structures) -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>3.25.0</version>
+        </dependency>
+
         <!-- Monitoring & Observability -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

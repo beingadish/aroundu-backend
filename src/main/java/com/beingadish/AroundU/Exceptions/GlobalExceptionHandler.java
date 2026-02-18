@@ -1,6 +1,7 @@
 package com.beingadish.AroundU.Exceptions;
 
 import com.beingadish.AroundU.DTO.Common.ApiResponse;
+import com.beingadish.AroundU.Exceptions.Bid.DuplicateBidException;
 import com.beingadish.AroundU.Exceptions.Client.ClientAlreadyExistException;
 import com.beingadish.AroundU.Exceptions.Client.ClientNotFoundException;
 import com.beingadish.AroundU.Exceptions.Client.ClientValidationException;
@@ -26,6 +27,12 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DuplicateBidException.class)
+    public ResponseEntity<ApiResponse<?>> handleDuplicateBid(DuplicateBidException ex) {
+        log.warn("Duplicate bid: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
 
     @ExceptionHandler(ClientAlreadyExistException.class)
     public ResponseEntity<ApiResponse<?>> handleClientAlreadyExists(ClientAlreadyExistException ex) {
