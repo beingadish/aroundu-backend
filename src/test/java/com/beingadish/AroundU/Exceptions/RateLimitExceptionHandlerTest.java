@@ -1,12 +1,14 @@
 package com.beingadish.AroundU.Exceptions;
 
-import com.beingadish.AroundU.DTO.Common.ApiResponse;
+import com.beingadish.AroundU.common.dto.ApiResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.beingadish.AroundU.common.exception.GlobalExceptionHandler;
+import com.beingadish.AroundU.common.exception.RateLimitExceededException;
 
 /**
  * Tests that the GlobalExceptionHandler correctly handles

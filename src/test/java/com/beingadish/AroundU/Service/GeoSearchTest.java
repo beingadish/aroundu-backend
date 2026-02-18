@@ -1,24 +1,25 @@
 package com.beingadish.AroundU.Service;
 
-import com.beingadish.AroundU.Constants.Enums.JobStatus;
-import com.beingadish.AroundU.Constants.Enums.SortDirection;
-import com.beingadish.AroundU.DTO.Job.JobSummaryDTO;
-import com.beingadish.AroundU.DTO.Job.WorkerJobFeedRequest;
-import com.beingadish.AroundU.Entities.Address;
-import com.beingadish.AroundU.Entities.FailedGeoSync;
-import com.beingadish.AroundU.Entities.Job;
-import com.beingadish.AroundU.Entities.Skill;
-import com.beingadish.AroundU.Entities.Worker;
-import com.beingadish.AroundU.Events.JobModifiedEvent;
-import com.beingadish.AroundU.Exceptions.Job.JobValidationException;
-import com.beingadish.AroundU.Mappers.Job.JobMapper;
-import com.beingadish.AroundU.Repository.Bid.BidRepository;
-import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
-import com.beingadish.AroundU.Repository.Job.JobRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
-import com.beingadish.AroundU.Service.CacheEvictionService;
-import com.beingadish.AroundU.Service.impl.JobServiceImpl;
-import com.beingadish.AroundU.Utilities.DistanceUtils;
+import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.common.constants.enums.SortDirection;
+import com.beingadish.AroundU.job.dto.JobSummaryDTO;
+import com.beingadish.AroundU.job.dto.WorkerJobFeedRequest;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.location.entity.FailedGeoSync;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.common.entity.Skill;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.job.event.JobModifiedEvent;
+import com.beingadish.AroundU.job.exception.JobValidationException;
+import com.beingadish.AroundU.job.mapper.JobMapper;
+import com.beingadish.AroundU.bid.repository.BidRepository;
+import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.user.repository.WorkerReadRepository;
+import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
+import com.beingadish.AroundU.job.service.impl.JobServiceImpl;
+import com.beingadish.AroundU.location.service.JobGeoSyncService;
+import com.beingadish.AroundU.common.util.DistanceUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,8 @@ import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.beingadish.AroundU.location.service.JobGeoService;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 
 /**
  * Comprehensive geo-search tests covering:
@@ -101,11 +104,11 @@ class GeoSearchTest {
 
     // Unused by getWorkerFeed but required by @InjectMocks
     @Mock
-    private com.beingadish.AroundU.Repository.Address.AddressRepository addressRepository;
+    private com.beingadish.AroundU.location.repository.AddressRepository addressRepository;
     @Mock
-    private com.beingadish.AroundU.Repository.Client.ClientRepository clientRepository;
+    private com.beingadish.AroundU.user.repository.ClientRepository clientRepository;
     @Mock
-    private com.beingadish.AroundU.Repository.Skill.SkillRepository skillRepository;
+    private com.beingadish.AroundU.common.repository.SkillRepository skillRepository;
 
     @InjectMocks
     private JobServiceImpl jobService;

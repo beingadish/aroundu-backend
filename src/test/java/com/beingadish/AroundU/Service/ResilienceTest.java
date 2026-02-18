@@ -1,12 +1,12 @@
 package com.beingadish.AroundU.Service;
 
-import com.beingadish.AroundU.Config.ResilienceConfig;
-import com.beingadish.AroundU.Constants.Enums.PaymentStatus;
-import com.beingadish.AroundU.DTO.Payment.PaymentLockRequest;
-import com.beingadish.AroundU.DTO.Payment.PaymentReleaseRequest;
-import com.beingadish.AroundU.Entities.PaymentTransaction;
-import com.beingadish.AroundU.Service.impl.EmailServiceImpl;
-import com.beingadish.AroundU.Service.impl.ImageStorageServiceImpl;
+import com.beingadish.AroundU.infrastructure.config.ResilienceConfig;
+import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
+import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
+import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
+import com.beingadish.AroundU.payment.entity.PaymentTransaction;
+import com.beingadish.AroundU.notification.service.impl.EmailServiceImpl;
+import com.beingadish.AroundU.infrastructure.storage.impl.ImageStorageServiceImpl;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
@@ -27,6 +27,10 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.beingadish.AroundU.payment.service.ResilientPaymentService;
+import com.beingadish.AroundU.payment.service.PaymentService;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.notification.service.EmailService;
 
 /**
  * Comprehensive unit tests for the Resilience4j integration.

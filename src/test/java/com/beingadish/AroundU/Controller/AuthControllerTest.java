@@ -1,10 +1,10 @@
 package com.beingadish.AroundU.Controller;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.Controller.Auth.AuthController;
-import com.beingadish.AroundU.DTO.Auth.LoginRequestDTO;
-import com.beingadish.AroundU.DTO.Auth.LoginResponseDTO;
-import com.beingadish.AroundU.Service.AuthService;
+import com.beingadish.AroundU.user.controller.AuthController;
+import com.beingadish.AroundU.user.dto.auth.LoginRequestDTO;
+import com.beingadish.AroundU.user.dto.auth.LoginResponseDTO;
+import com.beingadish.AroundU.user.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -57,57 +57,57 @@ class AuthControllerTest {
     private AuthService authService;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     // ── JPA infrastructure mocks (no DB in WebMvcTest slice) ────
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Client.ClientReadRepository clientReadRepository;
+    private com.beingadish.AroundU.user.repository.ClientReadRepository clientReadRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Client.ClientWriteRepository clientWriteRepository;
+    private com.beingadish.AroundU.user.repository.ClientWriteRepository clientWriteRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Client.ClientRepository clientRepository;
+    private com.beingadish.AroundU.user.repository.ClientRepository clientRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Worker.WorkerReadRepository workerReadRepository;
+    private com.beingadish.AroundU.user.repository.WorkerReadRepository workerReadRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository workerWriteRepository;
+    private com.beingadish.AroundU.user.repository.WorkerWriteRepository workerWriteRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Worker.WorkerRepository workerRepository;
+    private com.beingadish.AroundU.user.repository.WorkerRepository workerRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Admin.AdminRepository adminRepository;
+    private com.beingadish.AroundU.user.repository.AdminRepository adminRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Skill.SkillRepository skillRepository;
+    private com.beingadish.AroundU.common.repository.SkillRepository skillRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Job.JobRepository jobRepository;
+    private com.beingadish.AroundU.job.repository.JobRepository jobRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository jobConfirmationCodeRepository;
+    private com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository jobConfirmationCodeRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Bid.BidRepository bidRepository;
+    private com.beingadish.AroundU.bid.repository.BidRepository bidRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository paymentTransactionRepository;
+    private com.beingadish.AroundU.payment.repository.PaymentTransactionRepository paymentTransactionRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Address.AddressRepository addressRepository;
+    private com.beingadish.AroundU.location.repository.AddressRepository addressRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
+    private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Analytics.AggregatedMetricsRepository aggregatedMetricsRepository;
+    private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Notification.FailedNotificationRepository failedNotificationRepository;
+    private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
     @SuppressWarnings("unused")
     @MockitoBean(name = "entityManagerFactory")
     private EntityManagerFactory entityManagerFactory;

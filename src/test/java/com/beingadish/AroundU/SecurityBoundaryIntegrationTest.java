@@ -1,11 +1,15 @@
 package com.beingadish.AroundU;
 
-import com.beingadish.AroundU.Constants.Enums.Country;
-import com.beingadish.AroundU.Constants.Enums.Currency;
-import com.beingadish.AroundU.Entities.*;
-import com.beingadish.AroundU.Repository.Admin.AdminRepository;
-import com.beingadish.AroundU.Repository.Client.ClientRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
+import com.beingadish.AroundU.common.constants.enums.Country;
+import com.beingadish.AroundU.common.constants.enums.Currency;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.user.entity.Admin;
+import com.beingadish.AroundU.common.entity.VerificationStatus;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.user.repository.AdminRepository;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -181,5 +185,6 @@ class SecurityBoundaryIntegrationTest {
     }
 
     private record LoginPayload(String email, String password) implements java.io.Serializable {
+
     }
 }

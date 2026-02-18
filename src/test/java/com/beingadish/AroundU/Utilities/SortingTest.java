@@ -1,7 +1,7 @@
 package com.beingadish.AroundU.Utilities;
 
-import com.beingadish.AroundU.Constants.Enums.SortDirection;
-import com.beingadish.AroundU.Exceptions.InvalidSortFieldException;
+import com.beingadish.AroundU.common.constants.enums.SortDirection;
+import com.beingadish.AroundU.common.exception.InvalidSortFieldException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -11,6 +11,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.data.domain.Sort;
 
 import static org.assertj.core.api.Assertions.*;
+import com.beingadish.AroundU.common.util.SortValidator;
+import com.beingadish.AroundU.common.util.DistanceUtils;
+import com.beingadish.AroundU.common.util.PopularityUtils;
 
 /**
  * Comprehensive tests for the sorting infrastructure:

@@ -1,12 +1,12 @@
 package com.beingadish.AroundU.Service;
 
-import com.beingadish.AroundU.Exceptions.Bid.DuplicateBidException;
-import com.beingadish.AroundU.Repository.Bid.BidRepository;
-import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
-import com.beingadish.AroundU.Service.impl.BidDuplicateCheckServiceImpl;
-import com.beingadish.AroundU.Service.impl.ProfileViewTrackingServiceImpl;
-import com.beingadish.AroundU.Service.impl.RegistrationValidationServiceImpl;
+import com.beingadish.AroundU.bid.exception.DuplicateBidException;
+import com.beingadish.AroundU.bid.repository.BidRepository;
+import com.beingadish.AroundU.user.repository.ClientReadRepository;
+import com.beingadish.AroundU.user.repository.WorkerReadRepository;
+import com.beingadish.AroundU.bid.service.impl.BidDuplicateCheckServiceImpl;
+import com.beingadish.AroundU.bid.service.impl.ProfileViewTrackingServiceImpl;
+import com.beingadish.AroundU.user.service.impl.RegistrationValidationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import com.beingadish.AroundU.bid.service.BloomFilterMetricsService;
 
 /**
  * Unit tests for Bloom-filter-backed services.
