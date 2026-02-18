@@ -16,4 +16,6 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     List<Bid> findByWorker(Worker worker);
 
     long countByJobId(Long jobId);
+
+    boolean existsByWorkerIdAndJobId(Long workerId, Long jobId);
 }
