@@ -25,6 +25,13 @@ logging:
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
 
+# Explicitly disable Swagger/OpenAPI in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 jwt:
   expiration:
     ms: ${PROD_JWT_EXPIRATION_MS:172800000}

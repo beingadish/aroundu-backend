@@ -4,6 +4,7 @@ import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.repository.JobRepository;
 import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.location.service.JobGeoSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
