@@ -15,6 +15,7 @@ import com.beingadish.AroundU.Entities.Client;
 import com.beingadish.AroundU.Entities.Job;
 import com.beingadish.AroundU.Entities.Skill;
 import com.beingadish.AroundU.Entities.Worker;
+import com.beingadish.AroundU.Events.JobModifiedEvent;
 import com.beingadish.AroundU.Exceptions.Job.JobNotFoundException;
 import com.beingadish.AroundU.Exceptions.Job.JobValidationException;
 import com.beingadish.AroundU.Mappers.Job.JobMapper;
@@ -32,8 +33,8 @@ import com.beingadish.AroundU.Utilities.PopularityUtils;
 import com.beingadish.AroundU.Utilities.SortValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -79,9 +80,9 @@ public class JobServiceImpl implements JobService {
     private final JobMapper jobMapper;
     private final JobGeoService jobGeoService;
     private final MetricsService metricsService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    @CacheEvict(value = {RedisConfig.CACHE_JOB_DETAIL, RedisConfig.CACHE_CLIENT_JOBS, RedisConfig.CACHE_WORKER_FEED}, allEntries = true)
     public JobDetailDTO createJob(Long clientId, JobCreateRequest request) {
         return metricsService.recordTimer(metricsService.getJobCreationTimer(), () -> {
             Client client = clientRepository.findById(clientId).orElseThrow(() -> new JobValidationException("Client not found"));
@@ -99,12 +100,12 @@ public class JobServiceImpl implements JobService {
             metricsService.getJobsCreatedCounter().increment();
             metricsService.incrementActiveJobs();
             log.info("Created job id={} for client={}", saved.getId(), clientId);
+            eventPublisher.publishEvent(new JobModifiedEvent(saved.getId(), clientId, JobModifiedEvent.Type.CREATED));
             return jobMapper.toDetailDto(saved);
         });
     }
 
     @Override
-    @CacheEvict(value = {RedisConfig.CACHE_JOB_DETAIL, RedisConfig.CACHE_CLIENT_JOBS, RedisConfig.CACHE_WORKER_FEED}, allEntries = true)
     public JobDetailDTO updateJob(Long jobId, Long clientId, JobUpdateRequest request) {
         Job job = jobRepository.findById(jobId).orElseThrow(() -> new JobNotFoundException("Job not found"));
         if (!Objects.equals(job.getCreatedBy().getId(), clientId)) {
@@ -127,11 +128,13 @@ public class JobServiceImpl implements JobService {
         if (location != null && saved.getJobStatus() == JobStatus.OPEN_FOR_BIDS) {
             jobGeoService.addOrUpdateOpenJob(saved.getId(), location.getLatitude(), location.getLongitude());
         }
+        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.UPDATED));
         return jobMapper.toDetailDto(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = RedisConfig.CACHE_JOB_DETAIL, key = "#jobId")
     public JobDetailDTO getJobDetail(Long jobId) {
         Job job = jobRepository.findById(jobId).orElseThrow(() -> new JobNotFoundException("Job not found"));
         return jobMapper.toDetailDto(job);
@@ -221,7 +224,6 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    @CacheEvict(value = {RedisConfig.CACHE_JOB_DETAIL, RedisConfig.CACHE_CLIENT_JOBS, RedisConfig.CACHE_WORKER_FEED}, allEntries = true)
     public JobDetailDTO updateJobStatus(Long jobId, Long clientId, JobStatusUpdateRequest request) {
         Job job = jobRepository.findByIdAndCreatedById(jobId, clientId).orElseThrow(() -> new JobNotFoundException("Job not found for client"));
         validateStatusTransition(job.getJobStatus(), request.getNewStatus());
@@ -238,6 +240,7 @@ public class JobServiceImpl implements JobService {
             metricsService.decrementActiveJobs();
         }
         log.info("Job id={} status updated from {} to {} by client {}", jobId, oldStatus, request.getNewStatus(), clientId);
+        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.STATUS_CHANGED));
         return jobMapper.toDetailDto(saved);
     }
 
@@ -322,7 +325,6 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    @CacheEvict(value = {RedisConfig.CACHE_JOB_DETAIL, RedisConfig.CACHE_CLIENT_JOBS, RedisConfig.CACHE_WORKER_FEED}, allEntries = true)
     public void deleteJob(Long jobId, Long clientId) {
         Job job = jobRepository.findById(jobId).orElseThrow(() -> new JobNotFoundException("Job not found"));
         if (!Objects.equals(job.getCreatedBy().getId(), clientId)) {
@@ -334,6 +336,7 @@ public class JobServiceImpl implements JobService {
         if (wasOpen) {
             jobGeoService.removeOpenJob(jobId);
         }
+        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.DELETED));
         log.info("Deleted job id={} for client={}", jobId, clientId);
     }
 
