@@ -12,6 +12,7 @@ import com.beingadish.AroundU.DTO.Job.JobUpdateRequest;
 import com.beingadish.AroundU.DTO.Job.WorkerJobFeedRequest;
 import com.beingadish.AroundU.Entities.Address;
 import com.beingadish.AroundU.Entities.Client;
+import com.beingadish.AroundU.Entities.FailedGeoSync;
 import com.beingadish.AroundU.Entities.Job;
 import com.beingadish.AroundU.Entities.Skill;
 import com.beingadish.AroundU.Entities.Worker;
@@ -22,6 +23,7 @@ import com.beingadish.AroundU.Mappers.Job.JobMapper;
 import com.beingadish.AroundU.Repository.Address.AddressRepository;
 import com.beingadish.AroundU.Repository.Bid.BidRepository;
 import com.beingadish.AroundU.Repository.Client.ClientRepository;
+import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
 import com.beingadish.AroundU.Repository.Job.JobRepository;
 import com.beingadish.AroundU.Repository.Skill.SkillRepository;
 import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
@@ -77,6 +79,7 @@ public class JobServiceImpl implements JobService {
     private final SkillRepository skillRepository;
     private final WorkerReadRepository workerReadRepository;
     private final BidRepository bidRepository;
+    private final FailedGeoSyncRepository failedGeoSyncRepository;
     private final JobMapper jobMapper;
     private final JobGeoService jobGeoService;
     private final MetricsService metricsService;
@@ -95,12 +98,12 @@ public class JobServiceImpl implements JobService {
             job.setJobStatus(JobStatus.OPEN_FOR_BIDS);
             Job saved = jobRepository.save(job);
             if (saved.getJobStatus() == JobStatus.OPEN_FOR_BIDS) {
-                jobGeoService.addOrUpdateOpenJob(saved.getId(), location.getLatitude(), location.getLongitude());
+                safeGeoAdd(saved.getId(), location.getLatitude(), location.getLongitude());
             }
             metricsService.getJobsCreatedCounter().increment();
             metricsService.incrementActiveJobs();
             log.info("Created job id={} for client={}", saved.getId(), clientId);
-            eventPublisher.publishEvent(new JobModifiedEvent(saved.getId(), clientId, JobModifiedEvent.Type.CREATED));
+            eventPublisher.publishEvent(new JobModifiedEvent(saved.getId(), clientId, JobModifiedEvent.Type.CREATED, false));
             return jobMapper.toDetailDto(saved);
         });
     }
@@ -125,10 +128,12 @@ public class JobServiceImpl implements JobService {
         request.setJobStatus(null); // enforce status changes through updateJobStatus
         jobMapper.updateEntity(request, job, location, skills);
         Job saved = jobRepository.save(job);
+        boolean locationChanged = false;
         if (location != null && saved.getJobStatus() == JobStatus.OPEN_FOR_BIDS) {
-            jobGeoService.addOrUpdateOpenJob(saved.getId(), location.getLatitude(), location.getLongitude());
+            safeGeoAdd(saved.getId(), location.getLatitude(), location.getLongitude());
+            locationChanged = true;
         }
-        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.UPDATED));
+        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.UPDATED, locationChanged));
         return jobMapper.toDetailDto(saved);
     }
 
@@ -240,7 +245,7 @@ public class JobServiceImpl implements JobService {
             metricsService.decrementActiveJobs();
         }
         log.info("Job id={} status updated from {} to {} by client {}", jobId, oldStatus, request.getNewStatus(), clientId);
-        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.STATUS_CHANGED));
+        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.STATUS_CHANGED, false));
         return jobMapper.toDetailDto(saved);
     }
 
@@ -310,7 +315,9 @@ public class JobServiceImpl implements JobService {
                     .toList();
         }
 
-        Page<JobSummaryDTO> finalPage = new PageImpl<>(dtos, pageable, jobsPage.getTotalElements());
+        // Use the filtered count as total elements, not the DB page total,
+        // because in-memory skill filtering may have reduced the result count.
+        Page<JobSummaryDTO> finalPage = new PageImpl<>(dtos, pageable, dtos.size());
         return finalPage;
     }
 
@@ -334,9 +341,9 @@ public class JobServiceImpl implements JobService {
         boolean wasOpen = job.getJobStatus() == JobStatus.OPEN_FOR_BIDS;
         jobRepository.delete(job);
         if (wasOpen) {
-            jobGeoService.removeOpenJob(jobId);
+            safeGeoRemove(jobId);
         }
-        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.DELETED));
+        eventPublisher.publishEvent(new JobModifiedEvent(jobId, clientId, JobModifiedEvent.Type.DELETED, false));
         log.info("Deleted job id={} for client={}", jobId, clientId);
     }
 
@@ -367,9 +374,9 @@ public class JobServiceImpl implements JobService {
         boolean wasOpen = oldStatus == JobStatus.OPEN_FOR_BIDS;
         boolean nowOpen = newStatus == JobStatus.OPEN_FOR_BIDS;
         if (wasOpen && !nowOpen) {
-            jobGeoService.removeOpenJob(job.getId());
+            safeGeoRemove(job.getId());
         } else if (!wasOpen && nowOpen && job.getJobLocation() != null) {
-            jobGeoService.addOrUpdateOpenJob(job.getId(), job.getJobLocation().getLatitude(), job.getJobLocation().getLongitude());
+            safeGeoAdd(job.getId(), job.getJobLocation().getLatitude(), job.getJobLocation().getLongitude());
         }
     }
 
@@ -423,5 +430,50 @@ public class JobServiceImpl implements JobService {
         }
 
         return dir == SortDirection.DESC ? comparator.reversed() : comparator;
+    }
+
+    // ── Safe Redis geo wrappers ──────────────────────────────────
+    /**
+     * Adds a job to the Redis geo-index. If the Redis write fails, records the
+     * failure in PostgreSQL for later retry, ensuring the PostgreSQL
+     * transaction is NOT rolled back.
+     */
+    private void safeGeoAdd(Long jobId, Double latitude, Double longitude) {
+        try {
+            jobGeoService.addOrUpdateOpenJob(jobId, latitude, longitude);
+        } catch (Exception ex) {
+            log.error("Redis geo ADD failed for jobId={}, scheduling retry: {}", jobId, ex.getMessage());
+            recordFailedSync(jobId, FailedGeoSync.SyncOperation.ADD, latitude, longitude, ex.getMessage());
+        }
+    }
+
+    /**
+     * Removes a job from the Redis geo-index. If the Redis write fails, records
+     * the failure for later retry.
+     */
+    private void safeGeoRemove(Long jobId) {
+        try {
+            jobGeoService.removeOpenJob(jobId);
+        } catch (Exception ex) {
+            log.error("Redis geo REMOVE failed for jobId={}, scheduling retry: {}", jobId, ex.getMessage());
+            recordFailedSync(jobId, FailedGeoSync.SyncOperation.REMOVE, null, null, ex.getMessage());
+        }
+    }
+
+    private void recordFailedSync(Long jobId, FailedGeoSync.SyncOperation operation,
+            Double latitude, Double longitude, String error) {
+        try {
+            if (!failedGeoSyncRepository.existsByJobIdAndOperationAndResolvedFalse(jobId, operation)) {
+                failedGeoSyncRepository.save(FailedGeoSync.builder()
+                        .jobId(jobId)
+                        .operation(operation)
+                        .latitude(latitude)
+                        .longitude(longitude)
+                        .lastError(error != null && error.length() > 1000 ? error.substring(0, 1000) : error)
+                        .build());
+            }
+        } catch (Exception ex) {
+            log.error("Failed to record geo sync failure for jobId={}: {}", jobId, ex.getMessage());
+        }
     }
 }
