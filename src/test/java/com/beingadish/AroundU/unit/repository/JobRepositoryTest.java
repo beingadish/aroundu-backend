@@ -1,8 +1,13 @@
 package com.beingadish.AroundU.unit.repository;
 
-import com.beingadish.AroundU.Constants.Enums.*;
-import com.beingadish.AroundU.Entities.*;
-import com.beingadish.AroundU.Repository.Job.JobRepository;
+import com.beingadish.AroundU.common.constants.enums.*;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.common.entity.VerificationStatus;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.common.entity.Skill;
+import com.beingadish.AroundU.common.entity.Price;
+import com.beingadish.AroundU.job.repository.JobRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;

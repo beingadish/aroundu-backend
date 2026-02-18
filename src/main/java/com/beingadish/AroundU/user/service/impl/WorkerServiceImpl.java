@@ -1,0 +1,134 @@
+package com.beingadish.AroundU.user.service.impl;
+
+import com.beingadish.AroundU.user.dto.worker.WorkerUpdateRequestDTO;
+import com.beingadish.AroundU.user.dto.worker.WorkerDetailDTO;
+import com.beingadish.AroundU.user.dto.worker.WorkerSignupRequestDTO;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.user.exception.WorkerAlreadyExistException;
+import com.beingadish.AroundU.user.exception.WorkerNotFoundException;
+import com.beingadish.AroundU.user.exception.WorkerValidationException;
+import com.beingadish.AroundU.user.mapper.WorkerMapper;
+import com.beingadish.AroundU.user.model.WorkerModel;
+import com.beingadish.AroundU.user.repository.WorkerReadRepository;
+import com.beingadish.AroundU.user.repository.WorkerWriteRepository;
+import com.beingadish.AroundU.user.service.WorkerService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class WorkerServiceImpl implements WorkerService {
+
+    private final WorkerMapper workerMapper;
+    private final WorkerReadRepository workerReadRepository;
+    private final WorkerWriteRepository workerWriteRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Override
+    @Transactional
+    public void registerWorker(WorkerSignupRequestDTO workerSignupRequestDTO) {
+        WorkerModel workerModel = workerMapper.signupRequestDtoToModel(workerSignupRequestDTO);
+
+        if (Boolean.TRUE.equals(workerReadRepository.existsByEmail(workerModel.getEmail()))) {
+            throw new WorkerAlreadyExistException("Worker with the given email already exists");
+        }
+
+        if (Boolean.TRUE.equals(workerReadRepository.existsByPhoneNumber(workerModel.getPhoneNumber()))) {
+            throw new WorkerAlreadyExistException("Worker with the given phone number already exists");
+        }
+
+        workerModel.setHashedPassword(passwordEncoder.encode(workerSignupRequestDTO.getPassword()));
+        workerWriteRepository.save(workerMapper.modelToEntity(workerModel));
+        log.info("Registered worker with email={} (id assigned by DB)", workerModel.getEmail());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkerDetailDTO getWorkerDetails(Long workerId) {
+        Worker workerEntity = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new WorkerNotFoundException("Worker with id %d does not exist".formatted(workerId)));
+
+        log.debug("Fetched worker details for id={}", workerId);
+        WorkerModel model = workerMapper.toModel(workerEntity);
+        return workerMapper.modelToWorkerDetailDto(model);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<WorkerDetailDTO> getAllWorkers(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Worker> pageData = workerReadRepository.findAll(pageable);
+        return pageData.map(workerMapper::toModel).map(workerMapper::modelToWorkerDetailDto);
+    }
+
+    @Override
+    @Transactional
+    public WorkerDetailDTO updateWorkerDetails(Long workerId, WorkerUpdateRequestDTO updateRequest) {
+        Worker foundWorker = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new WorkerValidationException("Cannot update, worker not found"));
+
+        if (updateRequest.getName() != null) {
+            foundWorker.setName(updateRequest.getName());
+        }
+
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(foundWorker.getEmail())) {
+            if (Boolean.TRUE.equals(workerReadRepository.existsByEmail(updateRequest.getEmail()))) {
+                throw new WorkerValidationException("Email already in use");
+            }
+            foundWorker.setEmail(updateRequest.getEmail());
+        }
+
+        if (updateRequest.getPhoneNumber() != null && !updateRequest.getPhoneNumber().equals(foundWorker.getPhoneNumber())) {
+            if (Boolean.TRUE.equals(workerReadRepository.existsByPhoneNumber(updateRequest.getPhoneNumber()))) {
+                throw new WorkerValidationException("Phone number already in use");
+            }
+            foundWorker.setPhoneNumber(updateRequest.getPhoneNumber());
+        }
+
+        if (updateRequest.getProfileImageUrl() != null) {
+            foundWorker.setProfileImageUrl(updateRequest.getProfileImageUrl());
+        }
+
+        if (updateRequest.getExperienceYears() != null) {
+            foundWorker.setExperienceYears(updateRequest.getExperienceYears());
+        }
+
+        if (updateRequest.getCertifications() != null) {
+            foundWorker.setCertifications(updateRequest.getCertifications());
+        }
+
+        if (updateRequest.getIsOnDuty() != null) {
+            foundWorker.setIsOnDuty(updateRequest.getIsOnDuty());
+        }
+
+        if (updateRequest.getPayoutAccount() != null) {
+            foundWorker.setPayoutAccount(updateRequest.getPayoutAccount());
+        }
+
+        if (updateRequest.getCurrency() != null) {
+            foundWorker.setCurrency(updateRequest.getCurrency());
+        }
+
+        Worker updatedWorker = workerWriteRepository.save(foundWorker);
+        log.info("Updated worker details for id={} email={}", workerId, updatedWorker.getEmail());
+        WorkerModel updatedModel = workerMapper.toModel(updatedWorker);
+        return workerMapper.modelToWorkerDetailDto(updatedModel);
+    }
+
+    @Override
+    @Transactional
+    public void deleteWorker(Long workerId) {
+        Worker worker = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new WorkerNotFoundException("Worker with id %d does not exist".formatted(workerId)));
+
+        workerWriteRepository.deleteById(workerId);
+        log.info("Deleted worker id={} email={}", workerId, worker.getEmail());
+    }
+}

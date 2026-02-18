@@ -1,10 +1,10 @@
 package com.beingadish.AroundU.Service;
 
-import com.beingadish.AroundU.Entities.FailedNotification;
-import com.beingadish.AroundU.Repository.Notification.FailedNotificationRepository;
-import com.beingadish.AroundU.Service.impl.NotificationServiceImpl;
-import com.beingadish.AroundU.Utilities.AsyncUtils;
-import com.beingadish.AroundU.Utilities.ParallelProcessingUtils;
+import com.beingadish.AroundU.notification.entity.FailedNotification;
+import com.beingadish.AroundU.notification.repository.FailedNotificationRepository;
+import com.beingadish.AroundU.notification.service.impl.NotificationServiceImpl;
+import com.beingadish.AroundU.common.util.AsyncUtils;
+import com.beingadish.AroundU.common.util.ParallelProcessingUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.beingadish.AroundU.notification.service.EmailService;
 
 /**
  * Tests for multi-threading, parallel processing, and async utilities.
