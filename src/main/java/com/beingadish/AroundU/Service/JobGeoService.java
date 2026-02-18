@@ -1,6 +1,7 @@
 package com.beingadish.AroundU.Service;
 
 import java.util.List;
+import java.util.Set;
 
 public interface JobGeoService {
 
@@ -9,4 +10,9 @@ public interface JobGeoService {
     void removeOpenJob(Long jobId);
 
     List<Long> findNearbyOpenJobs(Double latitude, Double longitude, double radiusKm, int limit);
+
+    /**
+     * Return all member identifiers stored in the geo index.
+     */
+    Set<String> getAllGeoMembers();
 }

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Profile("railway")
@@ -26,5 +27,10 @@ public class NoOpJobGeoService implements JobGeoService {
     public List<Long> findNearbyOpenJobs(Double latitude, Double longitude, double radiusKm, int limit) {
         log.debug("Railway profile: geo search bypassed (Redis disabled)");
         return Collections.emptyList();
+    }
+
+    @Override
+    public Set<String> getAllGeoMembers() {
+        return Collections.emptySet();
     }
 }

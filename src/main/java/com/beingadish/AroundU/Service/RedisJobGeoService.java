@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -80,6 +81,17 @@ public class RedisJobGeoService implements JobGeoService {
         } catch (Exception ex) {
             log.warn("Redis geo search failed for lat={} lon={}: {}", latitude, longitude, ex.getMessage());
             return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public Set<String> getAllGeoMembers() {
+        try {
+            Set<String> members = stringRedisTemplate.opsForZSet().range(OPEN_JOBS_GEO_KEY, 0, -1);
+            return members != null ? members : Collections.emptySet();
+        } catch (Exception ex) {
+            log.warn("Failed to retrieve all geo members: {}", ex.getMessage());
+            return Collections.emptySet();
         }
     }
 }

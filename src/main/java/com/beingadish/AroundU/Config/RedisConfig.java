@@ -26,6 +26,8 @@ public class RedisConfig {
     public static final String CACHE_JOB_DETAIL = "job:detail";
     public static final String CACHE_CLIENT_JOBS = "job:client:list";
     public static final String CACHE_WORKER_FEED = "job:worker:feed";
+    public static final String CACHE_USER_PROFILE = "user:profile";
+    public static final String CACHE_WORKER_SKILLS = "worker:skills";
 
     private static RedisCacheConfiguration baseConfig(Duration ttl) {
         return RedisCacheConfiguration
@@ -42,10 +44,13 @@ public class RedisConfig {
         cacheConfigs.put(CACHE_JOB_DETAIL, baseConfig(Duration.ofMinutes(30)));
         cacheConfigs.put(CACHE_CLIENT_JOBS, baseConfig(Duration.ofMinutes(10)));
         cacheConfigs.put(CACHE_WORKER_FEED, baseConfig(Duration.ofMinutes(5)));
+        cacheConfigs.put(CACHE_USER_PROFILE, baseConfig(Duration.ofHours(1)));
+        cacheConfigs.put(CACHE_WORKER_SKILLS, baseConfig(Duration.ofHours(6)));
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(baseConfig(Duration.ofMinutes(10)))
                 .withInitialCacheConfigurations(cacheConfigs)
+                .enableStatistics()
                 .build();
     }
 
