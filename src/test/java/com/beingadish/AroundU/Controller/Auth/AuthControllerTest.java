@@ -139,6 +139,10 @@ class AuthControllerTest {
     private com.beingadish.AroundU.Repository.Analytics.AggregatedMetricsRepository aggregatedMetricsRepository;
 
     @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.Repository.Notification.FailedNotificationRepository failedNotificationRepository;
+
+    @SuppressWarnings("unused")
     @MockitoBean(name = "entityManagerFactory")
     private EntityManagerFactory entityManagerFactory;
 

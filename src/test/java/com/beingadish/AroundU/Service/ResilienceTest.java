@@ -31,17 +31,17 @@ import static org.mockito.Mockito.*;
 /**
  * Comprehensive unit tests for the Resilience4j integration.
  * <p>
- * We create real (not mocked) CircuitBreaker and Retry instances with
- * tight thresholds so tests run fast, and verify:
+ * We create real (not mocked) CircuitBreaker and Retry instances with tight
+ * thresholds so tests run fast, and verify:
  * <ol>
- *   <li>Circuit breaker opens after failure threshold</li>
- *   <li>Requests fail fast while circuit is open</li>
- *   <li>Half-open state allows test request</li>
- *   <li>Successful request closes the circuit</li>
- *   <li>Retry with exponential back-off</li>
- *   <li>Jitter prevents exact retry intervals</li>
- *   <li>Metrics are recorded correctly</li>
- *   <li>Fallback behaviour for payment / email / image services</li>
+ * <li>Circuit breaker opens after failure threshold</li>
+ * <li>Requests fail fast while circuit is open</li>
+ * <li>Half-open state allows test request</li>
+ * <li>Successful request closes the circuit</li>
+ * <li>Retry with exponential back-off</li>
+ * <li>Jitter prevents exact retry intervals</li>
+ * <li>Metrics are recorded correctly</li>
+ * <li>Fallback behaviour for payment / email / image services</li>
  * </ol>
  */
 @ExtendWith(MockitoExtension.class)
@@ -51,7 +51,6 @@ class ResilienceTest {
     // =====================================================================
     //  1 · Circuit Breaker core behaviour
     // =====================================================================
-
     @Nested
     @DisplayName("CircuitBreaker – state transitions")
     class CircuitBreakerStateTests {
@@ -61,8 +60,8 @@ class ResilienceTest {
         @BeforeEach
         void setUp() {
             CircuitBreakerConfig config = CircuitBreakerConfig.custom()
-                    .failureRateThreshold(50)           // open at 50 % failures
-                    .minimumNumberOfCalls(4)             // need 4 calls to evaluate
+                    .failureRateThreshold(50) // open at 50 % failures
+                    .minimumNumberOfCalls(4) // need 4 calls to evaluate
                     .slidingWindowSize(4)
                     .waitDurationInOpenState(Duration.ofMillis(500))
                     .permittedNumberOfCallsInHalfOpenState(2)
@@ -153,7 +152,6 @@ class ResilienceTest {
     // =====================================================================
     //  2 · Retry with exponential back-off
     // =====================================================================
-
     @Nested
     @DisplayName("Retry – exponential back-off")
     class RetryTests {
@@ -218,7 +216,9 @@ class ResilienceTest {
             Supplier<String> supplier = Retry.decorateSupplier(retry, () -> {
                 int i = idx.getAndIncrement();
                 timestamps[i] = System.currentTimeMillis();
-                if (i < 3) throw new RuntimeException("fail");
+                if (i < 3) {
+                    throw new RuntimeException("fail");
+                }
                 return "ok";
             });
 
@@ -261,7 +261,6 @@ class ResilienceTest {
     // =====================================================================
     //  3 · Circuit Breaker + Retry composed
     // =====================================================================
-
     @Nested
     @DisplayName("CircuitBreaker + Retry – composed")
     class ComposedTests {
@@ -314,7 +313,6 @@ class ResilienceTest {
     // =====================================================================
     //  4 · Micrometer metrics
     // =====================================================================
-
     @Nested
     @DisplayName("Metrics – Micrometer integration")
     class MetricsTests {
@@ -366,7 +364,10 @@ class ResilienceTest {
                 throw new RuntimeException("fail");
             });
 
-            try { decorated.get(); } catch (Exception ignored) { }
+            try {
+                decorated.get();
+            } catch (Exception ignored) {
+            }
 
             assertThat(registry.find("resilience4j.retry.calls").meters())
                     .isNotEmpty();
@@ -376,13 +377,14 @@ class ResilienceTest {
     // =====================================================================
     //  5 · ResilientPaymentService
     // =====================================================================
-
     @Nested
     @DisplayName("ResilientPaymentService")
     class ResilientPaymentServiceTests {
 
-        @Mock private MetricsService metricsService;
-        @Mock private EmailService emailService;
+        @Mock
+        private MetricsService metricsService;
+        @Mock
+        private EmailService emailService;
 
         @Test
         @DisplayName("delegates to underlying service on success")
@@ -417,9 +419,19 @@ class ResilienceTest {
                     .thenThrow(new RuntimeException("gateway down"));
             when(metricsService.getPaymentFailureCounter())
                     .thenReturn(new io.micrometer.core.instrument.Counter() {
-                        @Override public void increment(double amount) {}
-                        @Override public double count() { return 0; }
-                        @Override public Id getId() { return null; }
+                        @Override
+                        public void increment(double amount) {
+                        }
+
+                        @Override
+                        public double count() {
+                            return 0;
+                        }
+
+                        @Override
+                        public Id getId() {
+                            return null;
+                        }
                     });
             when(emailService.sendAdminAlert(anyString(), anyString())).thenReturn(true);
 
@@ -452,12 +464,12 @@ class ResilienceTest {
     // =====================================================================
     //  6 · EmailServiceImpl
     // =====================================================================
-
     @Nested
     @DisplayName("EmailServiceImpl – resilience")
     class EmailServiceTests {
 
-        @Mock private MetricsService metricsService;
+        @Mock
+        private MetricsService metricsService;
 
         @Test
         @DisplayName("queues email when circuit breaker is open")
@@ -471,7 +483,8 @@ class ResilienceTest {
                     .waitDuration(Duration.ofMillis(10))
                     .build());
 
-            EmailServiceImpl service = new EmailServiceImpl(cb, retry, metricsService);
+            EmailServiceImpl service = new EmailServiceImpl(cb, retry, metricsService,
+                    Runnable::run);
             boolean result = service.sendEmail("user@test.com", "Test", "Body");
 
             assertThat(result).isFalse();
@@ -483,12 +496,12 @@ class ResilienceTest {
     // =====================================================================
     //  7 · ImageStorageServiceImpl
     // =====================================================================
-
     @Nested
     @DisplayName("ImageStorageServiceImpl – resilience")
     class ImageStorageTests {
 
-        @Mock private MetricsService metricsService;
+        @Mock
+        private MetricsService metricsService;
 
         @Test
         @DisplayName("stores locally when circuit breaker is open")
@@ -532,7 +545,6 @@ class ResilienceTest {
     // =====================================================================
     //  8 · Registry configuration consistency
     // =====================================================================
-
     @Nested
     @DisplayName("ResilienceConfig – registry wiring")
     class ConfigRegistryTests {
@@ -571,7 +583,6 @@ class ResilienceTest {
     // =====================================================================
     //  Helpers
     // =====================================================================
-
     private static void recordSuccess(CircuitBreaker cb) {
         cb.onSuccess(0, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
