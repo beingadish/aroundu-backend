@@ -1,14 +1,14 @@
 package com.beingadish.AroundU.Service.impl;
 
-import com.beingadish.AroundU.Constants.Enums.JobCodeStatus;
-import com.beingadish.AroundU.Constants.Enums.JobStatus;
-import com.beingadish.AroundU.Entities.Client;
-import com.beingadish.AroundU.Entities.Job;
-import com.beingadish.AroundU.Entities.JobConfirmationCode;
-import com.beingadish.AroundU.Entities.Worker;
-import com.beingadish.AroundU.Mappers.Job.JobConfirmationCodeMapper;
-import com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository;
-import com.beingadish.AroundU.Repository.Job.JobRepository;
+import com.beingadish.AroundU.common.constants.enums.JobCodeStatus;
+import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.job.entity.JobConfirmationCode;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.job.mapper.JobConfirmationCodeMapper;
+import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.beingadish.AroundU.job.service.impl.JobCodeServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 class JobCodeServiceImplTest {

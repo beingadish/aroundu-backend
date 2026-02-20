@@ -1,12 +1,12 @@
 package com.beingadish.AroundU.Controller;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.Constants.Enums.BidStatus;
-import com.beingadish.AroundU.Controller.Bid.BidController;
-import com.beingadish.AroundU.DTO.Bid.BidCreateRequest;
-import com.beingadish.AroundU.DTO.Bid.BidHandshakeRequest;
-import com.beingadish.AroundU.DTO.Bid.BidResponseDTO;
-import com.beingadish.AroundU.Service.BidService;
+import com.beingadish.AroundU.common.constants.enums.BidStatus;
+import com.beingadish.AroundU.bid.controller.BidController;
+import com.beingadish.AroundU.bid.dto.BidCreateRequest;
+import com.beingadish.AroundU.bid.dto.BidHandshakeRequest;
+import com.beingadish.AroundU.bid.dto.BidResponseDTO;
+import com.beingadish.AroundU.bid.service.BidService;
 import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
@@ -76,55 +76,55 @@ class BidControllerTest {
     private PlatformTransactionManager platformTransactionManager;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Client.ClientReadRepository clientReadRepository;
+    private com.beingadish.AroundU.user.repository.ClientReadRepository clientReadRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Client.ClientWriteRepository clientWriteRepository;
+    private com.beingadish.AroundU.user.repository.ClientWriteRepository clientWriteRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Client.ClientRepository clientRepository;
+    private com.beingadish.AroundU.user.repository.ClientRepository clientRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Worker.WorkerReadRepository workerReadRepository;
+    private com.beingadish.AroundU.user.repository.WorkerReadRepository workerReadRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository workerWriteRepository;
+    private com.beingadish.AroundU.user.repository.WorkerWriteRepository workerWriteRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Worker.WorkerRepository workerRepository;
+    private com.beingadish.AroundU.user.repository.WorkerRepository workerRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Admin.AdminRepository adminRepository;
+    private com.beingadish.AroundU.user.repository.AdminRepository adminRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Skill.SkillRepository skillRepository;
+    private com.beingadish.AroundU.common.repository.SkillRepository skillRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Bid.BidRepository bidRepository;
+    private com.beingadish.AroundU.bid.repository.BidRepository bidRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Job.JobRepository jobRepository;
+    private com.beingadish.AroundU.job.repository.JobRepository jobRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository jobConfirmationCodeRepository;
+    private com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository jobConfirmationCodeRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository paymentTransactionRepository;
+    private com.beingadish.AroundU.payment.repository.PaymentTransactionRepository paymentTransactionRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Address.AddressRepository addressRepository;
+    private com.beingadish.AroundU.location.repository.AddressRepository addressRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
+    private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Analytics.AggregatedMetricsRepository aggregatedMetricsRepository;
+    private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Notification.FailedNotificationRepository failedNotificationRepository;
+    private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
 
     @BeforeEach
     void stubEntityManager() {
@@ -187,7 +187,7 @@ class BidControllerTest {
                     .param("workerId", "10")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(TestFixtures.bidCreateRequest(450.0))))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isNotFound());
         }
     }
 
@@ -225,13 +225,13 @@ class BidControllerTest {
         }
 
         @Test
-        @DisplayName("500 – bid not found (EntityNotFoundException falls through)")
+        @DisplayName("404 – bid not found")
         void acceptBid_NotFound() throws Exception {
             when(bidService.acceptBid(999L, 1L))
                     .thenThrow(new EntityNotFoundException("Bid not found"));
 
             mockMvc.perform(post(BASE + "/bids/999/accept").param("clientId", "1"))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isNotFound());
         }
     }
 

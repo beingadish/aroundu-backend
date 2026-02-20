@@ -6,9 +6,10 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@EnableJpaRepositories("com.beingadish.AroundU.Repository")
-@EntityScan("com.beingadish.AroundU.Entities")
+@EnableJpaRepositories(basePackages = "com.beingadish.AroundU")
+@EntityScan(basePackages = "com.beingadish.AroundU")
 public class AroundUApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(AroundUApplication.class, args);
     }

@@ -1,0 +1,1863 @@
+openapi: 3.0.3
+info:
+  title: AroundU API
+  description: |
+    AroundU is a local services marketplace connecting clients with skilled workers.
+    
+    ## Authentication
+    Most endpoints require a JWT Bearer token. Obtain one via `POST /api/v1/auth/login`.
+    
+    ## Rate Limiting
+    Certain endpoints enforce rate limits. Exceeding the limit returns `429 Too Many Requests`.
+    
+    ## Pagination
+    List endpoints accept `page` (0-based) and `size` (max 100) query parameters.
+    Responses include `totalElements`, `totalPages`, and `last` metadata.
+    
+    ## Sorting
+    Sortable endpoints accept `sortBy`, `sortDirection`, `secondarySortBy`, and `secondarySortDirection`.
+    Distance-based sorting is available via `sortByDistance=true` with latitude/longitude coordinates.
+  version: 1.0.0
+  contact:
+    name: AroundU Dev Team
+    email: support@aroundu.com
+    url: https://aroundu.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:20232
+    description: Local development
+  - url: https://preprod.aroundu.com
+    description: Pre-production
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Client
+    description: Client registration, profile retrieval, pagination, and updates
+  - name: Worker
+    description: Worker registration, profile retrieval, pagination, and updates
+  - name: Jobs
+    description: Job posting, filtering, and worker feed
+  - name: Job Codes
+    description: Job start/release code generation and verification
+  - name: Bids
+    description: Bid placement, listing, acceptance, and worker handshake
+  - name: Payments
+    description: Escrow payment lock and release operations
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter your JWT token obtained from POST /api/v1/auth/login
+
+  schemas:
+    # ── Common ────────────────────────────────────────────────────
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Success
+        data:
+          type: object
+      required: [success, message]
+
+    ApiResponseError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Validation failed"
+        data:
+          type: object
+          nullable: true
+
+    PageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items: {}
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 42
+        totalPages:
+          type: integer
+          example: 3
+        last:
+          type: boolean
+          example: false
+
+    AddressDTO:
+      type: object
+      required: [country, postalCode]
+      properties:
+        id:
+          type: integer
+          format: int64
+        country:
+          type: string
+          enum: [US, GB, IN, CA, AU, DE, FR, JP]
+          description: ISO country code
+          example: US
+        postalCode:
+          type: string
+          example: "10001"
+        city:
+          type: string
+          example: New York
+        area:
+          type: string
+          example: Manhattan
+        latitude:
+          type: number
+          format: double
+          example: 40.7128
+        longitude:
+          type: number
+          format: double
+          example: -74.006
+        fullAddress:
+          type: string
+          maxLength: 500
+          example: "123 Main St, Manhattan, New York, NY 10001"
+
+    PriceDTO:
+      type: object
+      required: [currency, amount]
+      properties:
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, INR, JPY, CAD, AUD]
+          example: USD
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 150.00
+
+    SkillDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        skillName:
+          type: string
+          example: Plumbing
+
+    VerificationStatusDTO:
+      type: object
+      properties:
+        isVerified:
+          type: boolean
+        verifiedAt:
+          type: string
+          format: date-time
+        expiryDate:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ── Auth ──────────────────────────────────────────────────────
+    LoginRequestDTO:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: john.client@example.com
+        password:
+          type: string
+          format: password
+          example: SecureP@ss123
+
+    LoginResponseDTO:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiJ9...
+        type:
+          type: string
+          example: Bearer
+        email:
+          type: string
+          format: email
+          example: john.client@example.com
+        role:
+          type: string
+          enum: [ROLE_CLIENT, ROLE_WORKER, ROLE_ADMIN]
+          example: ROLE_CLIENT
+
+    # ── Client ────────────────────────────────────────────────────
+    ClientRegisterRequestDTO:
+      type: object
+      required: [name, email, phoneNumber, password, currency, currentAddress]
+      properties:
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john.client@example.com
+        phoneNumber:
+          type: string
+          example: "+1234567890"
+        password:
+          type: string
+          format: password
+          example: SecureP@ss123
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, INR]
+          example: USD
+        currentAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        savedAddresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddressDTO'
+
+    ClientUpdateRequestDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: John Updated
+        email:
+          type: string
+          format: email
+          example: john.updated@example.com
+        phoneNumber:
+          type: string
+          minLength: 7
+          maxLength: 15
+          example: "+1987654321"
+        profileImageUrl:
+          type: string
+          example: https://cdn.aroundu.com/images/profile-123.jpg
+
+    ClientDetailsResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john.client@example.com
+        phoneNumber:
+          type: string
+          example: "+1234567890"
+        currency:
+          type: string
+          example: USD
+        currentAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        verificationStatus:
+          $ref: '#/components/schemas/VerificationStatusDTO'
+        profileImageUrl:
+          type: string
+
+    # ── Worker ────────────────────────────────────────────────────
+    WorkerSignupRequestDTO:
+      type: object
+      required: [name, email, phoneNumber, password, currency, currentAddress]
+      properties:
+        name:
+          type: string
+          example: Jane Worker
+        email:
+          type: string
+          format: email
+          example: jane.worker@example.com
+        phoneNumber:
+          type: string
+          example: "+1234567891"
+        password:
+          type: string
+          format: password
+          example: WorkerP@ss456
+        currency:
+          type: string
+          example: USD
+        currentAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        skillIds:
+          type: array
+          items:
+            type: string
+          example: ["1", "3", "5"]
+
+    WorkerUpdateRequestDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Jane Updated
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+          minLength: 7
+          maxLength: 15
+        profileImageUrl:
+          type: string
+        experienceYears:
+          type: integer
+          minimum: 0
+          example: 5
+        certifications:
+          type: string
+          maxLength: 500
+          example: Licensed Plumber, EPA Certified
+        isOnDuty:
+          type: boolean
+          example: true
+        payoutAccount:
+          type: string
+          example: acct_123456789
+        currency:
+          type: string
+          example: USD
+
+    WorkerDetailDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 2
+        name:
+          type: string
+          example: Jane Worker
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+        currency:
+          type: string
+        currentAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        verificationStatus:
+          $ref: '#/components/schemas/VerificationStatusDTO'
+        profileImageUrl:
+          type: string
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillDTO'
+        engagedJobIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        experienceYears:
+          type: integer
+        certifications:
+          type: string
+        isOnDuty:
+          type: boolean
+        payoutAccount:
+          type: string
+
+    # ── Job ───────────────────────────────────────────────────────
+    JobCreateRequest:
+      type: object
+      required: [title, longDescription, price, jobLocationId, jobUrgency, requiredSkillIds, paymentMode]
+      properties:
+        title:
+          type: string
+          example: Fix kitchen sink
+        shortDescription:
+          type: string
+          maxLength: 200
+          example: Kitchen sink is leaking
+        longDescription:
+          type: string
+          example: The kitchen sink has been leaking for 2 days. Need a plumber to fix the pipe under the sink.
+        price:
+          $ref: '#/components/schemas/PriceDTO'
+        jobLocationId:
+          type: integer
+          format: int64
+          example: 1
+        jobUrgency:
+          type: string
+          enum: [SUPER_URGENT, URGENT, MEDIUM, NORMAL]
+          example: URGENT
+        requiredSkillIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [1, 3]
+        paymentMode:
+          type: string
+          enum: [ESCROW, OFFLINE]
+          example: ESCROW
+
+    JobUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        shortDescription:
+          type: string
+          maxLength: 200
+        longDescription:
+          type: string
+        price:
+          $ref: '#/components/schemas/PriceDTO'
+        jobLocationId:
+          type: integer
+          format: int64
+        jobUrgency:
+          type: string
+          enum: [SUPER_URGENT, URGENT, MEDIUM, NORMAL]
+        jobStatus:
+          type: string
+          enum: [CREATED, OPEN_FOR_BIDS, BID_SELECTED_AWAITING_HANDSHAKE, READY_TO_START, IN_PROGRESS, COMPLETED, CANCELLED, JOB_CLOSED_DUE_TO_EXPIRATION]
+        requiredSkillIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        paymentMode:
+          type: string
+          enum: [ESCROW, OFFLINE]
+
+    JobStatusUpdateRequest:
+      type: object
+      required: [newStatus]
+      properties:
+        newStatus:
+          type: string
+          enum: [CREATED, OPEN_FOR_BIDS, BID_SELECTED_AWAITING_HANDSHAKE, READY_TO_START, IN_PROGRESS, COMPLETED, CANCELLED, JOB_CLOSED_DUE_TO_EXPIRATION]
+          example: OPEN_FOR_BIDS
+
+    JobDetailDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 100
+        title:
+          type: string
+          example: Fix kitchen sink
+        shortDescription:
+          type: string
+        longDescription:
+          type: string
+        price:
+          $ref: '#/components/schemas/PriceDTO'
+        jobLocation:
+          $ref: '#/components/schemas/AddressDTO'
+        jobStatus:
+          type: string
+          enum: [CREATED, OPEN_FOR_BIDS, BID_SELECTED_AWAITING_HANDSHAKE, READY_TO_START, IN_PROGRESS, COMPLETED, CANCELLED, JOB_CLOSED_DUE_TO_EXPIRATION]
+        jobUrgency:
+          type: string
+          enum: [SUPER_URGENT, URGENT, MEDIUM, NORMAL]
+        paymentMode:
+          type: string
+          enum: [ESCROW, OFFLINE]
+        requiredSkills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillDTO'
+        createdBy:
+          type: object
+          description: Client summary
+        assignedTo:
+          type: object
+          description: Worker brief DTO
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    JobSummaryDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        shortDescription:
+          type: string
+        jobStatus:
+          type: string
+        jobUrgency:
+          type: string
+        price:
+          $ref: '#/components/schemas/PriceDTO'
+        paymentMode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        distanceKm:
+          type: number
+          format: double
+          description: Distance from reference point (km)
+        popularityScore:
+          type: number
+          format: double
+
+    # ── Job Codes ─────────────────────────────────────────────────
+    JobCodeResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        jobId:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: [START_PENDING, START_CONFIRMED, RELEASE_PENDING, COMPLETED]
+        startCode:
+          type: string
+          description: Only returned on generate; hidden after verification
+          example: "ABC123"
+        releaseCode:
+          type: string
+          description: Only returned after start verification
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    JobCodeVerifyRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          example: "ABC123"
+
+    # ── Bid ───────────────────────────────────────────────────────
+    BidCreateRequest:
+      type: object
+      required: [bidAmount]
+      properties:
+        bidAmount:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 120.00
+        partnerName:
+          type: string
+          example: Helper Co.
+        partnerFee:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 15.00
+        notes:
+          type: string
+          example: I can start tomorrow morning
+
+    BidHandshakeRequest:
+      type: object
+      required: [accepted]
+      properties:
+        accepted:
+          type: boolean
+          example: true
+
+    BidResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 50
+        jobId:
+          type: integer
+          format: int64
+          example: 100
+        workerId:
+          type: integer
+          format: int64
+          example: 2
+        bidAmount:
+          type: number
+          format: double
+          example: 120.00
+        partnerName:
+          type: string
+        partnerFee:
+          type: number
+          format: double
+        notes:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, SELECTED, REJECTED, WITHDRAWN]
+          example: PENDING
+
+    # ── Payment ───────────────────────────────────────────────────
+    PaymentLockRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 150.00
+
+    PaymentReleaseRequest:
+      type: object
+      required: [releaseCode]
+      properties:
+        releaseCode:
+          type: string
+          example: "REL-XYZ789"
+
+    PaymentResponseDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 200
+        jobId:
+          type: integer
+          format: int64
+          example: 100
+        clientId:
+          type: integer
+          format: int64
+          example: 1
+        workerId:
+          type: integer
+          format: int64
+          example: 2
+        amount:
+          type: number
+          format: double
+          example: 150.00
+        paymentMode:
+          type: string
+          enum: [ESCROW, OFFLINE]
+          example: ESCROW
+        status:
+          type: string
+          enum: [PENDING_ESCROW, ESCROW_LOCKED, RELEASED, FAILED, OFFLINE]
+          example: ESCROW_LOCKED
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+paths:
+  # ════════════════════════════════════════════════════════════════
+  #  AUTH
+  # ════════════════════════════════════════════════════════════════
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user
+      description: Authenticate by email/password and receive a JWT token. Rate limited to 5 requests per 15 minutes.
+      operationId: authenticateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestDTO'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponseDTO'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '404':
+          description: User not found
+        '429':
+          description: Rate limit exceeded
+
+  # ════════════════════════════════════════════════════════════════
+  #  CLIENT
+  # ════════════════════════════════════════════════════════════════
+  /api/v1/client/register:
+    post:
+      tags: [Client]
+      summary: Register client
+      description: Creates a client account. No authentication required.
+      operationId: registerClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRegisterRequestDTO'
+      responses:
+        '201':
+          description: Client registered
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: string
+                        example: Client registered successfully
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/v1/client/{clientId}:
+    get:
+      tags: [Client]
+      summary: Get client details
+      description: Fetch client profile by ID. Accessible by the client themselves or ADMIN.
+      operationId: getClientDetails
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Client found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ClientDetailsResponseDTO'
+        '403':
+          description: Forbidden
+        '404':
+          description: Client not found
+    delete:
+      tags: [Client]
+      summary: Delete client
+      description: Deletes client and related data. ADMIN or the client themselves.
+      operationId: deleteClient
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Client deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: string
+                        example: Client deleted successfully
+        '403':
+          description: Forbidden
+        '404':
+          description: Client not found
+
+  /api/v1/client/me:
+    get:
+      tags: [Client]
+      summary: Get current client details
+      description: Fetch authenticated client's own profile.
+      operationId: getMyClientDetails
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Client profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ClientDetailsResponseDTO'
+        '401':
+          description: Not authenticated
+
+  /api/v1/client/all:
+    get:
+      tags: [Client]
+      summary: List all clients (admin)
+      description: Paginated listing of all clients. ADMIN only.
+      operationId: getAllClients
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            example: 0
+        - name: size
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            example: 20
+      responses:
+        '200':
+          description: Page of clients
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/PageResponse'
+        '403':
+          description: Forbidden — ADMIN role required
+
+  /api/v1/client/update/{clientId}:
+    patch:
+      tags: [Client]
+      summary: Update client details
+      description: Partial update of client profile fields.
+      operationId: updateClientDetails
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientUpdateRequestDTO'
+      responses:
+        '200':
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ClientDetailsResponseDTO'
+        '400':
+          description: Validation error
+        '403':
+          description: Forbidden
+        '404':
+          description: Client not found
+
+  # ════════════════════════════════════════════════════════════════
+  #  WORKER
+  # ════════════════════════════════════════════════════════════════
+  /api/v1/worker/register:
+    post:
+      tags: [Worker]
+      summary: Register worker
+      description: Creates a worker account. No authentication required.
+      operationId: registerWorker
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerSignupRequestDTO'
+      responses:
+        '201':
+          description: Worker registered
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: string
+                        example: Worker registered successfully
+        '400':
+          description: Validation error
+
+  /api/v1/worker/{workerId}:
+    get:
+      tags: [Worker]
+      summary: Get worker details
+      description: Fetch worker profile by ID. Accessible by the worker themselves or ADMIN.
+      operationId: getWorkerDetails
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Worker found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/WorkerDetailDTO'
+        '403':
+          description: Forbidden
+        '404':
+          description: Worker not found
+    delete:
+      tags: [Worker]
+      summary: Delete worker
+      description: Deletes worker and related data. ADMIN or the worker themselves.
+      operationId: deleteWorker
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Worker deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Worker not found
+
+  /api/v1/worker/me:
+    get:
+      tags: [Worker]
+      summary: Get current worker details
+      description: Fetch authenticated worker's own profile.
+      operationId: getMyWorkerDetails
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Worker profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/WorkerDetailDTO'
+
+  /api/v1/worker/all:
+    get:
+      tags: [Worker]
+      summary: List all workers (admin)
+      description: Paginated listing of all workers. ADMIN only.
+      operationId: getAllWorkers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+        - name: size
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Page of workers
+        '403':
+          description: Forbidden
+
+  /api/v1/worker/update/{workerId}:
+    patch:
+      tags: [Worker]
+      summary: Update worker details
+      description: Partial update of worker profile fields.
+      operationId: updateWorkerDetails
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerUpdateRequestDTO'
+      responses:
+        '200':
+          description: Worker updated
+        '400':
+          description: Validation error
+        '403':
+          description: Forbidden
+        '404':
+          description: Worker not found
+
+  # ════════════════════════════════════════════════════════════════
+  #  JOBS
+  # ════════════════════════════════════════════════════════════════
+  /api/v1/jobs:
+    post:
+      tags: [Jobs]
+      summary: Create job
+      description: Client creates a job with required skills and location. Rate limited to 5 requests/hour.
+      operationId: createJob
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCreateRequest'
+      responses:
+        '201':
+          description: Job created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/JobDetailDTO'
+        '400':
+          description: Validation error
+        '429':
+          description: Rate limit exceeded
+    get:
+      tags: [Jobs]
+      summary: Search jobs by location
+      description: Public search for jobs filtered by city, area, and/or skill IDs.
+      operationId: listJobs
+      parameters:
+        - name: city
+          in: query
+          schema:
+            type: string
+            example: New York
+        - name: area
+          in: query
+          schema:
+            type: string
+            example: Manhattan
+        - name: skillIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+            example: [1, 3]
+      responses:
+        '200':
+          description: Jobs found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/JobSummaryDTO'
+
+  /api/v1/jobs/{jobId}:
+    get:
+      tags: [Jobs]
+      summary: Public job detail
+      description: Basic job detail (authorization may apply).
+      operationId: getJob
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Job found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/JobDetailDTO'
+        '404':
+          description: Job not found
+    patch:
+      tags: [Jobs]
+      summary: Update job details
+      description: Client updates job fields.
+      operationId: updateJob
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobUpdateRequest'
+      responses:
+        '200':
+          description: Job updated
+        '403':
+          description: Forbidden
+        '404':
+          description: Job not found
+    delete:
+      tags: [Jobs]
+      summary: Delete job
+      description: Client deletes a job they created.
+      operationId: deleteJob
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Job deleted
+        '403':
+          description: Forbidden
+        '404':
+          description: Job not found
+
+  /api/v1/jobs/{jobId}/status:
+    patch:
+      tags: [Jobs]
+      summary: Update job status
+      description: Allows valid forward-only status transitions.
+      operationId: updateJobStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobStatusUpdateRequest'
+      responses:
+        '200':
+          description: Status updated
+        '400':
+          description: Invalid status transition
+        '403':
+          description: Forbidden
+
+  /api/v1/jobs/client/{clientId}:
+    get:
+      tags: [Jobs]
+      summary: List client jobs
+      description: Filter by statuses, date range, with sorting and pagination.
+      operationId: getClientJobs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: statuses
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [CREATED, OPEN_FOR_BIDS, BID_SELECTED_AWAITING_HANDSHAKE, READY_TO_START, IN_PROGRESS, COMPLETED, CANCELLED]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: createdAt
+            example: createdAt
+        - name: sortDirection
+          in: query
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+        - name: secondarySortBy
+          in: query
+          schema:
+            type: string
+        - name: secondarySortDirection
+          in: query
+          schema:
+            type: string
+            enum: [ASC, DESC]
+        - name: sortByDistance
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: distanceLatitude
+          in: query
+          schema:
+            type: number
+            format: double
+        - name: distanceLongitude
+          in: query
+          schema:
+            type: number
+            format: double
+      responses:
+        '200':
+          description: Page of client jobs
+        '403':
+          description: Forbidden
+
+  /api/v1/jobs/client/{clientId}/{jobId}:
+    get:
+      tags: [Jobs]
+      summary: Get client job detail
+      security:
+        - bearerAuth: []
+      operationId: getJobForClient
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Job detail
+        '403':
+          description: Forbidden
+        '404':
+          description: Job not found
+
+  /api/v1/jobs/client/{clientId}/past:
+    get:
+      tags: [Jobs]
+      summary: List past jobs
+      description: Completed or cancelled jobs for a client.
+      operationId: getClientPastJobs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Page of past jobs
+        '403':
+          description: Forbidden
+
+  /api/v1/jobs/worker/{workerId}/feed:
+    get:
+      tags: [Jobs]
+      summary: Worker feed
+      description: Open jobs filtered by worker skills and proximity. Rate limited to 30 requests/minute.
+      operationId: getWorkerFeed
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: skillIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int64
+        - name: radiusKm
+          in: query
+          schema:
+            type: number
+            format: double
+            example: 10.0
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            default: createdAt
+        - name: sortDirection
+          in: query
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: DESC
+        - name: sortByDistance
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Page of matching jobs
+        '429':
+          description: Rate limit exceeded
+
+  /api/v1/jobs/worker/{workerId}/{jobId}:
+    get:
+      tags: [Jobs]
+      summary: Worker job detail
+      description: Visible if job is open or assigned to the worker.
+      operationId: getJobForWorker
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Job detail
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+
+  # ════════════════════════════════════════════════════════════════
+  #  JOB CODES
+  # ════════════════════════════════════════════════════════════════
+  /api/v1/jobs/{jobId}/codes:
+    post:
+      tags: [Job Codes]
+      summary: Generate job codes
+      description: Client generates start and release codes after selecting a bid. Only the start code is returned initially.
+      operationId: generateCodes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Codes generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobCodeResponseDTO'
+        '403':
+          description: Not the job owner
+        '404':
+          description: Job not found
+        '409':
+          description: Codes already generated
+
+  /api/v1/jobs/{jobId}/codes/start:
+    post:
+      tags: [Job Codes]
+      summary: Verify start code
+      description: Assigned worker confirms the start code before beginning work.
+      operationId: verifyStartCode
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: workerId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCodeVerifyRequest'
+      responses:
+        '200':
+          description: Start code verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobCodeResponseDTO'
+        '400':
+          description: Invalid code
+        '404':
+          description: Job or code not found
+
+  /api/v1/jobs/{jobId}/codes/release:
+    post:
+      tags: [Job Codes]
+      summary: Verify release code
+      description: Client confirms the release code to mark the job complete and trigger payout.
+      operationId: verifyReleaseCode
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCodeVerifyRequest'
+      responses:
+        '200':
+          description: Release code verified, job completed
+        '400':
+          description: Invalid code
+        '404':
+          description: Job or code not found
+
+  # ════════════════════════════════════════════════════════════════
+  #  BIDS
+  # ════════════════════════════════════════════════════════════════
+  /api/v1/bid/jobs/{jobId}/bids:
+    post:
+      tags: [Bids]
+      summary: Place bid
+      description: Worker places a bid on an open job. Rate limited to 20 requests/hour.
+      operationId: placeBid
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: workerId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidCreateRequest'
+      responses:
+        '201':
+          description: Bid placed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidResponseDTO'
+        '400':
+          description: Validation error or duplicate bid
+        '404':
+          description: Job not found
+        '429':
+          description: Rate limit exceeded
+    get:
+      tags: [Bids]
+      summary: List bids for job
+      description: Returns all bids submitted for a specific job.
+      operationId: listBids
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Bids retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BidResponseDTO'
+        '404':
+          description: Job not found
+
+  /api/v1/bid/bids/{bidId}/accept:
+    post:
+      tags: [Bids]
+      summary: Accept bid
+      description: Client accepts a bid; other bids for the job are rejected.
+      operationId: acceptBid
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Bid accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidResponseDTO'
+        '403':
+          description: Not the job owner
+        '404':
+          description: Bid not found
+        '409':
+          description: Bid already processed
+
+  /api/v1/bid/bids/{bidId}/handshake:
+    post:
+      tags: [Bids]
+      summary: Worker handshake
+      description: Worker accepts or declines a selected bid.
+      operationId: handshakeBid
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: workerId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BidHandshakeRequest'
+      responses:
+        '200':
+          description: Handshake processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BidResponseDTO'
+        '400':
+          description: Invalid handshake state
+        '404':
+          description: Bid not found
+
+  # ════════════════════════════════════════════════════════════════
+  #  PAYMENTS
+  # ════════════════════════════════════════════════════════════════
+  /api/v1/jobs/{jobId}/payments/lock:
+    post:
+      tags: [Payments]
+      summary: Lock escrow payment
+      description: Client locks the escrow amount for a job before work begins.
+      operationId: lockEscrow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentLockRequest'
+      responses:
+        '201':
+          description: Escrow locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseDTO'
+        '400':
+          description: Validation error
+        '404':
+          description: Job not found
+        '409':
+          description: Escrow already locked
+
+  /api/v1/jobs/{jobId}/payments/release:
+    post:
+      tags: [Payments]
+      summary: Release escrow payment
+      description: Client releases escrowed funds to the worker after job completion.
+      operationId: releaseEscrow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: clientId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentReleaseRequest'
+      responses:
+        '200':
+          description: Payment released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponseDTO'
+        '400':
+          description: Invalid release code
+        '404':
+          description: Job or payment not found
+        '409':
+          description: Payment not in locked state

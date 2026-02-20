@@ -1,16 +1,10 @@
 package com.beingadish.AroundU.Controller;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.Controller.Auth.AuthController;
-import com.beingadish.AroundU.DTO.Auth.LoginRequestDTO;
-import com.beingadish.AroundU.Entities.Admin;
-import com.beingadish.AroundU.Entities.Client;
-import com.beingadish.AroundU.Entities.Worker;
-import com.beingadish.AroundU.Repository.Admin.AdminRepository;
-import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
-import com.beingadish.AroundU.Security.JwtTokenProvider;
-import com.beingadish.AroundU.Security.UserPrincipal;
+import com.beingadish.AroundU.user.controller.AuthController;
+import com.beingadish.AroundU.user.dto.auth.LoginRequestDTO;
+import com.beingadish.AroundU.user.dto.auth.LoginResponseDTO;
+import com.beingadish.AroundU.user.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,21 +18,14 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 import jakarta.persistence.EntityManagerFactory;
-
-import java.util.List;
-import java.util.Optional;
+import jakarta.persistence.EntityNotFoundException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -67,59 +54,60 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
     @MockitoBean
-    private AuthenticationManager authenticationManager;
-    @MockitoBean
-    private JwtTokenProvider tokenProvider;
-    @MockitoBean
-    private ClientReadRepository clientReadRepository;
-    @MockitoBean
-    private WorkerReadRepository workerReadRepository;
-    @MockitoBean
-    private AdminRepository adminRepository;
+    private AuthService authService;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     // ── JPA infrastructure mocks (no DB in WebMvcTest slice) ────
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Client.ClientWriteRepository clientWriteRepository;
+    private com.beingadish.AroundU.user.repository.ClientReadRepository clientReadRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Client.ClientRepository clientRepository;
+    private com.beingadish.AroundU.user.repository.ClientWriteRepository clientWriteRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository workerWriteRepository;
+    private com.beingadish.AroundU.user.repository.ClientRepository clientRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Worker.WorkerRepository workerRepository;
+    private com.beingadish.AroundU.user.repository.WorkerReadRepository workerReadRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Skill.SkillRepository skillRepository;
+    private com.beingadish.AroundU.user.repository.WorkerWriteRepository workerWriteRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Job.JobRepository jobRepository;
+    private com.beingadish.AroundU.user.repository.WorkerRepository workerRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository jobConfirmationCodeRepository;
+    private com.beingadish.AroundU.user.repository.AdminRepository adminRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Bid.BidRepository bidRepository;
+    private com.beingadish.AroundU.common.repository.SkillRepository skillRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository paymentTransactionRepository;
+    private com.beingadish.AroundU.job.repository.JobRepository jobRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Address.AddressRepository addressRepository;
+    private com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository jobConfirmationCodeRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
+    private com.beingadish.AroundU.bid.repository.BidRepository bidRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Analytics.AggregatedMetricsRepository aggregatedMetricsRepository;
+    private com.beingadish.AroundU.payment.repository.PaymentTransactionRepository paymentTransactionRepository;
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Repository.Notification.FailedNotificationRepository failedNotificationRepository;
+    private com.beingadish.AroundU.location.repository.AddressRepository addressRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
     @SuppressWarnings("unused")
     @MockitoBean(name = "entityManagerFactory")
     private EntityManagerFactory entityManagerFactory;
@@ -135,20 +123,11 @@ class AuthControllerTest {
 
     private static final String LOGIN_URL = "/api/v1/auth/login";
 
-    // ── helpers ──────────────────────────────────────────────────
     private LoginRequestDTO loginRequest(String email, String password) {
         LoginRequestDTO req = new LoginRequestDTO();
         req.setEmail(email);
         req.setPassword(password);
         return req;
-    }
-
-    private Authentication authResult(Long id, String email, String role, String password) {
-        UserPrincipal principal = UserPrincipal.builder()
-                .id(id).email(email).password(password)
-                .authorities(List.of(new SimpleGrantedAuthority(role)))
-                .build();
-        return new UsernamePasswordAuthenticationToken(principal, password, principal.getAuthorities());
     }
 
     // ── Successful Login ─────────────────────────────────────────
@@ -160,9 +139,8 @@ class AuthControllerTest {
         @DisplayName("200 OK – client login returns JWT")
         void clientLogin() throws Exception {
             LoginRequestDTO req = loginRequest("client@test.com", "password");
-            when(authenticationManager.authenticate(any())).thenReturn(authResult(1L, req.getEmail(), "ROLE_CLIENT", req.getPassword()));
-            when(clientReadRepository.findByEmail(req.getEmail())).thenReturn(Optional.of(clientEntity(1L, req.getEmail())));
-            when(tokenProvider.generateToken(1L, req.getEmail(), "ROLE_CLIENT")).thenReturn("jwt-client");
+            when(authService.authenticate(any(LoginRequestDTO.class)))
+                    .thenReturn(new LoginResponseDTO(1L, "jwt-client", "Bearer", "client@test.com", "ROLE_CLIENT"));
 
             mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isOk())
@@ -176,9 +154,8 @@ class AuthControllerTest {
         @DisplayName("200 OK – worker login returns JWT")
         void workerLogin() throws Exception {
             LoginRequestDTO req = loginRequest("worker@test.com", "password");
-            when(authenticationManager.authenticate(any())).thenReturn(authResult(10L, req.getEmail(), "ROLE_WORKER", req.getPassword()));
-            when(workerReadRepository.findByEmail(req.getEmail())).thenReturn(Optional.of(workerEntity(10L, req.getEmail())));
-            when(tokenProvider.generateToken(10L, req.getEmail(), "ROLE_WORKER")).thenReturn("jwt-worker");
+            when(authService.authenticate(any(LoginRequestDTO.class)))
+                    .thenReturn(new LoginResponseDTO(10L, "jwt-worker", "Bearer", "worker@test.com", "ROLE_WORKER"));
 
             mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isOk())
@@ -190,9 +167,8 @@ class AuthControllerTest {
         @DisplayName("200 OK – admin login returns JWT")
         void adminLogin() throws Exception {
             LoginRequestDTO req = loginRequest("admin@test.com", "password");
-            when(authenticationManager.authenticate(any())).thenReturn(authResult(99L, req.getEmail(), "ROLE_ADMIN", req.getPassword()));
-            when(adminRepository.findByEmail(req.getEmail())).thenReturn(Optional.of(adminEntity(99L, req.getEmail())));
-            when(tokenProvider.generateToken(99L, req.getEmail(), "ROLE_ADMIN")).thenReturn("jwt-admin");
+            when(authService.authenticate(any(LoginRequestDTO.class)))
+                    .thenReturn(new LoginResponseDTO(99L, "jwt-admin", "Bearer", "admin@test.com", "ROLE_ADMIN"));
 
             mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isOk())
@@ -240,7 +216,8 @@ class AuthControllerTest {
         @DisplayName("401 – invalid credentials")
         void invalidCredentials() throws Exception {
             LoginRequestDTO req = loginRequest("client@test.com", "wrong");
-            when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Bad credentials"));
+            when(authService.authenticate(any(LoginRequestDTO.class)))
+                    .thenThrow(new BadCredentialsException("Bad credentials"));
 
             mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isUnauthorized());
@@ -250,33 +227,11 @@ class AuthControllerTest {
         @DisplayName("404 – user not found during resolution")
         void userNotFound() throws Exception {
             LoginRequestDTO req = loginRequest("unknown@test.com", "password");
-            when(authenticationManager.authenticate(any())).thenReturn(authResult(1L, req.getEmail(), "ROLE_CLIENT", req.getPassword()));
-            when(clientReadRepository.findByEmail(req.getEmail())).thenReturn(Optional.empty());
+            when(authService.authenticate(any(LoginRequestDTO.class)))
+                    .thenThrow(new EntityNotFoundException("User not found"));
 
             mockMvc.perform(post(LOGIN_URL).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(req)))
-                    .andExpect(status().is4xxClientError());
+                    .andExpect(status().isNotFound());
         }
-    }
-
-    // ── entity helpers ───────────────────────────────────────────
-    private Client clientEntity(Long id, String email) {
-        Client c = new Client();
-        c.setId(id);
-        c.setEmail(email);
-        return c;
-    }
-
-    private Worker workerEntity(Long id, String email) {
-        Worker w = new Worker();
-        w.setId(id);
-        w.setEmail(email);
-        return w;
-    }
-
-    private Admin adminEntity(Long id, String email) {
-        Admin a = new Admin();
-        a.setId(id);
-        a.setEmail(email);
-        return a;
     }
 }

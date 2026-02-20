@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import com.beingadish.AroundU.infrastructure.cache.impl.RedisCacheEvictionService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RedisCacheEvictionService")

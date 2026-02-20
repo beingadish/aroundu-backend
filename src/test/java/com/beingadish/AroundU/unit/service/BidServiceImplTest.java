@@ -1,18 +1,22 @@
 package com.beingadish.AroundU.unit.service;
 
-import com.beingadish.AroundU.Constants.Enums.BidStatus;
-import com.beingadish.AroundU.Constants.Enums.JobStatus;
-import com.beingadish.AroundU.DTO.Bid.BidCreateRequest;
-import com.beingadish.AroundU.DTO.Bid.BidHandshakeRequest;
-import com.beingadish.AroundU.DTO.Bid.BidResponseDTO;
-import com.beingadish.AroundU.Entities.*;
-import com.beingadish.AroundU.Mappers.Bid.BidMapper;
-import com.beingadish.AroundU.Repository.Bid.BidRepository;
-import com.beingadish.AroundU.Repository.Client.ClientRepository;
-import com.beingadish.AroundU.Repository.Job.JobRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
-import com.beingadish.AroundU.Service.MetricsService;
-import com.beingadish.AroundU.Service.impl.BidServiceImpl;
+import com.beingadish.AroundU.common.constants.enums.BidStatus;
+import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.bid.dto.BidCreateRequest;
+import com.beingadish.AroundU.bid.dto.BidHandshakeRequest;
+import com.beingadish.AroundU.bid.dto.BidResponseDTO;
+import com.beingadish.AroundU.bid.entity.Bid;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.bid.mapper.BidMapper;
+import com.beingadish.AroundU.bid.repository.BidRepository;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
+import com.beingadish.AroundU.bid.service.BidDuplicateCheckService;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.bid.service.impl.BidServiceImpl;
 import com.beingadish.AroundU.fixtures.JobTestBuilder;
 import com.beingadish.AroundU.fixtures.TestFixtures;
 import io.micrometer.core.instrument.Counter;
@@ -50,6 +54,8 @@ class BidServiceImplTest {
     private BidMapper bidMapper;
     @Mock
     private MetricsService metricsService;
+    @Mock
+    private BidDuplicateCheckService bidDuplicateCheckService;
 
     @InjectMocks
     private BidServiceImpl bidService;
@@ -183,10 +189,9 @@ class BidServiceImplTest {
         @Test
         @DisplayName("success – bid accepted, others rejected, job status transitions")
         void acceptBid_Success() {
-            Bid otherBid = TestFixtures.bid(201L, openJob, TestFixtures.worker(11L));
             when(bidRepository.findById(200L)).thenReturn(Optional.of(bid));
             when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
-            when(bidRepository.findByJob(openJob)).thenReturn(List.of(bid, otherBid));
+            when(bidRepository.rejectOtherBids(openJob, 200L)).thenReturn(0);
             when(bidRepository.save(any(Bid.class))).thenAnswer(inv -> inv.getArgument(0));
             when(jobRepository.save(any(Job.class))).thenAnswer(inv -> inv.getArgument(0));
             when(bidMapper.toDto(any(Bid.class))).thenReturn(bidResponseDTO);

@@ -1,14 +1,17 @@
 package com.beingadish.AroundU.integration;
 
-import com.beingadish.AroundU.Constants.Enums.*;
-import com.beingadish.AroundU.DTO.Job.*;
-import com.beingadish.AroundU.Entities.*;
-import com.beingadish.AroundU.Repository.Address.AddressRepository;
-import com.beingadish.AroundU.Repository.Client.ClientRepository;
-import com.beingadish.AroundU.Repository.Job.JobRepository;
-import com.beingadish.AroundU.Repository.Skill.SkillRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
-import com.beingadish.AroundU.Service.JobService;
+import com.beingadish.AroundU.common.constants.enums.*;
+import com.beingadish.AroundU.job.dto.*;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.common.entity.VerificationStatus;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.common.entity.Skill;
+import com.beingadish.AroundU.location.repository.AddressRepository;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
+import com.beingadish.AroundU.job.service.JobService;
 import com.beingadish.AroundU.fixtures.TestFixtures;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;

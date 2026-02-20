@@ -1,0 +1,1011 @@
+{
+  "info": {
+    "_postman_id": "aroundu-api-collection-v1",
+    "name": "AroundU API",
+    "description": "Complete API collection for AroundU — a local services marketplace connecting clients with skilled workers.\n\n## Setup\n1. Set `base_url` environment variable (default: http://localhost:20232)\n2. Run the 'Login (Client)' request to auto-populate `auth_token`\n3. All authenticated requests use {{auth_token}} automatically\n\n## Rate Limits\n- Auth login: 5 req / 15 min\n- Job creation: 5 req / hour\n- Bid placement: 20 req / hour\n- Worker feed: 30 req / min",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:20232" },
+    { "key": "auth_token", "value": "" },
+    { "key": "client_id", "value": "1" },
+    { "key": "worker_id", "value": "2" },
+    { "key": "job_id", "value": "100" },
+    { "key": "bid_id", "value": "50" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{auth_token}}", "type": "string" }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-refresh auth token if expired",
+          "const tokenTimestamp = pm.collectionVariables.get('token_timestamp');",
+          "const now = Date.now();",
+          "const TOKEN_TTL_MS = 86400000; // 24 hours",
+          "",
+          "if (!pm.collectionVariables.get('auth_token') || !tokenTimestamp || (now - parseInt(tokenTimestamp)) > TOKEN_TTL_MS) {",
+          "    const loginRequest = {",
+          "        url: pm.collectionVariables.get('base_url') + '/api/v1/auth/login',",
+          "        method: 'POST',",
+          "        header: { 'Content-Type': 'application/json' },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                email: 'john.client@example.com',",
+          "                password: 'SecureP@ss123'",
+          "            })",
+          "        }",
+          "    };",
+          "",
+          "    pm.sendRequest(loginRequest, (err, res) => {",
+          "        if (!err && res.code === 200) {",
+          "            const body = res.json();",
+          "            pm.collectionVariables.set('auth_token', body.token);",
+          "            pm.collectionVariables.set('token_timestamp', now.toString());",
+          "            console.log('Auth token refreshed');",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints",
+      "item": [
+        {
+          "name": "Login (Client)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has token', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.token).to.be.a('string');",
+                  "    pm.collectionVariables.set('auth_token', body.token);",
+                  "    pm.collectionVariables.set('client_id', body.userId.toString());",
+                  "    pm.collectionVariables.set('token_timestamp', Date.now().toString());",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.client@example.com\",\n  \"password\": \"SecureP@ss123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Authenticated",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"userId\": 1,\n  \"token\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJqb2huLmNsaWVudEBleGFtcGxlLmNvbSIsInJvbGUiOiJST0xFX0NMSUVOVCIsImlhdCI6MTcwODAwMDAwMCwiZXhwIjoxNzA4MDg2NDAwfQ.sample\",\n  \"type\": \"Bearer\",\n  \"email\": \"john.client@example.com\",\n  \"role\": \"ROLE_CLIENT\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login (Worker)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has token', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', body.token);",
+                  "    pm.collectionVariables.set('worker_id', body.userId.toString());",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.worker@example.com\",\n  \"password\": \"WorkerP@ss456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login — Invalid credentials (401)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.client@example.com\",\n  \"password\": \"WrongPassword\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": [
+            {
+              "name": "401 — Invalid credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"success\": false,\n  \"message\": \"Invalid credentials\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Client",
+      "description": "Client registration, profile, and management",
+      "item": [
+        {
+          "name": "Register Client",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.client@example.com\",\n  \"phoneNumber\": \"+1234567890\",\n  \"password\": \"SecureP@ss123\",\n  \"currency\": \"USD\",\n  \"currentAddress\": {\n    \"country\": \"US\",\n    \"postalCode\": \"10001\",\n    \"city\": \"New York\",\n    \"area\": \"Manhattan\",\n    \"latitude\": 40.7128,\n    \"longitude\": -74.006,\n    \"fullAddress\": \"123 Main St, Manhattan, New York, NY 10001\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/client/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "client", "register"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 — Registered",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Success\",\n  \"data\": \"Client registered successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Client by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/client/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "client", "{{client_id}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Client Details",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"John Doe\",\n    \"email\": \"john.client@example.com\",\n    \"phoneNumber\": \"+1234567890\",\n    \"currency\": \"USD\",\n    \"currentAddress\": {\n      \"country\": \"US\",\n      \"postalCode\": \"10001\",\n      \"city\": \"New York\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/client/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "client", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Clients (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/client/all?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "client", "all"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Page Response",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Success\",\n  \"data\": {\n    \"content\": [],\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 0,\n    \"totalPages\": 0,\n    \"last\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Client",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Updated\",\n  \"phoneNumber\": \"+1987654321\",\n  \"profileImageUrl\": \"https://cdn.aroundu.com/images/profile-123.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/client/update/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "client", "update", "{{client_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Client",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/client/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "client", "{{client_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Worker",
+      "description": "Worker registration, profile, and management",
+      "item": [
+        {
+          "name": "Register Worker",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Worker\",\n  \"email\": \"jane.worker@example.com\",\n  \"phoneNumber\": \"+1234567891\",\n  \"password\": \"WorkerP@ss456\",\n  \"currency\": \"USD\",\n  \"currentAddress\": {\n    \"country\": \"US\",\n    \"postalCode\": \"10001\",\n    \"city\": \"New York\",\n    \"area\": \"Manhattan\",\n    \"latitude\": 40.7128,\n    \"longitude\": -74.006,\n    \"fullAddress\": \"789 Broadway, Manhattan, New York, NY 10001\"\n  },\n  \"skillIds\": [\"1\", \"3\", \"5\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/worker/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "worker", "register"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 — Registered",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Success\",\n  \"data\": \"Worker registered successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Worker by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/worker/{{worker_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "worker", "{{worker_id}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Worker Details",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 2,\n    \"name\": \"Jane Worker\",\n    \"email\": \"jane.worker@example.com\",\n    \"skills\": [{\"id\": 1, \"skillName\": \"Plumbing\"}],\n    \"isOnDuty\": true,\n    \"experienceYears\": 5\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get My Worker Profile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/worker/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "worker", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Workers (Admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/worker/all?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "worker", "all"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Worker",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Updated\",\n  \"experienceYears\": 5,\n  \"certifications\": \"Licensed Plumber, EPA Certified\",\n  \"isOnDuty\": true,\n  \"payoutAccount\": \"acct_123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/worker/update/{{worker_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "worker", "update", "{{worker_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Worker",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/worker/{{worker_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "worker", "{{worker_id}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "description": "Job posting, filtering, worker feed, and status management",
+      "item": [
+        {
+          "name": "Create Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Capture job ID', () => {",
+                  "    const body = pm.response.json();",
+                  "    if (body.data && body.data.id) {",
+                  "        pm.collectionVariables.set('job_id', body.data.id.toString());",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Fix kitchen sink\",\n  \"shortDescription\": \"Kitchen sink is leaking\",\n  \"longDescription\": \"The kitchen sink has been leaking for 2 days. Need a plumber to fix the pipe.\",\n  \"price\": {\n    \"currency\": \"USD\",\n    \"amount\": 150.00\n  },\n  \"jobLocationId\": 1,\n  \"jobUrgency\": \"URGENT\",\n  \"requiredSkillIds\": [1, 3],\n  \"paymentMode\": \"ESCROW\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 — Job Created",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"success\": true,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 100,\n    \"title\": \"Fix kitchen sink\",\n    \"shortDescription\": \"Kitchen sink is leaking\",\n    \"jobStatus\": \"CREATED\",\n    \"jobUrgency\": \"URGENT\",\n    \"paymentMode\": \"ESCROW\",\n    \"price\": { \"currency\": \"USD\", \"amount\": 150.00 },\n    \"requiredSkills\": [{\"id\": 1, \"skillName\": \"Plumbing\"}]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Job",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Fix kitchen sink (updated)\",\n  \"price\": {\n    \"currency\": \"USD\",\n    \"amount\": 175.00\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Job Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newStatus\": \"OPEN_FOR_BIDS\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}/status?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}", "status"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Job (Public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Jobs by Location",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs?city=New%20York&area=Manhattan&skillIds=1&skillIds=3",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs"],
+              "query": [
+                { "key": "city", "value": "New York" },
+                { "key": "area", "value": "Manhattan" },
+                { "key": "skillIds", "value": "1" },
+                { "key": "skillIds", "value": "3" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Client Jobs (Filtered + Sorted)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/client/{{client_id}}?statuses=OPEN_FOR_BIDS,IN_PROGRESS&page=0&size=20&sortBy=createdAt&sortDirection=DESC&secondarySortBy=jobUrgency&secondarySortDirection=DESC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "client", "{{client_id}}"],
+              "query": [
+                { "key": "statuses", "value": "OPEN_FOR_BIDS,IN_PROGRESS" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortDirection", "value": "DESC" },
+                { "key": "secondarySortBy", "value": "jobUrgency" },
+                { "key": "secondarySortDirection", "value": "DESC" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Client Jobs (Distance Sort)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/client/{{client_id}}?sortByDistance=true&distanceLatitude=40.7128&distanceLongitude=-74.006&page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "client", "{{client_id}}"],
+              "query": [
+                { "key": "sortByDistance", "value": "true" },
+                { "key": "distanceLatitude", "value": "40.7128" },
+                { "key": "distanceLongitude", "value": "-74.006" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Client Job Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/client/{{client_id}}/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "client", "{{client_id}}", "{{job_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Client Past Jobs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/client/{{client_id}}/past?page=0&size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "client", "{{client_id}}", "past"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Worker Feed",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/worker/{{worker_id}}/feed?skillIds=1&skillIds=3&radiusKm=10.0&page=0&size=20&sortBy=createdAt&sortDirection=DESC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "worker", "{{worker_id}}", "feed"],
+              "query": [
+                { "key": "skillIds", "value": "1" },
+                { "key": "skillIds", "value": "3" },
+                { "key": "radiusKm", "value": "10.0" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" },
+                { "key": "sortBy", "value": "createdAt" },
+                { "key": "sortDirection", "value": "DESC" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Worker Feed (Distance Sort)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/worker/{{worker_id}}/feed?skillIds=1&radiusKm=25.0&sortByDistance=true&page=0&size=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "worker", "{{worker_id}}", "feed"],
+              "query": [
+                { "key": "skillIds", "value": "1" },
+                { "key": "radiusKm", "value": "25.0" },
+                { "key": "sortByDistance", "value": "true" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Worker Job Detail",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/worker/{{worker_id}}/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "worker", "{{worker_id}}", "{{job_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Job",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Job Codes",
+      "description": "Job start/release code generation and verification",
+      "item": [
+        {
+          "name": "Generate Codes",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}/codes?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}", "codes"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Codes Generated",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 1,\n  \"jobId\": 100,\n  \"status\": \"START_PENDING\",\n  \"startCode\": \"ABC123\",\n  \"releaseCode\": null,\n  \"createdAt\": \"2026-02-19T10:00:00\",\n  \"updatedAt\": \"2026-02-19T10:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify Start Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"ABC123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}/codes/start?workerId={{worker_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}", "codes", "start"],
+              "query": [
+                { "key": "workerId", "value": "{{worker_id}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Start Verified",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 1,\n  \"jobId\": 100,\n  \"status\": \"START_CONFIRMED\",\n  \"startCode\": null,\n  \"releaseCode\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify Release Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"REL-XYZ789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}/codes/release?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}", "codes", "release"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Release Verified",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 1,\n  \"jobId\": 100,\n  \"status\": \"COMPLETED\",\n  \"startCode\": null,\n  \"releaseCode\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bids",
+      "description": "Bid placement, listing, acceptance, and worker handshake",
+      "item": [
+        {
+          "name": "Place Bid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Capture bid ID', () => {",
+                  "    const body = pm.response.json();",
+                  "    if (body.id) {",
+                  "        pm.collectionVariables.set('bid_id', body.id.toString());",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bidAmount\": 120.00,\n  \"partnerName\": \"Helper Co.\",\n  \"partnerFee\": 15.00,\n  \"notes\": \"I can start tomorrow morning. Have 5 years experience.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/bid/jobs/{{job_id}}/bids?workerId={{worker_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bid", "jobs", "{{job_id}}", "bids"],
+              "query": [
+                { "key": "workerId", "value": "{{worker_id}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 — Bid Placed",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": 50,\n  \"jobId\": 100,\n  \"workerId\": 2,\n  \"bidAmount\": 120.00,\n  \"partnerName\": \"Helper Co.\",\n  \"partnerFee\": 15.00,\n  \"notes\": \"I can start tomorrow morning.\",\n  \"status\": \"PENDING\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Bids for Job",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/bid/jobs/{{job_id}}/bids",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bid", "jobs", "{{job_id}}", "bids"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Bids List",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"id\": 50,\n    \"jobId\": 100,\n    \"workerId\": 2,\n    \"bidAmount\": 120.00,\n    \"status\": \"PENDING\"\n  },\n  {\n    \"id\": 51,\n    \"jobId\": 100,\n    \"workerId\": 3,\n    \"bidAmount\": 140.00,\n    \"status\": \"PENDING\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Accept Bid",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/v1/bid/bids/{{bid_id}}/accept?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bid", "bids", "{{bid_id}}", "accept"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Bid Accepted",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 50,\n  \"jobId\": 100,\n  \"workerId\": 2,\n  \"bidAmount\": 120.00,\n  \"status\": \"SELECTED\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Worker Handshake — Accept",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accepted\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/bid/bids/{{bid_id}}/handshake?workerId={{worker_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bid", "bids", "{{bid_id}}", "handshake"],
+              "query": [
+                { "key": "workerId", "value": "{{worker_id}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Worker Handshake — Decline",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accepted\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/bid/bids/{{bid_id}}/handshake?workerId={{worker_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bid", "bids", "{{bid_id}}", "handshake"],
+              "query": [
+                { "key": "workerId", "value": "{{worker_id}}" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "description": "Escrow payment lock and release",
+      "item": [
+        {
+          "name": "Lock Escrow",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}/payments/lock?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}", "payments", "lock"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 — Escrow Locked",
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": 200,\n  \"jobId\": 100,\n  \"clientId\": 1,\n  \"workerId\": 2,\n  \"amount\": 150.00,\n  \"paymentMode\": \"ESCROW\",\n  \"status\": \"ESCROW_LOCKED\",\n  \"createdAt\": \"2026-02-19T10:00:00\",\n  \"updatedAt\": \"2026-02-19T10:00:00\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Release Escrow",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"releaseCode\": \"REL-XYZ789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs/{{job_id}}/payments/release?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs", "{{job_id}}", "payments", "release"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 — Payment Released",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": 200,\n  \"jobId\": 100,\n  \"clientId\": 1,\n  \"workerId\": 2,\n  \"amount\": 150.00,\n  \"paymentMode\": \"ESCROW\",\n  \"status\": \"RELEASED\",\n  \"createdAt\": \"2026-02-19T10:00:00\",\n  \"updatedAt\": \"2026-02-19T12:00:00\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "Notification triggers (no direct endpoints — notifications are event-driven)",
+      "item": [
+        {
+          "name": "Trigger: Create Job (notifies workers)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Notification test job\",\n  \"longDescription\": \"Creating this job triggers notifications to nearby workers.\",\n  \"price\": { \"currency\": \"USD\", \"amount\": 100.00 },\n  \"jobLocationId\": 1,\n  \"jobUrgency\": \"URGENT\",\n  \"requiredSkillIds\": [1],\n  \"paymentMode\": \"ESCROW\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/jobs?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "jobs"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Trigger: Accept Bid (notifies worker)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/v1/bid/bids/{{bid_id}}/accept?clientId={{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "bid", "bids", "{{bid_id}}", "accept"],
+              "query": [
+                { "key": "clientId", "value": "{{client_id}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check (circuit breaker status)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/actuator/health",
+              "host": ["{{base_url}}"],
+              "path": ["actuator", "health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
