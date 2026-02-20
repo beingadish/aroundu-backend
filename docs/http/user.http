@@ -1,0 +1,224 @@
+### ═══════════════════════════════════════════════════════════════
+### AroundU API — User / Auth Endpoints
+### ═══════════════════════════════════════════════════════════════
+
+@base_url = http://localhost:20232
+@api_version = v1
+@auth_token = {{$dotenv_auth_token}}
+
+### ──────────────────────────────────────────────────────────────
+### AUTH — Login (Client)
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.client@example.com",
+  "password": "SecureP@ss123"
+}
+
+### AUTH — Login (Worker)
+POST {{base_url}}/api/{{api_version}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "jane.worker@example.com",
+  "password": "WorkerP@ss456"
+}
+
+### AUTH — Login (Admin)
+POST {{base_url}}/api/{{api_version}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@aroundu.com",
+  "password": "AdminP@ss789"
+}
+
+### AUTH — Login with invalid credentials (expect 401)
+POST {{base_url}}/api/{{api_version}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "john.client@example.com",
+  "password": "WrongPassword"
+}
+
+### AUTH — Login with missing fields (expect 400)
+POST {{base_url}}/api/{{api_version}}/auth/login
+Content-Type: application/json
+
+{
+  "email": ""
+}
+
+### AUTH — Login rate limit test (send 6 times rapidly; 6th should return 429)
+POST {{base_url}}/api/{{api_version}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "ratelimit@example.com",
+  "password": "test123"
+}
+
+### ──────────────────────────────────────────────────────────────
+### CLIENT — Register
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/client/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john.client@example.com",
+  "phoneNumber": "+1234567890",
+  "password": "SecureP@ss123",
+  "currency": "USD",
+  "currentAddress": {
+    "country": "US",
+    "postalCode": "10001",
+    "city": "New York",
+    "area": "Manhattan",
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "fullAddress": "123 Main St, Manhattan, New York, NY 10001"
+  },
+  "savedAddresses": [
+    {
+      "country": "US",
+      "postalCode": "10002",
+      "city": "New York",
+      "area": "Lower East Side",
+      "latitude": 40.7158,
+      "longitude": -73.9862,
+      "fullAddress": "456 Oak Ave, Lower East Side, NY 10002"
+    }
+  ]
+}
+
+### CLIENT — Register with validation errors (expect 400)
+POST {{base_url}}/api/{{api_version}}/client/register
+Content-Type: application/json
+
+{
+  "name": "",
+  "email": "not-an-email",
+  "phoneNumber": "",
+  "password": "",
+  "currency": "USD",
+  "currentAddress": null
+}
+
+### CLIENT — Get by ID
+GET {{base_url}}/api/{{api_version}}/client/1
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT — Get my profile
+GET {{base_url}}/api/{{api_version}}/client/me
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT — List all (admin, paginated)
+GET {{base_url}}/api/{{api_version}}/client/all?page=0&size=20
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT — List all page 2
+GET {{base_url}}/api/{{api_version}}/client/all?page=1&size=10
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT — Update profile
+PATCH {{base_url}}/api/{{api_version}}/client/update/1
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "John Updated",
+  "email": "john.updated@example.com",
+  "phoneNumber": "+1987654321",
+  "profileImageUrl": "https://cdn.aroundu.com/images/profile-123.jpg"
+}
+
+### CLIENT — Partial update (name only)
+PATCH {{base_url}}/api/{{api_version}}/client/update/1
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "John Partial"
+}
+
+### CLIENT — Delete
+DELETE {{base_url}}/api/{{api_version}}/client/1
+Authorization: Bearer {{auth_token}}
+
+### CLIENT — Access another client's profile (expect 403)
+GET {{base_url}}/api/{{api_version}}/client/999
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT — Get non-existent client (expect 404)
+GET {{base_url}}/api/{{api_version}}/client/99999
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT — Access without token (expect 401)
+GET {{base_url}}/api/{{api_version}}/client/1
+
+### ──────────────────────────────────────────────────────────────
+### WORKER — Register
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/worker/register
+Content-Type: application/json
+
+{
+  "name": "Jane Worker",
+  "email": "jane.worker@example.com",
+  "phoneNumber": "+1234567891",
+  "password": "WorkerP@ss456",
+  "currency": "USD",
+  "currentAddress": {
+    "country": "US",
+    "postalCode": "10001",
+    "city": "New York",
+    "area": "Manhattan",
+    "latitude": 40.7128,
+    "longitude": -74.006,
+    "fullAddress": "789 Broadway, Manhattan, New York, NY 10001"
+  },
+  "skillIds": ["1", "3", "5"]
+}
+
+### WORKER — Get by ID
+GET {{base_url}}/api/{{api_version}}/worker/2
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### WORKER — Get my profile
+GET {{base_url}}/api/{{api_version}}/worker/me
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### WORKER — List all (admin, paginated)
+GET {{base_url}}/api/{{api_version}}/worker/all?page=0&size=20
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### WORKER — Update profile
+PATCH {{base_url}}/api/{{api_version}}/worker/update/2
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "name": "Jane Updated",
+  "experienceYears": 5,
+  "certifications": "Licensed Plumber, EPA Certified",
+  "isOnDuty": true,
+  "payoutAccount": "acct_123456789",
+  "currency": "USD"
+}
+
+### WORKER — Delete
+DELETE {{base_url}}/api/{{api_version}}/worker/2
+Authorization: Bearer {{auth_token}}

@@ -1,0 +1,73 @@
+### ═══════════════════════════════════════════════════════════════
+### AroundU API — Notification Endpoints
+### ═══════════════════════════════════════════════════════════════
+###
+### Note: AroundU does not currently expose notification endpoints
+### via REST controllers. Notifications are handled internally by
+### the NotificationService (email, push, SMS) triggered by
+### domain events (job creation, bid acceptance, etc.).
+###
+### This file documents the internal notification flows and
+### provides test scenarios for related endpoints that trigger
+### notifications.
+### ═══════════════════════════════════════════════════════════════
+
+@base_url = http://localhost:20232
+@api_version = v1
+@auth_token = {{$dotenv auth_token}}
+@client_id = 1
+@worker_id = 2
+@job_id = 100
+@bid_id = 50
+
+### ──────────────────────────────────────────────────────────────
+### TRIGGER: Job creation sends notification to nearby workers
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/jobs?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "Fix kitchen sink — notification test",
+  "shortDescription": "Notification trigger test",
+  "longDescription": "Creating a job to test that nearby workers receive notifications.",
+  "price": { "currency": "USD", "amount": 150.00 },
+  "jobLocationId": 1,
+  "jobUrgency": "URGENT",
+  "requiredSkillIds": [1, 3],
+  "paymentMode": "ESCROW"
+}
+
+### ──────────────────────────────────────────────────────────────
+### TRIGGER: Bid acceptance sends notification to worker
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/accept?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+
+### ──────────────────────────────────────────────────────────────
+### TRIGGER: Handshake acceptance sends notification to client
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/handshake?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "accepted": true
+}
+
+### ──────────────────────────────────────────────────────────────
+### TRIGGER: Job status update to COMPLETED sends notifications
+### ──────────────────────────────────────────────────────────────
+PATCH {{base_url}}/api/{{api_version}}/jobs/{{job_id}}/status?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "newStatus": "COMPLETED"
+}
+
+### ──────────────────────────────────────────────────────────────
+### HEALTH CHECK — Verify email service circuit breaker status
+### ──────────────────────────────────────────────────────────────
+GET {{base_url}}/actuator/health
+Accept: application/json

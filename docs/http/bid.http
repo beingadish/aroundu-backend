@@ -1,0 +1,157 @@
+### ═══════════════════════════════════════════════════════════════
+### AroundU API — Bid Endpoints
+### ═══════════════════════════════════════════════════════════════
+
+@base_url = http://localhost:20232
+@api_version = v1
+@auth_token = {{$dotenv auth_token}}
+@worker_id = 2
+@client_id = 1
+@job_id = 100
+@bid_id = 50
+
+### ──────────────────────────────────────────────────────────────
+### PLACE BID
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/bid/jobs/{{job_id}}/bids?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "bidAmount": 120.00,
+  "partnerName": "Helper Co.",
+  "partnerFee": 15.00,
+  "notes": "I can start tomorrow morning. Have 5 years experience in plumbing."
+}
+
+### PLACE BID — Minimum fields
+POST {{base_url}}/api/{{api_version}}/bid/jobs/{{job_id}}/bids?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "bidAmount": 100.00
+}
+
+### PLACE BID — Validation error: negative amount (expect 400)
+POST {{base_url}}/api/{{api_version}}/bid/jobs/{{job_id}}/bids?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "bidAmount": -10.00
+}
+
+### PLACE BID — Validation error: missing required field (expect 400)
+POST {{base_url}}/api/{{api_version}}/bid/jobs/{{job_id}}/bids?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "notes": "Missing bidAmount"
+}
+
+### PLACE BID — Duplicate bid (expect 400)
+POST {{base_url}}/api/{{api_version}}/bid/jobs/{{job_id}}/bids?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "bidAmount": 130.00,
+  "notes": "This is a duplicate bid attempt"
+}
+
+### PLACE BID — Non-existent job (expect 404)
+POST {{base_url}}/api/{{api_version}}/bid/jobs/99999/bids?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "bidAmount": 100.00
+}
+
+### PLACE BID — Rate limit test (21st request/hour should return 429)
+POST {{base_url}}/api/{{api_version}}/bid/jobs/{{job_id}}/bids?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "bidAmount": 99.00,
+  "notes": "Rate limit test"
+}
+
+### ──────────────────────────────────────────────────────────────
+### LIST BIDS FOR JOB
+### ──────────────────────────────────────────────────────────────
+GET {{base_url}}/api/{{api_version}}/bid/jobs/{{job_id}}/bids
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### LIST BIDS — Non-existent job (expect 404)
+GET {{base_url}}/api/{{api_version}}/bid/jobs/99999/bids
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### ──────────────────────────────────────────────────────────────
+### ACCEPT BID
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/accept?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+
+### ACCEPT BID — Not owner (expect 403)
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/accept?clientId=999
+Authorization: Bearer {{auth_token}}
+
+### ACCEPT BID — Already accepted (expect 409)
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/accept?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+
+### ACCEPT BID — Non-existent bid (expect 404)
+POST {{base_url}}/api/{{api_version}}/bid/bids/99999/accept?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+
+### ──────────────────────────────────────────────────────────────
+### WORKER HANDSHAKE
+### ──────────────────────────────────────────────────────────────
+### Handshake — Accept
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/handshake?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "accepted": true
+}
+
+### Handshake — Decline
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/handshake?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "accepted": false
+}
+
+### Handshake — Missing field (expect 400)
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/handshake?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+}
+
+### Handshake — Non-existent bid (expect 404)
+POST {{base_url}}/api/{{api_version}}/bid/bids/99999/handshake?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "accepted": true
+}
+
+### Handshake — Without auth (expect 401)
+POST {{base_url}}/api/{{api_version}}/bid/bids/{{bid_id}}/handshake?workerId={{worker_id}}
+Content-Type: application/json
+
+{
+  "accepted": true
+}

@@ -13,10 +13,11 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
-  redis:
-    host: localhost
-    port: 6379
-    password: ""
+  data:
+    redis:
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      host: ${REDIS_HOST:localhost}
 
 logging:
   level:
@@ -32,7 +33,78 @@ jwt:
     expiration:
       ms: 86400000
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
 feature:
   enable-dummy-data: true
   enable-swagger: true
   enable-debug-security: true
+
+rate-limit:
+  enabled: true
+  job-creation:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  bid-placement:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  worker-feed:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  profile-view:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+  auth:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 1
+
+# ── Scheduler (aggressive for local testing) ─────────────────────
+scheduler:
+  enabled: true
+  user-cleanup-cron: "0 */5 * * * ?"      # every 5 minutes
+  job-expiration-cron: "0 */2 * * * ?"     # every 2 minutes
+  reminder-cron: "0 */5 * * * ?"           # every 5 minutes
+  cache-sync-cron: "0 */5 * * * ?"         # every 5 minutes
+  analytics-cron: "0 */10 * * * ?"         # every 10 minutes
+  user-inactive-years: 2
+  job-expiration-days: 1
+  reminder-threshold-hours: 1
+
+# ── Resilience4j (lenient for dev) ────────────────────────────────
+resilience:
+  circuitbreaker:
+    payment-gateway:
+      failure-rate-threshold: 70
+      wait-duration-in-open-state-seconds: 10
+      minimum-number-of-calls: 3
+    email-service:
+      failure-rate-threshold: 80
+      wait-duration-in-open-state-seconds: 15
+      minimum-number-of-calls: 3
+    image-upload:
+      failure-rate-threshold: 80
+      wait-duration-in-open-state-seconds: 10
+      minimum-number-of-calls: 3
+  retry:
+    payment-gateway:
+      max-attempts: 2
+      wait-duration-ms: 200
+    email-service:
+      max-attempts: 2
+      wait-duration-ms: 500
+    image-upload:
+      max-attempts: 2
+      wait-duration-ms: 100
