@@ -1,10 +1,14 @@
 package com.beingadish.AroundU.Config.Interceptors;
 
-import com.beingadish.AroundU.Entities.Client;
-import com.beingadish.AroundU.Repository.Admin.AdminRepository;
-import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
-import com.beingadish.AroundU.Security.UserPrincipal;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.repository.AdminRepository;
+import com.beingadish.AroundU.user.repository.ClientReadRepository;
+import com.beingadish.AroundU.user.repository.WorkerReadRepository;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
+import com.beingadish.AroundU.infrastructure.interceptor.RequestIdInterceptor;
+import com.beingadish.AroundU.infrastructure.interceptor.RequestLoggingInterceptor;
+import com.beingadish.AroundU.infrastructure.interceptor.ApiVersionInterceptor;
+import com.beingadish.AroundU.infrastructure.interceptor.UserContextInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

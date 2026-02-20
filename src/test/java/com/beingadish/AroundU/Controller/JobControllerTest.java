@@ -1,16 +1,16 @@
 package com.beingadish.AroundU.Controller;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.Constants.Enums.JobStatus;
-import com.beingadish.AroundU.Constants.Enums.JobUrgency;
-import com.beingadish.AroundU.Constants.Enums.PaymentMode;
-import com.beingadish.AroundU.Controller.Job.JobController;
-import com.beingadish.AroundU.DTO.Common.PriceDTO;
-import com.beingadish.AroundU.DTO.Job.*;
-import com.beingadish.AroundU.Constants.Enums.Currency;
-import com.beingadish.AroundU.Exceptions.Job.JobNotFoundException;
-import com.beingadish.AroundU.Exceptions.Job.JobValidationException;
-import com.beingadish.AroundU.Service.JobService;
+import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.common.constants.enums.JobUrgency;
+import com.beingadish.AroundU.common.constants.enums.PaymentMode;
+import com.beingadish.AroundU.job.controller.JobController;
+import com.beingadish.AroundU.common.dto.PriceDTO;
+import com.beingadish.AroundU.job.dto.*;
+import com.beingadish.AroundU.common.constants.enums.Currency;
+import com.beingadish.AroundU.job.exception.JobNotFoundException;
+import com.beingadish.AroundU.job.exception.JobValidationException;
+import com.beingadish.AroundU.job.service.JobService;
 import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import com.beingadish.AroundU.Security.UserPrincipal;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -79,23 +79,23 @@ class JobControllerTest {
     @SuppressWarnings("unused") @MockitoBean(name = "jpaSharedEM_entityManagerFactory") private jakarta.persistence.EntityManager sharedEntityManager;
     @SuppressWarnings("unused") @MockitoBean private JpaMetamodelMappingContext jpaMetamodelMappingContext;
     @SuppressWarnings("unused") @MockitoBean private PlatformTransactionManager platformTransactionManager;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Security.JwtAuthenticationFilter jwtAuthenticationFilter;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Client.ClientReadRepository clientReadRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Client.ClientWriteRepository clientWriteRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Client.ClientRepository clientRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Worker.WorkerReadRepository workerReadRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository workerWriteRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Worker.WorkerRepository workerRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Admin.AdminRepository adminRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Skill.SkillRepository skillRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Bid.BidRepository bidRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Job.JobRepository jobRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository jobConfirmationCodeRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository paymentTransactionRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Address.AddressRepository addressRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Analytics.AggregatedMetricsRepository aggregatedMetricsRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Notification.FailedNotificationRepository failedNotificationRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.ClientReadRepository clientReadRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.ClientWriteRepository clientWriteRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.ClientRepository clientRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.WorkerReadRepository workerReadRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.WorkerWriteRepository workerWriteRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.WorkerRepository workerRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.AdminRepository adminRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.common.repository.SkillRepository skillRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.bid.repository.BidRepository bidRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.job.repository.JobRepository jobRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository jobConfirmationCodeRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.payment.repository.PaymentTransactionRepository paymentTransactionRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.location.repository.AddressRepository addressRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
+    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
 
     @BeforeEach
     void stubEntityManager() {

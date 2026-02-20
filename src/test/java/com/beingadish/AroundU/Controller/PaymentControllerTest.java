@@ -1,13 +1,15 @@
 package com.beingadish.AroundU.Controller;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.Constants.Enums.PaymentMode;
-import com.beingadish.AroundU.Constants.Enums.PaymentStatus;
-import com.beingadish.AroundU.Controller.Payment.PaymentController;
-import com.beingadish.AroundU.DTO.Payment.PaymentLockRequest;
-import com.beingadish.AroundU.DTO.Payment.PaymentReleaseRequest;
-import com.beingadish.AroundU.Entities.PaymentTransaction;
-import com.beingadish.AroundU.Service.PaymentService;
+import com.beingadish.AroundU.common.constants.enums.PaymentMode;
+import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
+import com.beingadish.AroundU.payment.controller.PaymentController;
+import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
+import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
+import com.beingadish.AroundU.payment.dto.PaymentResponseDTO;
+import com.beingadish.AroundU.payment.entity.PaymentTransaction;
+import com.beingadish.AroundU.payment.mapper.PaymentTransactionMapper;
+import com.beingadish.AroundU.payment.service.PaymentService;
 import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
@@ -37,48 +39,95 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(value = PaymentController.class, excludeAutoConfiguration = {
-        DataSourceAutoConfiguration.class,
-        HibernateJpaAutoConfiguration.class,
-        JpaRepositoriesAutoConfiguration.class
+    DataSourceAutoConfiguration.class,
+    HibernateJpaAutoConfiguration.class,
+    JpaRepositoriesAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestWebSecurityConfig.class)
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration," +
-                "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
-                "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
-        "spring.data.jpa.repositories.enabled=false"
+    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
+    + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
+    + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+    "spring.data.jpa.repositories.enabled=false"
 })
 @DisplayName("PaymentController")
 class PaymentControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-    @MockitoBean private PaymentService paymentService;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @MockitoBean
+    private PaymentService paymentService;
+    @MockitoBean
+    private PaymentTransactionMapper paymentTransactionMapper;
 
     // ── JPA/Security infrastructure mocks ────────────────────────
-    @SuppressWarnings("unused") @MockitoBean(name = "entityManagerFactory") private EntityManagerFactory entityManagerFactory;
-    @SuppressWarnings("unused") @MockitoBean(name = "jpaSharedEM_entityManagerFactory") private jakarta.persistence.EntityManager sharedEntityManager;
-    @SuppressWarnings("unused") @MockitoBean private JpaMetamodelMappingContext jpaMetamodelMappingContext;
-    @SuppressWarnings("unused") @MockitoBean private PlatformTransactionManager platformTransactionManager;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Security.JwtAuthenticationFilter jwtAuthenticationFilter;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Client.ClientReadRepository clientReadRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Client.ClientWriteRepository clientWriteRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Client.ClientRepository clientRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Worker.WorkerReadRepository workerReadRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository workerWriteRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Worker.WorkerRepository workerRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Admin.AdminRepository adminRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Skill.SkillRepository skillRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Bid.BidRepository bidRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Job.JobRepository jobRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository jobConfirmationCodeRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository paymentTransactionRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Address.AddressRepository addressRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository failedGeoSyncRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Analytics.AggregatedMetricsRepository aggregatedMetricsRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.Repository.Notification.FailedNotificationRepository failedNotificationRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean(name = "entityManagerFactory")
+    private EntityManagerFactory entityManagerFactory;
+    @SuppressWarnings("unused")
+    @MockitoBean(name = "jpaSharedEM_entityManagerFactory")
+    private jakarta.persistence.EntityManager sharedEntityManager;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private PlatformTransactionManager platformTransactionManager;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.ClientReadRepository clientReadRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.ClientWriteRepository clientWriteRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.ClientRepository clientRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.WorkerReadRepository workerReadRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.WorkerWriteRepository workerWriteRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.WorkerRepository workerRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.AdminRepository adminRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.common.repository.SkillRepository skillRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.bid.repository.BidRepository bidRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.job.repository.JobRepository jobRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository jobConfirmationCodeRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.payment.repository.PaymentTransactionRepository paymentTransactionRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.location.repository.AddressRepository addressRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
 
     @BeforeEach
     void stubEntityManager() {
@@ -97,6 +146,15 @@ class PaymentControllerTest {
                 .build();
     }
 
+    private PaymentResponseDTO sampleResponseDTO(PaymentStatus status) {
+        PaymentResponseDTO dto = new PaymentResponseDTO();
+        dto.setId(1L);
+        dto.setAmount(500.0);
+        dto.setPaymentMode(PaymentMode.ESCROW);
+        dto.setStatus(status);
+        return dto;
+    }
+
     // ── Lock Escrow ──────────────────────────────────────────────
     @Nested
     @DisplayName("POST /api/v1/jobs/{jobId}/payments/lock")
@@ -105,8 +163,10 @@ class PaymentControllerTest {
         @Test
         @DisplayName("201 Created – escrow locked")
         void lock_Success() throws Exception {
+            PaymentTransaction tx = sampleTransaction(PaymentStatus.ESCROW_LOCKED);
             when(paymentService.lockEscrow(eq(100L), eq(1L), any(PaymentLockRequest.class)))
-                    .thenReturn(sampleTransaction(PaymentStatus.ESCROW_LOCKED));
+                    .thenReturn(tx);
+            when(paymentTransactionMapper.toDto(tx)).thenReturn(sampleResponseDTO(PaymentStatus.ESCROW_LOCKED));
 
             mockMvc.perform(post(JOBS_BASE + "/100/payments/lock")
                     .param("clientId", "1")
@@ -118,7 +178,7 @@ class PaymentControllerTest {
         }
 
         @Test
-        @DisplayName("500 – job not found (EntityNotFoundException falls through)")
+        @DisplayName("404 – job not found")
         void lock_JobNotFound() throws Exception {
             when(paymentService.lockEscrow(eq(999L), eq(1L), any(PaymentLockRequest.class)))
                     .thenThrow(new EntityNotFoundException("Job not found"));
@@ -127,7 +187,7 @@ class PaymentControllerTest {
                     .param("clientId", "1")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(TestFixtures.paymentLockRequest(500.0))))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isNotFound());
         }
 
         @Test
@@ -152,8 +212,10 @@ class PaymentControllerTest {
         @Test
         @DisplayName("200 OK – escrow released")
         void release_Success() throws Exception {
+            PaymentTransaction tx = sampleTransaction(PaymentStatus.RELEASED);
             when(paymentService.releaseEscrow(eq(100L), eq(1L), any(PaymentReleaseRequest.class)))
-                    .thenReturn(sampleTransaction(PaymentStatus.RELEASED));
+                    .thenReturn(tx);
+            when(paymentTransactionMapper.toDto(tx)).thenReturn(sampleResponseDTO(PaymentStatus.RELEASED));
 
             mockMvc.perform(post(JOBS_BASE + "/100/payments/release")
                     .param("clientId", "1")
@@ -164,7 +226,7 @@ class PaymentControllerTest {
         }
 
         @Test
-        @DisplayName("500 – job not found (EntityNotFoundException falls through)")
+        @DisplayName("404 – job not found")
         void release_JobNotFound() throws Exception {
             when(paymentService.releaseEscrow(eq(999L), eq(1L), any(PaymentReleaseRequest.class)))
                     .thenThrow(new EntityNotFoundException("Job not found"));
@@ -173,11 +235,11 @@ class PaymentControllerTest {
                     .param("clientId", "1")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(TestFixtures.paymentReleaseRequest("RELEASE456"))))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isNotFound());
         }
 
         @Test
-        @DisplayName("500 – invalid state throws (IllegalStateException falls through)")
+        @DisplayName("409 – invalid state")
         void release_InvalidState() throws Exception {
             when(paymentService.releaseEscrow(eq(100L), eq(1L), any(PaymentReleaseRequest.class)))
                     .thenThrow(new IllegalStateException("Payment already released"));
@@ -186,7 +248,7 @@ class PaymentControllerTest {
                     .param("clientId", "1")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(TestFixtures.paymentReleaseRequest("RELEASE456"))))
-                    .andExpect(status().isInternalServerError());
+                    .andExpect(status().isConflict());
         }
     }
 }

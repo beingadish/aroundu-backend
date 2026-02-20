@@ -1,22 +1,28 @@
 package com.beingadish.AroundU.unit.service;
 
-import com.beingadish.AroundU.Constants.Enums.JobStatus;
-import com.beingadish.AroundU.DTO.Job.*;
-import com.beingadish.AroundU.Entities.*;
-import com.beingadish.AroundU.Events.JobModifiedEvent;
-import com.beingadish.AroundU.Exceptions.Job.JobNotFoundException;
-import com.beingadish.AroundU.Exceptions.Job.JobValidationException;
-import com.beingadish.AroundU.Mappers.Job.JobMapper;
-import com.beingadish.AroundU.Repository.Address.AddressRepository;
-import com.beingadish.AroundU.Repository.Bid.BidRepository;
-import com.beingadish.AroundU.Repository.Client.ClientRepository;
-import com.beingadish.AroundU.Repository.FailedGeoSync.FailedGeoSyncRepository;
-import com.beingadish.AroundU.Repository.Job.JobRepository;
-import com.beingadish.AroundU.Repository.Skill.SkillRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
-import com.beingadish.AroundU.Service.JobGeoService;
-import com.beingadish.AroundU.Service.MetricsService;
-import com.beingadish.AroundU.Service.impl.JobServiceImpl;
+import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.job.dto.*;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.common.entity.Skill;
+import com.beingadish.AroundU.job.event.JobModifiedEvent;
+import com.beingadish.AroundU.job.exception.JobNotFoundException;
+import com.beingadish.AroundU.job.exception.JobValidationException;
+import com.beingadish.AroundU.job.mapper.JobMapper;
+import com.beingadish.AroundU.location.repository.AddressRepository;
+import com.beingadish.AroundU.bid.repository.BidRepository;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
+import com.beingadish.AroundU.location.entity.FailedGeoSync;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.user.repository.WorkerReadRepository;
+import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
+import com.beingadish.AroundU.location.service.JobGeoService;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.job.service.impl.JobServiceImpl;
 import com.beingadish.AroundU.fixtures.JobTestBuilder;
 import com.beingadish.AroundU.fixtures.TestFixtures;
 import io.micrometer.core.instrument.Counter;
@@ -67,6 +73,8 @@ class JobServiceImplTest {
     private MetricsService metricsService;
     @Mock
     private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private CacheEvictionService cacheEvictionService;
 
     @InjectMocks
     private JobServiceImpl jobService;
@@ -366,7 +374,7 @@ class JobServiceImplTest {
             when(jobRepository.findByIdInAndJobStatus(anyCollection(), eq(JobStatus.OPEN_FOR_BIDS), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of(job)));
             when(jobMapper.toSummaryDto(any(Job.class))).thenReturn(new JobSummaryDTO());
-            when(bidRepository.countByJobId(anyLong())).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(10L, TestFixtures.workerFeedRequest());
 
@@ -383,7 +391,7 @@ class JobServiceImplTest {
             when(jobRepository.findOpenJobsBySkills(eq(JobStatus.OPEN_FOR_BIDS), anyCollection(), any(Pageable.class)))
                     .thenReturn(new PageImpl<>(List.of(job)));
             when(jobMapper.toSummaryDto(any(Job.class))).thenReturn(new JobSummaryDTO());
-            when(bidRepository.countByJobId(anyLong())).thenReturn(0L);
+            when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             Page<JobSummaryDTO> result = jobService.getWorkerFeed(10L, TestFixtures.workerFeedRequest());
 

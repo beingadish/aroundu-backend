@@ -1,10 +1,15 @@
 package com.beingadish.AroundU.fixtures;
 
-import com.beingadish.AroundU.Constants.Enums.BidStatus;
-import com.beingadish.AroundU.Constants.Enums.Currency;
-import com.beingadish.AroundU.Constants.Enums.PaymentMode;
-import com.beingadish.AroundU.Constants.Enums.PaymentStatus;
-import com.beingadish.AroundU.Entities.*;
+import com.beingadish.AroundU.common.constants.enums.BidStatus;
+import com.beingadish.AroundU.common.constants.enums.Currency;
+import com.beingadish.AroundU.common.constants.enums.PaymentMode;
+import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
+import com.beingadish.AroundU.bid.entity.Bid;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.payment.entity.PaymentTransaction;
+import com.beingadish.AroundU.common.entity.Price;
 
 import java.time.LocalDateTime;
 
