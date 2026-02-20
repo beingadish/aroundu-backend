@@ -21,12 +21,13 @@ spring:
     console:
       enabled: true
       path: /h2-console
-  redis:
-    host: ${TEST_REDIS_HOST:localhost}
-    port: ${TEST_REDIS_PORT:6379}
-    password: ""
   cache:
     type: none
+  data:
+    redis:
+      host: ${TEST_REDIS_HOST:localhost}
+      password: ""
+      port: ${TEST_REDIS_PORT:6379}
 
 logging:
   level:
@@ -41,7 +42,59 @@ jwt:
     expiration:
       ms: 3600000
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: false
+
 feature:
   enable-dummy-data: true
   enable-swagger: true
   enable-debug-security: false
+
+rate-limit:
+  enabled: false
+
+# ── Scheduler (disabled for tests — invoke directly) ─────────────
+scheduler:
+  enabled: false
+  user-inactive-years: 2
+  job-expiration-days: 30
+  reminder-threshold-hours: 24
+
+# ── Resilience4j (very lenient / effectively disabled for tests) ──
+resilience:
+  circuitbreaker:
+    payment-gateway:
+      failure-rate-threshold: 90
+      wait-duration-in-open-state-seconds: 1
+      minimum-number-of-calls: 100
+      sliding-window-size: 100
+    email-service:
+      failure-rate-threshold: 90
+      wait-duration-in-open-state-seconds: 1
+      minimum-number-of-calls: 100
+      sliding-window-size: 100
+    image-upload:
+      failure-rate-threshold: 90
+      wait-duration-in-open-state-seconds: 1
+      minimum-number-of-calls: 100
+      sliding-window-size: 100
+  retry:
+    payment-gateway:
+      max-attempts: 1
+      wait-duration-ms: 10
+    email-service:
+      max-attempts: 1
+      wait-duration-ms: 10
+    image-upload:
+      max-attempts: 1
+      wait-duration-ms: 10

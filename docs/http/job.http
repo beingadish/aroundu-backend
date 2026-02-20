@@ -1,0 +1,255 @@
+### ═══════════════════════════════════════════════════════════════
+### AroundU API — Job Endpoints
+### ═══════════════════════════════════════════════════════════════
+
+@base_url = http://localhost:20232
+@api_version = v1
+@auth_token = {{$dotenv auth_token}}
+@client_id = 1
+@worker_id = 2
+@job_id = 100
+
+### ──────────────────────────────────────────────────────────────
+### CREATE JOB
+### ──────────────────────────────────────────────────────────────
+POST {{base_url}}/api/{{api_version}}/jobs?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "Fix kitchen sink",
+  "shortDescription": "Kitchen sink is leaking",
+  "longDescription": "The kitchen sink has been leaking for 2 days. Need a plumber to fix the pipe under the sink.",
+  "price": {
+    "currency": "USD",
+    "amount": 150.00
+  },
+  "jobLocationId": 1,
+  "jobUrgency": "URGENT",
+  "requiredSkillIds": [1, 3],
+  "paymentMode": "ESCROW"
+}
+
+### CREATE JOB — Super urgent
+POST {{base_url}}/api/{{api_version}}/jobs?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "Emergency pipe burst",
+  "shortDescription": "Pipe burst in basement",
+  "longDescription": "Major pipe burst flooding the basement. Need immediate help.",
+  "price": {
+    "currency": "USD",
+    "amount": 500.00
+  },
+  "jobLocationId": 1,
+  "jobUrgency": "SUPER_URGENT",
+  "requiredSkillIds": [1],
+  "paymentMode": "ESCROW"
+}
+
+### CREATE JOB — Offline payment
+POST {{base_url}}/api/{{api_version}}/jobs?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "Paint living room",
+  "shortDescription": "Need entire living room painted",
+  "longDescription": "Living room of approximately 400 sq ft needs new paint. We have the paint already.",
+  "price": {
+    "currency": "USD",
+    "amount": 200.00
+  },
+  "jobLocationId": 1,
+  "jobUrgency": "NORMAL",
+  "requiredSkillIds": [2],
+  "paymentMode": "OFFLINE"
+}
+
+### CREATE JOB — Validation error (expect 400)
+POST {{base_url}}/api/{{api_version}}/jobs?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "",
+  "price": null,
+  "jobUrgency": "URGENT",
+  "requiredSkillIds": [],
+  "paymentMode": "ESCROW"
+}
+
+### CREATE JOB — Rate limit test (send 6 times; 6th should return 429)
+POST {{base_url}}/api/{{api_version}}/jobs?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "Rate limit test job",
+  "longDescription": "Testing rate limiting",
+  "price": { "currency": "USD", "amount": 50.00 },
+  "jobLocationId": 1,
+  "jobUrgency": "NORMAL",
+  "requiredSkillIds": [1],
+  "paymentMode": "OFFLINE"
+}
+
+### ──────────────────────────────────────────────────────────────
+### UPDATE JOB
+### ──────────────────────────────────────────────────────────────
+PATCH {{base_url}}/api/{{api_version}}/jobs/{{job_id}}?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "title": "Fix kitchen sink (updated)",
+  "shortDescription": "Kitchen sink leak — updated description",
+  "price": {
+    "currency": "USD",
+    "amount": 175.00
+  }
+}
+
+### ──────────────────────────────────────────────────────────────
+### UPDATE JOB STATUS
+### ──────────────────────────────────────────────────────────────
+PATCH {{base_url}}/api/{{api_version}}/jobs/{{job_id}}/status?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "newStatus": "OPEN_FOR_BIDS"
+}
+
+### UPDATE JOB STATUS — Invalid transition (expect 400)
+PATCH {{base_url}}/api/{{api_version}}/jobs/{{job_id}}/status?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "newStatus": "COMPLETED"
+}
+
+### ──────────────────────────────────────────────────────────────
+### DELETE JOB
+### ──────────────────────────────────────────────────────────────
+DELETE {{base_url}}/api/{{api_version}}/jobs/{{job_id}}?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+
+### ──────────────────────────────────────────────────────────────
+### GET JOBS — Public detail
+### ──────────────────────────────────────────────────────────────
+GET {{base_url}}/api/{{api_version}}/jobs/{{job_id}}
+Accept: application/json
+
+### GET JOBS — Search by city
+GET {{base_url}}/api/{{api_version}}/jobs?city=New%20York
+Accept: application/json
+
+### GET JOBS — Search by city + area
+GET {{base_url}}/api/{{api_version}}/jobs?city=New%20York&area=Manhattan
+Accept: application/json
+
+### GET JOBS — Search by city + skills
+GET {{base_url}}/api/{{api_version}}/jobs?city=New%20York&skillIds=1&skillIds=3
+Accept: application/json
+
+### GET JOBS — Non-existent job (expect 404)
+GET {{base_url}}/api/{{api_version}}/jobs/99999
+Accept: application/json
+
+### ──────────────────────────────────────────────────────────────
+### CLIENT JOBS — List with filters
+### ──────────────────────────────────────────────────────────────
+GET {{base_url}}/api/{{api_version}}/jobs/client/{{client_id}}?page=0&size=20&sortBy=createdAt&sortDirection=DESC
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT JOBS — Filter by status
+GET {{base_url}}/api/{{api_version}}/jobs/client/{{client_id}}?statuses=OPEN_FOR_BIDS,IN_PROGRESS&page=0&size=10
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT JOBS — Filter by date range
+GET {{base_url}}/api/{{api_version}}/jobs/client/{{client_id}}?startDate=2025-01-01&endDate=2026-12-31&page=0&size=20
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT JOBS — Multi-field sorting
+GET {{base_url}}/api/{{api_version}}/jobs/client/{{client_id}}?sortBy=jobUrgency&sortDirection=DESC&secondarySortBy=createdAt&secondarySortDirection=ASC&page=0&size=20
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT JOBS — Sort by distance
+GET {{base_url}}/api/{{api_version}}/jobs/client/{{client_id}}?sortByDistance=true&distanceLatitude=40.7128&distanceLongitude=-74.006&page=0&size=20
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT JOBS — Get specific job
+GET {{base_url}}/api/{{api_version}}/jobs/client/{{client_id}}/{{job_id}}
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### CLIENT JOBS — Past jobs
+GET {{base_url}}/api/{{api_version}}/jobs/client/{{client_id}}/past?page=0&size=20
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### ──────────────────────────────────────────────────────────────
+### WORKER FEED
+### ──────────────────────────────────────────────────────────────
+GET {{base_url}}/api/{{api_version}}/jobs/worker/{{worker_id}}/feed?skillIds=1&skillIds=3&radiusKm=10.0&page=0&size=20&sortBy=createdAt&sortDirection=DESC
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### WORKER FEED — Sort by distance
+GET {{base_url}}/api/{{api_version}}/jobs/worker/{{worker_id}}/feed?skillIds=1&radiusKm=25.0&sortByDistance=true&page=0&size=10
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### WORKER FEED — Rate limit test (31st request in 1 minute should return 429)
+GET {{base_url}}/api/{{api_version}}/jobs/worker/{{worker_id}}/feed?page=0&size=5
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### WORKER — Get specific job detail
+GET {{base_url}}/api/{{api_version}}/jobs/worker/{{worker_id}}/{{job_id}}
+Authorization: Bearer {{auth_token}}
+Accept: application/json
+
+### ──────────────────────────────────────────────────────────────
+### JOB CODES
+### ──────────────────────────────────────────────────────────────
+
+### Generate start/release codes
+POST {{base_url}}/api/{{api_version}}/jobs/{{job_id}}/codes?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+
+### Verify start code (worker)
+POST {{base_url}}/api/{{api_version}}/jobs/{{job_id}}/codes/start?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "code": "ABC123"
+}
+
+### Verify start code — wrong code (expect 400)
+POST {{base_url}}/api/{{api_version}}/jobs/{{job_id}}/codes/start?workerId={{worker_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "code": "WRONGCODE"
+}
+
+### Verify release code (client)
+POST {{base_url}}/api/{{api_version}}/jobs/{{job_id}}/codes/release?clientId={{client_id}}
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "code": "REL-XYZ789"
+}

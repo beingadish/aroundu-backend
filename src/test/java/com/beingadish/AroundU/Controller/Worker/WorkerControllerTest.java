@@ -1,14 +1,14 @@
 package com.beingadish.AroundU.Controller.Worker;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.Constants.Enums.Country;
-import com.beingadish.AroundU.Constants.Enums.Currency;
-import com.beingadish.AroundU.DTO.Common.AddressDTO;
-import com.beingadish.AroundU.DTO.Worker.Update.WorkerUpdateRequestDTO;
-import com.beingadish.AroundU.DTO.Worker.WorkerDetailDTO;
-import com.beingadish.AroundU.DTO.Worker.WorkerSignupRequestDTO;
-import com.beingadish.AroundU.Security.UserPrincipal;
-import com.beingadish.AroundU.Service.WorkerService;
+import com.beingadish.AroundU.common.constants.enums.Country;
+import com.beingadish.AroundU.common.constants.enums.Currency;
+import com.beingadish.AroundU.common.dto.AddressDTO;
+import com.beingadish.AroundU.user.dto.worker.WorkerUpdateRequestDTO;
+import com.beingadish.AroundU.user.dto.worker.WorkerDetailDTO;
+import com.beingadish.AroundU.user.dto.worker.WorkerSignupRequestDTO;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
+import com.beingadish.AroundU.user.service.WorkerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,19 +36,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.data.domain.PageRequest;
-import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
-import com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository;
-import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
-import com.beingadish.AroundU.Repository.Client.ClientWriteRepository;
-import com.beingadish.AroundU.Repository.Client.ClientRepository;
-import com.beingadish.AroundU.Repository.Admin.AdminRepository;
-import com.beingadish.AroundU.Repository.Skill.SkillRepository;
-import com.beingadish.AroundU.Repository.Bid.BidRepository;
-import com.beingadish.AroundU.Repository.Job.JobRepository;
-import com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository;
-import com.beingadish.AroundU.Repository.Address.AddressRepository;
+import com.beingadish.AroundU.user.repository.WorkerReadRepository;
+import com.beingadish.AroundU.user.repository.WorkerWriteRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
+import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
+import com.beingadish.AroundU.user.repository.ClientReadRepository;
+import com.beingadish.AroundU.user.repository.ClientWriteRepository;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.AdminRepository;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.bid.repository.BidRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
+import com.beingadish.AroundU.location.repository.AddressRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +61,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.beingadish.AroundU.user.controller.WorkerController;
 
 @WebMvcTest(value = WorkerController.class, excludeAutoConfiguration = {
     DataSourceAutoConfiguration.class,
@@ -102,7 +103,7 @@ class WorkerControllerTest {
 
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @SuppressWarnings("unused")
     @MockitoBean
@@ -151,6 +152,18 @@ class WorkerControllerTest {
     @SuppressWarnings("unused")
     @MockitoBean
     private AddressRepository addressRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
 
     @SuppressWarnings("unused")
     @MockitoBean

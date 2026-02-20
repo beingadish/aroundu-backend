@@ -1,14 +1,14 @@
 package com.beingadish.AroundU.Controller.Client;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.Constants.Enums.Country;
-import com.beingadish.AroundU.Constants.Enums.Currency;
-import com.beingadish.AroundU.DTO.Client.Details.ClientDetailsResponseDTO;
-import com.beingadish.AroundU.DTO.Client.Register.ClientRegisterRequestDTO;
-import com.beingadish.AroundU.DTO.Client.Update.ClientUpdateRequestDTO;
-import com.beingadish.AroundU.DTO.Common.AddressDTO;
-import com.beingadish.AroundU.Security.UserPrincipal;
-import com.beingadish.AroundU.Service.ClientService;
+import com.beingadish.AroundU.common.constants.enums.Country;
+import com.beingadish.AroundU.common.constants.enums.Currency;
+import com.beingadish.AroundU.user.dto.client.ClientDetailsResponseDTO;
+import com.beingadish.AroundU.user.dto.client.ClientRegisterRequestDTO;
+import com.beingadish.AroundU.user.dto.client.ClientUpdateRequestDTO;
+import com.beingadish.AroundU.common.dto.AddressDTO;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
+import com.beingadish.AroundU.user.service.ClientService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,19 +40,19 @@ import org.springframework.transaction.PlatformTransactionManager;
 import java.util.List;
 import java.util.ArrayList;
 
-import com.beingadish.AroundU.Repository.Admin.AdminRepository;
-import com.beingadish.AroundU.Repository.Address.AddressRepository;
-import com.beingadish.AroundU.Repository.Bid.BidRepository;
-import com.beingadish.AroundU.Repository.Client.ClientReadRepository;
-import com.beingadish.AroundU.Repository.Client.ClientRepository;
-import com.beingadish.AroundU.Repository.Client.ClientWriteRepository;
-import com.beingadish.AroundU.Repository.Job.JobConfirmationCodeRepository;
-import com.beingadish.AroundU.Repository.Job.JobRepository;
-import com.beingadish.AroundU.Repository.Payment.PaymentTransactionRepository;
-import com.beingadish.AroundU.Repository.Skill.SkillRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerReadRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerRepository;
-import com.beingadish.AroundU.Repository.Worker.WorkerWriteRepository;
+import com.beingadish.AroundU.user.repository.AdminRepository;
+import com.beingadish.AroundU.location.repository.AddressRepository;
+import com.beingadish.AroundU.bid.repository.BidRepository;
+import com.beingadish.AroundU.user.repository.ClientReadRepository;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.ClientWriteRepository;
+import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.user.repository.WorkerReadRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
+import com.beingadish.AroundU.user.repository.WorkerWriteRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -60,6 +60,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.beingadish.AroundU.user.controller.ClientController;
 
 @WebMvcTest(value = ClientController.class, excludeAutoConfiguration = {
     DataSourceAutoConfiguration.class,
@@ -101,7 +102,7 @@ class ClientControllerTest {
 
     @SuppressWarnings("unused")
     @MockitoBean
-    private com.beingadish.AroundU.Security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @SuppressWarnings("unused")
     @MockitoBean
@@ -154,6 +155,18 @@ class ClientControllerTest {
     @SuppressWarnings("unused")
     @MockitoBean
     private AddressRepository addressRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
+
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
 
     @BeforeEach
     void stubEntityManager() {

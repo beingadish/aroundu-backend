@@ -13,16 +13,24 @@ spring:
     properties:
       hibernate:
         format_sql: false
-  redis:
-    host: ${PROD_REDIS_HOST}
-    port: ${PROD_REDIS_PORT}
-    password: ${PROD_REDIS_PASSWORD}
+  data:
+    redis:
+      host: ${PROD_REDIS_HOST}
+      port: ${PROD_REDIS_PORT}
+      password: ${PROD_REDIS_PASSWORD}
 
 logging:
   level:
     root: WARN
     org.springframework.security: WARN
     org.hibernate.SQL: WARN
+
+# Explicitly disable Swagger/OpenAPI in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
 
 jwt:
   expiration:
@@ -31,7 +39,85 @@ jwt:
     expiration:
       ms: ${PROD_JWT_REFRESH_EXPIRATION_MS:2592000000}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+
 feature:
   enable-dummy-data: false
   enable-swagger: false
   enable-debug-security: false
+
+rate-limit:
+  enabled: true
+  job-creation:
+    capacity: 5
+    refill-tokens: 5
+    refill-minutes: 60
+  bid-placement:
+    capacity: 20
+    refill-tokens: 20
+    refill-minutes: 60
+  worker-feed:
+    capacity: 30
+    refill-tokens: 30
+    refill-minutes: 1
+  profile-view:
+    capacity: 100
+    refill-tokens: 100
+    refill-minutes: 60
+  auth:
+    capacity: 5
+    refill-tokens: 5
+    refill-minutes: 15
+
+# ── Scheduler (conservative, avoid peak hours) ──────────────────
+scheduler:
+  enabled: true
+  user-cleanup-cron: "0 0 2 * * ?"
+  job-expiration-cron: "0 0 * * * ?"
+  reminder-cron: "0 0 */6 * * ?"
+  cache-sync-cron: "0 */30 * * * ?"
+  analytics-cron: "0 0 3 * * ?"
+  user-inactive-years: 2
+  job-expiration-days: 30
+  reminder-threshold-hours: 24
+
+# ── Resilience4j (strict for prod) ───────────────────────────────
+resilience:
+  circuitbreaker:
+    payment-gateway:
+      failure-rate-threshold: 50
+      wait-duration-in-open-state-seconds: 30
+      slow-call-duration-threshold-seconds: 5
+      minimum-number-of-calls: 5
+      sliding-window-size: 10
+    email-service:
+      failure-rate-threshold: 70
+      wait-duration-in-open-state-seconds: 60
+      minimum-number-of-calls: 5
+      sliding-window-size: 10
+    image-upload:
+      failure-rate-threshold: 60
+      wait-duration-in-open-state-seconds: 30
+      minimum-number-of-calls: 5
+      sliding-window-size: 10
+  retry:
+    payment-gateway:
+      max-attempts: 3
+      wait-duration-ms: 500
+      multiplier: 2.0
+    email-service:
+      max-attempts: 5
+      wait-duration-ms: 1000
+      multiplier: 2.0
+    image-upload:
+      max-attempts: 2
+      wait-duration-ms: 200
+      multiplier: 2.0

@@ -14,6 +14,7 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.redisson.spring.starter.RedissonAutoConfigurationV2
   main:
     allow-bean-definition-overriding: true
   data:
@@ -28,3 +29,12 @@ jwt:
 logging:
   level:
     org.springframework.security: ERROR
+
+rate-limit:
+  enabled: false
+
+scheduler:
+  enabled: false
+  user-inactive-years: 2
+  job-expiration-days: 30
+  reminder-threshold-hours: 24
