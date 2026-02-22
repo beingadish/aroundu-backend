@@ -10,6 +10,7 @@ import com.beingadish.AroundU.job.dto.JobStatusUpdateRequest;
 import com.beingadish.AroundU.job.dto.JobSummaryDTO;
 import com.beingadish.AroundU.job.dto.JobUpdateRequest;
 import com.beingadish.AroundU.job.dto.WorkerJobFeedRequest;
+import com.beingadish.AroundU.common.util.PageResponse;
 import com.beingadish.AroundU.location.entity.Address;
 import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.location.entity.FailedGeoSync;
@@ -26,6 +27,7 @@ import com.beingadish.AroundU.user.repository.ClientRepository;
 import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
 import com.beingadish.AroundU.job.repository.JobRepository;
 import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.common.service.SkillService;
 import com.beingadish.AroundU.user.repository.WorkerReadRepository;
 import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
 import com.beingadish.AroundU.location.service.JobGeoService;
@@ -34,6 +36,7 @@ import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import com.beingadish.AroundU.common.util.DistanceUtils;
 import com.beingadish.AroundU.common.util.PopularityUtils;
 import com.beingadish.AroundU.common.util.SortValidator;
+import com.beingadish.AroundU.user.service.WorkerPenaltyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -70,15 +73,18 @@ public class JobServiceImpl implements JobService {
             JobStatus.OPEN_FOR_BIDS,
             JobStatus.BID_SELECTED_AWAITING_HANDSHAKE,
             JobStatus.READY_TO_START,
-            JobStatus.IN_PROGRESS
+            JobStatus.IN_PROGRESS,
+            JobStatus.COMPLETED_PENDING_PAYMENT
     );
 
-    private static final List<JobStatus> PAST_STATUSES = List.of(JobStatus.COMPLETED, JobStatus.CANCELLED);
+    private static final List<JobStatus> PAST_STATUSES = List.of(
+            JobStatus.COMPLETED, JobStatus.CANCELLED, JobStatus.PAYMENT_RELEASED);
 
     private final JobRepository jobRepository;
     private final ClientRepository clientRepository;
     private final AddressRepository addressRepository;
     private final SkillRepository skillRepository;
+    private final SkillService skillService;
     private final WorkerReadRepository workerReadRepository;
     private final BidRepository bidRepository;
     private final FailedGeoSyncRepository failedGeoSyncRepository;
@@ -87,16 +93,33 @@ public class JobServiceImpl implements JobService {
     private final MetricsService metricsService;
     private final ApplicationEventPublisher eventPublisher;
     private final CacheEvictionService cacheEvictionService;
+    private final WorkerPenaltyService workerPenaltyService;
 
     @Override
     @Transactional
     public JobDetailDTO createJob(Long clientId, JobCreateRequest request) {
         return metricsService.recordTimer(metricsService.getJobCreationTimer(), () -> {
             Client client = clientRepository.findById(clientId).orElseThrow(() -> new JobValidationException("Client not found"));
+
+            // Single active job enforcement: client cannot create a new job
+            // if they already have one IN_PROGRESS
+            if (jobRepository.hasJobInStatus(clientId, JobStatus.IN_PROGRESS)) {
+                throw new JobValidationException("You already have a job in progress. Complete or cancel it before creating a new one.");
+            }
+
             Address location = addressRepository.findById(request.getJobLocationId()).orElseThrow(() -> new JobValidationException("Job location not found"));
-            Set<Skill> skills = new HashSet<>(skillRepository.findAllById(request.getRequiredSkillIds()));
+
+            // Resolve skills: prefer names (auto-create), fall back to IDs
+            Set<Skill> skills;
+            if (request.getRequiredSkillNames() != null && !request.getRequiredSkillNames().isEmpty()) {
+                skills = skillService.findOrCreateSkills(request.getRequiredSkillNames());
+            } else if (request.getRequiredSkillIds() != null && !request.getRequiredSkillIds().isEmpty()) {
+                skills = new HashSet<>(skillRepository.findAllById(request.getRequiredSkillIds()));
+            } else {
+                throw new JobValidationException("At least one required skill must be provided (via names or IDs)");
+            }
             if (skills.isEmpty()) {
-                throw new JobValidationException("At least one required skill must be provided");
+                throw new JobValidationException("At least one valid required skill must be provided");
             }
             Job job = jobMapper.toEntity(request, location, skills, client);
             job.setJobStatus(JobStatus.OPEN_FOR_BIDS);
@@ -171,8 +194,8 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = RedisConfig.CACHE_CLIENT_JOBS, key = "#clientId + ':' + #filterRequest.hashCode()")
-    public Page<JobSummaryDTO> getClientJobs(Long clientId, JobFilterRequest filterRequest) {
+    @Cacheable(value = RedisConfig.CACHE_CLIENT_JOBS, key = "#clientId + ':' + #filterRequest.toCacheKey()")
+    public PageResponse<JobSummaryDTO> getClientJobs(Long clientId, JobFilterRequest filterRequest) {
         // Validate sort fields against whitelist
         SortValidator.validate(filterRequest.getSortBy(), filterRequest.getSortDirection(), SortValidator.JOB_FIELDS);
         if (filterRequest.getSecondarySortBy() != null) {
@@ -219,19 +242,19 @@ public class JobServiceImpl implements JobService {
                     })
                     .sorted(buildVirtualComparator(filterRequest.getSortBy(), filterRequest.getSortDirection(), distanceSorting))
                     .toList();
-            return new PageImpl<>(dtos, pageable, jobPage.getTotalElements());
+            return new PageResponse<>(new PageImpl<>(dtos, pageable, jobPage.getTotalElements()));
         }
 
-        return jobPage.map(jobMapper::toSummaryDto);
+        return new PageResponse<>(jobPage.map(jobMapper::toSummaryDto));
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = RedisConfig.CACHE_CLIENT_JOBS, key = "#clientId + ':past:' + #page + ':' + #size")
-    public Page<JobSummaryDTO> getClientPastJobs(Long clientId, int page, int size) {
+    public PageResponse<JobSummaryDTO> getClientPastJobs(Long clientId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
         Page<Job> jobPage = jobRepository.findByCreatedByIdAndJobStatusIn(clientId, PAST_STATUSES, pageable);
-        return jobPage.map(jobMapper::toSummaryDto);
+        return new PageResponse<>(jobPage.map(jobMapper::toSummaryDto));
     }
 
     @Override
@@ -251,7 +274,7 @@ public class JobServiceImpl implements JobService {
         Job saved = jobRepository.save(job);
         handleGeoOnStatusChange(saved, oldStatus, request.getNewStatus());
         // Record metrics for terminal statuses
-        if (request.getNewStatus() == JobStatus.COMPLETED) {
+        if (request.getNewStatus() == JobStatus.COMPLETED || request.getNewStatus() == JobStatus.PAYMENT_RELEASED) {
             metricsService.getJobsCompletedCounter().increment();
             metricsService.decrementActiveJobs();
         } else if (request.getNewStatus() == JobStatus.CANCELLED) {
@@ -267,9 +290,76 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @Transactional
+    public JobDetailDTO updateJobStatusByWorker(Long jobId, Long workerId, JobStatusUpdateRequest request) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new JobNotFoundException("Job not found"));
+        if (job.getAssignedTo() == null || !Objects.equals(job.getAssignedTo().getId(), workerId)) {
+            throw new AccessDeniedException("Worker is not assigned to this job");
+        }
+
+        // Workers can only transition: READY_TO_START → IN_PROGRESS, IN_PROGRESS → COMPLETED_PENDING_PAYMENT
+        JobStatus target = request.getNewStatus();
+        if (target != JobStatus.IN_PROGRESS && target != JobStatus.COMPLETED_PENDING_PAYMENT) {
+            throw new JobValidationException("Workers can only start tasks or mark them complete");
+        }
+
+        validateStatusTransition(job.getJobStatus(), target);
+        JobStatus oldStatus = job.getJobStatus();
+        job.setJobStatus(target);
+        Job saved = jobRepository.save(job);
+        handleGeoOnStatusChange(saved, oldStatus, target);
+
+        log.info("Job id={} status updated from {} to {} by worker {}", jobId, oldStatus, target, workerId);
+        eventPublisher.publishEvent(new JobModifiedEvent(jobId, job.getCreatedBy().getId(), JobModifiedEvent.Type.STATUS_CHANGED, false));
+        cacheEvictionService.evictJobDetail(jobId);
+        cacheEvictionService.evictClientJobsCaches(job.getCreatedBy().getId());
+        cacheEvictionService.evictWorkerFeedCaches();
+        return jobMapper.toDetailDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public JobDetailDTO cancelJobByWorker(Long jobId, Long workerId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new JobNotFoundException("Job not found"));
+        if (job.getAssignedTo() == null || !Objects.equals(job.getAssignedTo().getId(), workerId)) {
+            throw new AccessDeniedException("Worker is not assigned to this job");
+        }
+
+        // Only allow cancellation from states where worker is actively engaged
+        JobStatus current = job.getJobStatus();
+        if (current != JobStatus.READY_TO_START && current != JobStatus.IN_PROGRESS
+                && current != JobStatus.BID_SELECTED_AWAITING_HANDSHAKE) {
+            throw new JobValidationException("Job cannot be cancelled by worker in its current state: " + current);
+        }
+
+        // Apply cancellation penalty
+        workerPenaltyService.recordCancellation(workerId);
+
+        // Revert job: unassign worker, reopen for bids
+        job.setAssignedTo(null);
+        job.setJobStatus(JobStatus.OPEN_FOR_BIDS);
+        Job saved = jobRepository.save(job);
+
+        // Re-add to geo-index since it's open for bids again
+        if (saved.getJobLocation() != null) {
+            safeGeoAdd(saved.getId(), saved.getJobLocation().getLatitude(), saved.getJobLocation().getLongitude());
+        }
+
+        metricsService.getJobsCancelledCounter().increment();
+        log.warn("Worker {} cancelled job {}. Job reverted to OPEN_FOR_BIDS.", workerId, jobId);
+        eventPublisher.publishEvent(new JobModifiedEvent(jobId, job.getCreatedBy().getId(), JobModifiedEvent.Type.STATUS_CHANGED, true));
+        cacheEvictionService.evictJobDetail(jobId);
+        cacheEvictionService.evictClientJobsCaches(job.getCreatedBy().getId());
+        cacheEvictionService.evictWorkerFeedCaches();
+        return jobMapper.toDetailDto(saved);
+    }
+
+    @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = RedisConfig.CACHE_WORKER_FEED, key = "#workerId + ':' + #request.hashCode()")
-    public Page<JobSummaryDTO> getWorkerFeed(Long workerId, WorkerJobFeedRequest request) {
+    @Cacheable(value = RedisConfig.CACHE_WORKER_FEED, key = "#workerId + ':' + #request.toCacheKey()")
+    public PageResponse<JobSummaryDTO> getWorkerFeed(Long workerId, WorkerJobFeedRequest request) {
         Worker worker = workerReadRepository.findById(workerId).orElseThrow(() -> new JobValidationException("Worker not found"));
 
         // Validate sort fields against whitelist
@@ -335,8 +425,7 @@ public class JobServiceImpl implements JobService {
 
         // Use the filtered count as total elements, not the DB page total,
         // because in-memory skill filtering may have reduced the result count.
-        Page<JobSummaryDTO> finalPage = new PageImpl<>(dtos, pageable, dtos.size());
-        return finalPage;
+        return new PageResponse<>(new PageImpl<>(dtos, pageable, dtos.size()));
     }
 
     @Override
@@ -383,7 +472,11 @@ public class JobServiceImpl implements JobService {
             case READY_TO_START ->
                 target == JobStatus.IN_PROGRESS || target == JobStatus.CANCELLED;
             case IN_PROGRESS ->
-                target == JobStatus.COMPLETED || target == JobStatus.CANCELLED;
+                target == JobStatus.COMPLETED_PENDING_PAYMENT || target == JobStatus.COMPLETED || target == JobStatus.CANCELLED;
+            case COMPLETED_PENDING_PAYMENT ->
+                target == JobStatus.PAYMENT_RELEASED || target == JobStatus.COMPLETED;
+            case PAYMENT_RELEASED ->
+                target == JobStatus.COMPLETED;
             case COMPLETED, CANCELLED, JOB_CLOSED_DUE_TO_EXPIRATION ->
                 false;
         };

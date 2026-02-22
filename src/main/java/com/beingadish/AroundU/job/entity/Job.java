@@ -45,8 +45,7 @@ public class Job {
     @Size(max = 200)
     private String shortDescription;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String longDescription;
 
     @Embedded

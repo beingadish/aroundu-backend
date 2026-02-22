@@ -2,6 +2,10 @@ package com.beingadish.AroundU.common.exception;
 
 import com.beingadish.AroundU.common.dto.ApiResponse;
 import com.beingadish.AroundU.bid.exception.DuplicateBidException;
+import com.beingadish.AroundU.chat.exception.ChatValidationException;
+import com.beingadish.AroundU.chat.exception.ConversationNotFoundException;
+import com.beingadish.AroundU.review.exception.ReviewNotFoundException;
+import com.beingadish.AroundU.review.exception.ReviewValidationException;
 import com.beingadish.AroundU.user.exception.ClientAlreadyExistException;
 import com.beingadish.AroundU.user.exception.ClientNotFoundException;
 import com.beingadish.AroundU.user.exception.ClientValidationException;
@@ -92,6 +96,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(WorkerNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleWorkerNotFoundException(WorkerNotFoundException ex) {
         log.warn("Worker not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ReviewNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleReviewNotFound(ReviewNotFoundException ex) {
+        log.warn("Review not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ReviewValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handleReviewValidation(ReviewValidationException ex) {
+        log.warn("Review validation error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ChatValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handleChatValidation(ChatValidationException ex) {
+        log.warn("Chat validation error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConversationNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleConversationNotFound(ConversationNotFoundException ex) {
+        log.warn("Conversation not found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
     }
 

@@ -12,6 +12,7 @@ import java.util.List;
 
 @Data
 public class JobCreateRequest {
+
     @NotBlank
     private String title;
     @Size(max = 200)
@@ -24,8 +25,20 @@ public class JobCreateRequest {
     private Long jobLocationId;
     @NotNull
     private JobUrgency jobUrgency;
-    @NotNull
+
+    /**
+     * Legacy field: skill IDs to attach to the job. Either this or
+     * {@code requiredSkillNames} must be provided.
+     */
     private List<Long> requiredSkillIds;
+
+    /**
+     * New field: skill names to attach to the job. Skills are auto-created if
+     * they don't exist. Takes precedence over {@code requiredSkillIds} when
+     * both are provided.
+     */
+    private List<String> requiredSkillNames;
+
     @NotNull
     private PaymentMode paymentMode;
 }

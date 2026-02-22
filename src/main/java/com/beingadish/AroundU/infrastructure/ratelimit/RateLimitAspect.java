@@ -49,7 +49,7 @@ public class RateLimitAspect {
 
     public RateLimitAspect(
             ProxyManager<String> proxyManager,
-            @Value("${rate-limit.enabled:true}") boolean enabled) {
+            @Value("${rate-limit.enabled}") boolean enabled) {
         this.proxyManager = proxyManager;
         this.enabled = enabled;
     }

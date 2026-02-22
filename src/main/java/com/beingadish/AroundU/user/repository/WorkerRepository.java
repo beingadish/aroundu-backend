@@ -14,4 +14,7 @@ public interface WorkerRepository extends JpaRepository<Worker, Long> {
 
     @Query("SELECT w FROM Worker w WHERE w.deleted = false AND w.lastLoginAt < :cutoff")
     List<Worker> findInactiveWorkersBefore(@Param("cutoff") LocalDateTime cutoff);
+
+    @Query("SELECT w FROM Worker w WHERE w.blockedUntil IS NOT NULL AND w.blockedUntil <= :now")
+    List<Worker> findBlockedWorkersWithExpiredPenalty(@Param("now") LocalDateTime now);
 }
