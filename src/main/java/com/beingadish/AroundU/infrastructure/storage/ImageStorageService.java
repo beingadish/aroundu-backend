@@ -13,7 +13,7 @@ public interface ImageStorageService {
      * Upload an image.
      *
      * @param fileName unique file name / key
-     * @param data raw image bytes
+     * @param data     raw image bytes
      * @return public URL or local path where the image can be served
      */
     String uploadImage(String fileName, byte[] data);
@@ -26,5 +26,5 @@ public interface ImageStorageService {
     /**
      * Delete an image.
      */
-    boolean deleteImage(String fileName);
+    void deleteImage(String fileName);
 }

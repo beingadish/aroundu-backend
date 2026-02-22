@@ -1,32 +1,34 @@
 package com.beingadish.AroundU.integration;
 
-import com.beingadish.AroundU.common.constants.enums.*;
 import com.beingadish.AroundU.bid.dto.BidCreateRequest;
 import com.beingadish.AroundU.bid.dto.BidHandshakeRequest;
 import com.beingadish.AroundU.bid.dto.BidResponseDTO;
+import com.beingadish.AroundU.bid.service.BidService;
+import com.beingadish.AroundU.common.constants.enums.*;
+import com.beingadish.AroundU.common.entity.Skill;
+import com.beingadish.AroundU.common.entity.VerificationStatus;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.beingadish.AroundU.job.dto.JobCreateRequest;
 import com.beingadish.AroundU.job.dto.JobDetailDTO;
 import com.beingadish.AroundU.job.dto.JobStatusUpdateRequest;
-import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
-import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.user.entity.Worker;
-import com.beingadish.AroundU.common.entity.VerificationStatus;
-import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.common.entity.Skill;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.entity.JobConfirmationCode;
-import com.beingadish.AroundU.payment.entity.PaymentTransaction;
-import com.beingadish.AroundU.location.repository.AddressRepository;
-import com.beingadish.AroundU.user.repository.ClientRepository;
 import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
-import com.beingadish.AroundU.common.repository.SkillRepository;
-import com.beingadish.AroundU.user.repository.WorkerRepository;
-import com.beingadish.AroundU.bid.service.BidService;
 import com.beingadish.AroundU.job.service.JobService;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.location.repository.AddressRepository;
+import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
+import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
+import com.beingadish.AroundU.payment.entity.PaymentTransaction;
 import com.beingadish.AroundU.payment.service.PaymentService;
-import com.beingadish.AroundU.fixtures.TestFixtures;
-import org.junit.jupiter.api.*;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -34,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for the Payment escrow lock → release flow.
@@ -168,6 +170,7 @@ class PaymentFlowIntegrationTest {
     }
 
     // ── helper ───────────────────────────────────────────────────
+
     /**
      * Creates a job, places a bid, accepts it, and handshakes to get to
      * READY_TO_START with an assigned worker.

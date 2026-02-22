@@ -34,8 +34,8 @@ public class NotificationServiceImpl implements NotificationService {
     private final Executor notificationExecutor;
 
     public NotificationServiceImpl(EmailService emailService,
-            FailedNotificationRepository failedNotificationRepository,
-            @Qualifier("notificationExecutor") Executor notificationExecutor) {
+                                   FailedNotificationRepository failedNotificationRepository,
+                                   @Qualifier("notificationExecutor") Executor notificationExecutor) {
         this.emailService = emailService;
         this.failedNotificationRepository = failedNotificationRepository;
         this.notificationExecutor = notificationExecutor;
@@ -45,10 +45,10 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Async("notificationExecutor")
     public void sendJobNotifications(Long jobId,
-            String clientEmail, String workerEmail,
-            Long clientId, Long workerId,
-            String clientPhone, String workerPhone,
-            String subject, String body) {
+                                     String clientEmail, String workerEmail,
+                                     Long clientId, Long workerId,
+                                     String clientPhone, String workerPhone,
+                                     String subject, String body) {
         log.info("Sending parallel notifications for jobId={}", jobId);
         long start = System.currentTimeMillis();
 
@@ -138,7 +138,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     // ── Failure persistence ──────────────────────────────────────────────
     private void recordFailedNotification(Long jobId, FailedNotification.NotificationType type,
-            String recipient, String errorMessage) {
+                                          String recipient, String errorMessage) {
         try {
             failedNotificationRepository.save(FailedNotification.builder()
                     .jobId(jobId)

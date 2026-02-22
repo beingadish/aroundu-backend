@@ -1,31 +1,32 @@
 package com.beingadish.AroundU.e2e;
 
-import com.beingadish.AroundU.common.constants.enums.*;
 import com.beingadish.AroundU.bid.dto.BidCreateRequest;
 import com.beingadish.AroundU.bid.dto.BidHandshakeRequest;
 import com.beingadish.AroundU.bid.dto.BidResponseDTO;
+import com.beingadish.AroundU.bid.service.BidService;
 import com.beingadish.AroundU.chat.entity.Conversation;
 import com.beingadish.AroundU.chat.repository.ConversationRepository;
-import com.beingadish.AroundU.job.dto.*;
-
+import com.beingadish.AroundU.common.constants.enums.*;
+import com.beingadish.AroundU.common.entity.Skill;
+import com.beingadish.AroundU.common.entity.VerificationStatus;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.fixtures.TestFixtures;
+import com.beingadish.AroundU.job.dto.JobCreateRequest;
+import com.beingadish.AroundU.job.dto.JobDetailDTO;
+import com.beingadish.AroundU.job.dto.JobStatusUpdateRequest;
+import com.beingadish.AroundU.job.service.JobService;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.location.repository.AddressRepository;
 import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
 import com.beingadish.AroundU.payment.entity.PaymentTransaction;
+import com.beingadish.AroundU.payment.service.PaymentService;
 import com.beingadish.AroundU.review.dto.ReviewCreateRequest;
 import com.beingadish.AroundU.review.dto.ReviewResponseDTO;
+import com.beingadish.AroundU.review.service.ReviewService;
 import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.user.entity.Worker;
-import com.beingadish.AroundU.common.entity.VerificationStatus;
-import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.common.entity.Skill;
-import com.beingadish.AroundU.location.repository.AddressRepository;
 import com.beingadish.AroundU.user.repository.ClientRepository;
-import com.beingadish.AroundU.common.repository.SkillRepository;
 import com.beingadish.AroundU.user.repository.WorkerRepository;
-import com.beingadish.AroundU.bid.service.BidService;
-import com.beingadish.AroundU.job.service.JobService;
-import com.beingadish.AroundU.payment.service.PaymentService;
-import com.beingadish.AroundU.review.service.ReviewService;
-import com.beingadish.AroundU.fixtures.TestFixtures;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,14 +35,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Full-lifecycle integration tests covering all three user journeys:
  * 1. Client Posts Job → Worker Bids → Accept → Escrow → Start
  * 2. Worker Completes → Client Releases Payment → Reviews
  * 3. Chat auto-created on bid acceptance
- *
+ * <p>
  * Also tests escrow guards, invalid transitions, and edge cases.
  */
 @SpringBootTest
@@ -51,15 +53,24 @@ import static org.assertj.core.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FullUserJourneyIntegrationTest {
 
-    @Autowired private JobService jobService;
-    @Autowired private BidService bidService;
-    @Autowired private PaymentService paymentService;
-    @Autowired private ReviewService reviewService;
-    @Autowired private ConversationRepository conversationRepository;
-    @Autowired private ClientRepository clientRepository;
-    @Autowired private WorkerRepository workerRepository;
-    @Autowired private AddressRepository addressRepository;
-    @Autowired private SkillRepository skillRepository;
+    @Autowired
+    private JobService jobService;
+    @Autowired
+    private BidService bidService;
+    @Autowired
+    private PaymentService paymentService;
+    @Autowired
+    private ReviewService reviewService;
+    @Autowired
+    private ConversationRepository conversationRepository;
+    @Autowired
+    private ClientRepository clientRepository;
+    @Autowired
+    private WorkerRepository workerRepository;
+    @Autowired
+    private AddressRepository addressRepository;
+    @Autowired
+    private SkillRepository skillRepository;
 
     private Client savedClient;
     private Worker savedWorker;

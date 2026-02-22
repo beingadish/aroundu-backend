@@ -1,21 +1,19 @@
 package com.beingadish.AroundU.Service.impl;
 
 import com.beingadish.AroundU.bid.dto.BidCreateRequest;
-import com.beingadish.AroundU.bid.entity.Bid;
 import com.beingadish.AroundU.bid.mapper.BidMapper;
 import com.beingadish.AroundU.bid.repository.BidRepository;
 import com.beingadish.AroundU.bid.service.BidDuplicateCheckService;
 import com.beingadish.AroundU.bid.service.impl.BidServiceImpl;
 import com.beingadish.AroundU.chat.repository.ConversationRepository;
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.repository.JobRepository;
 import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.user.repository.ClientRepository;
 import com.beingadish.AroundU.user.repository.WorkerRepository;
-import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,8 +26,10 @@ import java.util.Collection;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BidServiceActiveJobEnforcementTest {

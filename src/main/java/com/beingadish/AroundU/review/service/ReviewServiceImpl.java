@@ -1,6 +1,5 @@
 package com.beingadish.AroundU.review.service;
 
-import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.exception.JobNotFoundException;
 import com.beingadish.AroundU.job.repository.JobRepository;

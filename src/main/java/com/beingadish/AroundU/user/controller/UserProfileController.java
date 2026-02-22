@@ -36,9 +36,9 @@ public class UserProfileController {
             description = "Upload a profile image (JPEG/PNG, max 5 MB). Replaces any existing image.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Image uploaded"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid file"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "413", description = "File too large")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Image uploaded"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid file"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "413", description = "File too large")
     })
     public ResponseEntity<ApiResponse<String>> uploadProfileImage(
             @Parameter(description = "User ID") @PathVariable Long userId,
@@ -65,8 +65,8 @@ public class UserProfileController {
             description = "Removes the user's profile image.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Image deleted"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No image to delete")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Image deleted"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No image to delete")
     })
     public ResponseEntity<ApiResponse<String>> deleteProfileImage(
             @Parameter(description = "User ID") @PathVariable Long userId) {

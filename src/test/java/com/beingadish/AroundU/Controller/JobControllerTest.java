@@ -1,17 +1,18 @@
 package com.beingadish.AroundU.Controller;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.common.constants.enums.Currency;
 import com.beingadish.AroundU.common.constants.enums.JobUrgency;
 import com.beingadish.AroundU.common.constants.enums.PaymentMode;
-import com.beingadish.AroundU.job.controller.JobController;
 import com.beingadish.AroundU.common.dto.PriceDTO;
+import com.beingadish.AroundU.common.util.PageResponse;
+import com.beingadish.AroundU.fixtures.TestFixtures;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
+import com.beingadish.AroundU.job.controller.JobController;
 import com.beingadish.AroundU.job.dto.*;
-import com.beingadish.AroundU.common.constants.enums.Currency;
 import com.beingadish.AroundU.job.exception.JobNotFoundException;
 import com.beingadish.AroundU.job.exception.JobValidationException;
 import com.beingadish.AroundU.job.service.JobService;
-import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,32 +27,28 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
-import com.beingadish.AroundU.common.util.PageResponse;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.PlatformTransactionManager;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = JobController.class, excludeAutoConfiguration = {
         DataSourceAutoConfiguration.class,
@@ -70,40 +67,83 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 @DisplayName("JobController")
 class JobControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-    @MockitoBean private JobService jobService;
-
+    private static final String BASE = "/api/v1/jobs";
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @MockitoBean
+    private JobService jobService;
     // ── JPA/Security infrastructure mocks ────────────────────────
-    @SuppressWarnings("unused") @MockitoBean(name = "entityManagerFactory") private EntityManagerFactory entityManagerFactory;
-    @SuppressWarnings("unused") @MockitoBean(name = "jpaSharedEM_entityManagerFactory") private jakarta.persistence.EntityManager sharedEntityManager;
-    @SuppressWarnings("unused") @MockitoBean private JpaMetamodelMappingContext jpaMetamodelMappingContext;
-    @SuppressWarnings("unused") @MockitoBean private PlatformTransactionManager platformTransactionManager;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.ClientReadRepository clientReadRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.ClientWriteRepository clientWriteRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.ClientRepository clientRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.WorkerReadRepository workerReadRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.WorkerWriteRepository workerWriteRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.WorkerRepository workerRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.user.repository.AdminRepository adminRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.common.repository.SkillRepository skillRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.bid.repository.BidRepository bidRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.job.repository.JobRepository jobRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository jobConfirmationCodeRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.payment.repository.PaymentTransactionRepository paymentTransactionRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.location.repository.AddressRepository addressRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
-    @SuppressWarnings("unused") @MockitoBean private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean(name = "entityManagerFactory")
+    private EntityManagerFactory entityManagerFactory;
+    @SuppressWarnings("unused")
+    @MockitoBean(name = "jpaSharedEM_entityManagerFactory")
+    private jakarta.persistence.EntityManager sharedEntityManager;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private JpaMetamodelMappingContext jpaMetamodelMappingContext;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private PlatformTransactionManager platformTransactionManager;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter jwtAuthenticationFilter;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.ClientReadRepository clientReadRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.ClientWriteRepository clientWriteRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.ClientRepository clientRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.WorkerReadRepository workerReadRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.WorkerWriteRepository workerWriteRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.WorkerRepository workerRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.user.repository.AdminRepository adminRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.common.repository.SkillRepository skillRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.bid.repository.BidRepository bidRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.job.repository.JobRepository jobRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository jobConfirmationCodeRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.payment.repository.PaymentTransactionRepository paymentTransactionRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.location.repository.AddressRepository addressRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.location.repository.FailedGeoSyncRepository failedGeoSyncRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository aggregatedMetricsRepository;
+    @SuppressWarnings("unused")
+    @MockitoBean
+    private com.beingadish.AroundU.notification.repository.FailedNotificationRepository failedNotificationRepository;
 
     @BeforeEach
     void stubEntityManager() {
         when(sharedEntityManager.getDelegate()).thenReturn(new Object());
         when(entityManagerFactory.createEntityManager()).thenReturn(sharedEntityManager);
     }
-
-    private static final String BASE = "/api/v1/jobs";
 
     private RequestPostProcessor authenticatedUser(Long id, String role) {
         UserPrincipal principal = UserPrincipal.builder()
@@ -134,10 +174,10 @@ class JobControllerTest {
             when(jobService.createJob(eq(1L), any(JobCreateRequest.class))).thenReturn(dto);
 
             mockMvc.perform(post(BASE)
-                    .param("clientId", "1")
-                    .with(authenticatedUser(1L, "ROLE_CLIENT"))
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.jobCreateRequest())))
+                            .param("clientId", "1")
+                            .with(authenticatedUser(1L, "ROLE_CLIENT"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.jobCreateRequest())))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.id").value(100));
@@ -156,10 +196,10 @@ class JobControllerTest {
             // title is missing
 
             mockMvc.perform(post(BASE)
-                    .param("clientId", "1")
-                    .with(authenticatedUser(1L, "ROLE_CLIENT"))
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
+                            .param("clientId", "1")
+                            .with(authenticatedUser(1L, "ROLE_CLIENT"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -170,10 +210,10 @@ class JobControllerTest {
                     .thenThrow(new JobValidationException("Client not found"));
 
             mockMvc.perform(post(BASE)
-                    .param("clientId", "1")
-                    .with(authenticatedUser(1L, "ROLE_CLIENT"))
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.jobCreateRequest())))
+                            .param("clientId", "1")
+                            .with(authenticatedUser(1L, "ROLE_CLIENT"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.jobCreateRequest())))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -235,7 +275,7 @@ class JobControllerTest {
             doNothing().when(jobService).deleteJob(100L, 1L);
 
             mockMvc.perform(delete(BASE + "/100").param("clientId", "1")
-                    .with(authenticatedUser(1L, "ROLE_CLIENT")))
+                            .with(authenticatedUser(1L, "ROLE_CLIENT")))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data").value("Job deleted successfully"));
         }
@@ -246,7 +286,7 @@ class JobControllerTest {
             doThrow(new JobNotFoundException("Job not found")).when(jobService).deleteJob(999L, 1L);
 
             mockMvc.perform(delete(BASE + "/999").param("clientId", "1")
-                    .with(authenticatedUser(1L, "ROLE_CLIENT")))
+                            .with(authenticatedUser(1L, "ROLE_CLIENT")))
                     .andExpect(status().isNotFound());
         }
     }
@@ -266,7 +306,7 @@ class JobControllerTest {
             when(jobService.getWorkerFeed(eq(10L), any(WorkerJobFeedRequest.class))).thenReturn(page);
 
             mockMvc.perform(get(BASE + "/worker/10/feed")
-                    .with(authenticatedUser(10L, "ROLE_WORKER")))
+                            .with(authenticatedUser(10L, "ROLE_WORKER")))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content[0].id").value(100));
         }
@@ -286,7 +326,7 @@ class JobControllerTest {
             when(jobService.getClientJobs(eq(1L), any(JobFilterRequest.class))).thenReturn(page);
 
             mockMvc.perform(get(BASE + "/client/1")
-                    .with(authenticatedUser(1L, "ROLE_CLIENT")))
+                            .with(authenticatedUser(1L, "ROLE_CLIENT")))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.content[0].id").value(100));
         }
@@ -304,10 +344,10 @@ class JobControllerTest {
                     .thenReturn(TestFixtures.jobDetailDTO());
 
             mockMvc.perform(patch(BASE + "/100/status")
-                    .param("clientId", "1")
-                    .with(authenticatedUser(1L, "ROLE_CLIENT"))
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"newStatus\":\"BID_SELECTED_AWAITING_HANDSHAKE\"}"))
+                            .param("clientId", "1")
+                            .with(authenticatedUser(1L, "ROLE_CLIENT"))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"newStatus\":\"BID_SELECTED_AWAITING_HANDSHAKE\"}"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.id").value(100));
         }

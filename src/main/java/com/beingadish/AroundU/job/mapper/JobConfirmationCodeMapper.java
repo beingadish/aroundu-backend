@@ -1,6 +1,5 @@
 package com.beingadish.AroundU.job.mapper;
 
-import com.beingadish.AroundU.common.constants.enums.JobCodeStatus;
 import com.beingadish.AroundU.job.dto.JobCodeResponseDTO;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.entity.JobConfirmationCode;

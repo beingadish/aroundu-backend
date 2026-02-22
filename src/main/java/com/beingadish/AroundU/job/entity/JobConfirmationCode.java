@@ -2,11 +2,7 @@ package com.beingadish.AroundU.job.entity;
 
 import com.beingadish.AroundU.common.constants.enums.JobCodeStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -30,68 +26,56 @@ import java.util.Objects;
 @Builder
 public class JobConfirmationCode {
 
+    /**
+     * Maximum attempts before codes are locked.
+     */
+    public static final int MAX_ATTEMPTS = 5;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @OneToOne(optional = false)
     @JoinColumn(name = "job_id", unique = true)
     private Job job;
-
     @Column(length = 6, nullable = false)
     private String startCode;
-
     @Column(length = 6, nullable = false)
     private String releaseCode;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private JobCodeStatus status = JobCodeStatus.START_PENDING;
-
     /**
      * When the current start code was generated.
      */
     @Column(nullable = false)
     private LocalDateTime startCodeGeneratedAt;
-
     /**
      * When the current start code expires.
      */
     @Column(nullable = false)
     private LocalDateTime startCodeExpiresAt;
-
     /**
      * When the current release code was generated.
      */
     @Column(nullable = false)
     private LocalDateTime releaseCodeGeneratedAt;
-
     /**
      * When the current release code expires.
      */
     @Column(nullable = false)
     private LocalDateTime releaseCodeExpiresAt;
-
     /**
      * Number of failed start code verification attempts.
      */
     @Column(nullable = false)
     @Builder.Default
     private Integer startCodeAttempts = 0;
-
     /**
      * Number of failed release code verification attempts.
      */
     @Column(nullable = false)
     @Builder.Default
     private Integer releaseCodeAttempts = 0;
-
-    /**
-     * Maximum attempts before codes are locked.
-     */
-    public static final int MAX_ATTEMPTS = 5;
-
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -2,22 +2,18 @@ package com.beingadish.AroundU.payment.entity;
 
 import com.beingadish.AroundU.common.constants.enums.PaymentMode;
 import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import com.beingadish.AroundU.job.entity.Job;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.user.entity.Worker;
 
 @Entity
 @Table(name = "payment_transactions")

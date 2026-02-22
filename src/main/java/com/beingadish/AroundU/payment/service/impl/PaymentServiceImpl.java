@@ -2,20 +2,20 @@ package com.beingadish.AroundU.payment.service.impl;
 
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
 import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
 import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.payment.entity.PaymentTransaction;
-import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.payment.mapper.PaymentTransactionMapper;
-import com.beingadish.AroundU.user.repository.ClientRepository;
-import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
 import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
-import com.beingadish.AroundU.user.repository.WorkerRepository;
-import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import com.beingadish.AroundU.payment.service.PaymentService;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +56,7 @@ public class PaymentServiceImpl implements PaymentService {
 
             // Validate job is in an appropriate state for escrow lock
             if (job.getJobStatus() != JobStatus.READY_TO_START &&
-                job.getJobStatus() != JobStatus.BID_SELECTED_AWAITING_HANDSHAKE) {
+                    job.getJobStatus() != JobStatus.BID_SELECTED_AWAITING_HANDSHAKE) {
                 throw new IllegalStateException("Escrow can only be locked when job is READY_TO_START or BID_SELECTED_AWAITING_HANDSHAKE");
             }
 
@@ -79,8 +79,8 @@ public class PaymentServiceImpl implements PaymentService {
 
             // Job must be in COMPLETED_PENDING_PAYMENT or IN_PROGRESS (for legacy flow)
             if (job.getJobStatus() != JobStatus.COMPLETED_PENDING_PAYMENT &&
-                job.getJobStatus() != JobStatus.IN_PROGRESS &&
-                job.getJobStatus() != JobStatus.COMPLETED) {
+                    job.getJobStatus() != JobStatus.IN_PROGRESS &&
+                    job.getJobStatus() != JobStatus.COMPLETED) {
                 throw new IllegalStateException("Cannot release payment in current job status: " + job.getJobStatus());
             }
 
