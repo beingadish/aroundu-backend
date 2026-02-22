@@ -1,9 +1,9 @@
 package com.beingadish.AroundU.review.mapper;
 
+import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.review.dto.ReviewCreateRequest;
 import com.beingadish.AroundU.review.dto.ReviewResponseDTO;
 import com.beingadish.AroundU.review.entity.Review;
-import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.user.entity.Worker;
 import org.mapstruct.Mapper;

@@ -1,13 +1,21 @@
 package com.beingadish.AroundU.Controller.Worker;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
+import com.beingadish.AroundU.bid.repository.BidRepository;
 import com.beingadish.AroundU.common.constants.enums.Country;
 import com.beingadish.AroundU.common.constants.enums.Currency;
 import com.beingadish.AroundU.common.dto.AddressDTO;
-import com.beingadish.AroundU.user.dto.worker.WorkerUpdateRequestDTO;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
+import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.location.repository.AddressRepository;
+import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
+import com.beingadish.AroundU.user.controller.WorkerController;
 import com.beingadish.AroundU.user.dto.worker.WorkerDetailDTO;
 import com.beingadish.AroundU.user.dto.worker.WorkerSignupRequestDTO;
-import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
+import com.beingadish.AroundU.user.dto.worker.WorkerUpdateRequestDTO;
+import com.beingadish.AroundU.user.repository.*;
 import com.beingadish.AroundU.user.service.WorkerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
@@ -22,6 +30,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,44 +44,26 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.data.domain.PageRequest;
-import com.beingadish.AroundU.user.repository.WorkerReadRepository;
-import com.beingadish.AroundU.user.repository.WorkerWriteRepository;
-import com.beingadish.AroundU.user.repository.WorkerRepository;
-import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
-import com.beingadish.AroundU.user.repository.ClientReadRepository;
-import com.beingadish.AroundU.user.repository.ClientWriteRepository;
-import com.beingadish.AroundU.user.repository.ClientRepository;
-import com.beingadish.AroundU.user.repository.AdminRepository;
-import com.beingadish.AroundU.common.repository.SkillRepository;
-import com.beingadish.AroundU.bid.repository.BidRepository;
-import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
-import com.beingadish.AroundU.location.repository.AddressRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import com.beingadish.AroundU.user.controller.WorkerController;
 
 @WebMvcTest(value = WorkerController.class, excludeAutoConfiguration = {
-    DataSourceAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class,
-    JpaRepositoriesAutoConfiguration.class
+        DataSourceAutoConfiguration.class,
+        HibernateJpaAutoConfiguration.class,
+        JpaRepositoriesAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestWebSecurityConfig.class)
 @TestPropertySource(properties = {
-    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
-    "spring.data.jpa.repositories.enabled=false"
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+        "spring.data.jpa.repositories.enabled=false"
 })
 class WorkerControllerTest {
 
@@ -190,8 +181,8 @@ class WorkerControllerTest {
                 .build());
 
         mockMvc.perform(post("/api/v1/worker/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Success"));
@@ -205,7 +196,7 @@ class WorkerControllerTest {
         when(workerService.getWorkerDetails(3L)).thenReturn(dto);
 
         mockMvc.perform(get("/api/v1/worker/3")
-                .with(authenticatedUser(3L, "ROLE_WORKER")))
+                        .with(authenticatedUser(3L, "ROLE_WORKER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isMap());
@@ -216,7 +207,7 @@ class WorkerControllerTest {
     @Test
     void getWorkerDetailsForbiddenForDifferentWorker() throws Exception {
         mockMvc.perform(get("/api/v1/worker/8")
-                .with(authenticatedUser(2L, "ROLE_WORKER")))
+                        .with(authenticatedUser(2L, "ROLE_WORKER")))
                 .andExpect(status().isForbidden());
     }
 
@@ -230,7 +221,7 @@ class WorkerControllerTest {
         when(workerService.getAllWorkers(1, 5)).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/worker/all?page=1&size=5")
-                .with(authenticatedUser(99L, "ROLE_ADMIN")))
+                        .with(authenticatedUser(99L, "ROLE_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.page").value(1))
@@ -244,9 +235,9 @@ class WorkerControllerTest {
         when(workerService.updateWorkerDetails(6L, update)).thenReturn(response);
 
         mockMvc.perform(patch("/api/v1/worker/update/6")
-                .with(authenticatedUser(6L, "ROLE_WORKER"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(update)))
+                        .with(authenticatedUser(6L, "ROLE_WORKER"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
@@ -256,7 +247,7 @@ class WorkerControllerTest {
     @Test
     void adminCanDeleteWorker() throws Exception {
         mockMvc.perform(delete("/api/v1/worker/77")
-                .with(authenticatedUser(1L, "ROLE_ADMIN")))
+                        .with(authenticatedUser(1L, "ROLE_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 

@@ -1,9 +1,9 @@
 package com.beingadish.AroundU.user.model;
 
 import com.beingadish.AroundU.common.constants.enums.Currency;
-import lombok.Data;
 import com.beingadish.AroundU.common.model.AddressModel;
 import com.beingadish.AroundU.common.model.VerificationStatusModel;
+import lombok.Data;
 
 @Data
 public class UserModel {

@@ -1,10 +1,10 @@
 package com.beingadish.AroundU.Utilities;
 
+import com.beingadish.AroundU.common.util.LoggingUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.beingadish.AroundU.common.util.LoggingUtils;
 
 /**
  * Unit tests for {@link LoggingUtils}.

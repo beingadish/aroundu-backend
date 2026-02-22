@@ -1,12 +1,13 @@
 package com.beingadish.AroundU.location.service;
 
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
-import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.location.entity.FailedGeoSync;
+import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.event.JobModifiedEvent;
-import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
 import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.location.entity.FailedGeoSync;
+import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -23,7 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
 
 /**
  * Keeps the Redis geo-index and Spring caches consistent with the PostgreSQL
@@ -49,6 +49,7 @@ public class JobGeoSyncService {
     private final FailedGeoSyncRepository failedGeoSyncRepository;
 
     // ── Startup sync ─────────────────────────────────────────────────────
+
     /**
      * On application startup, sync all OPEN_FOR_BIDS jobs to the Redis geo
      * index so that proximity queries return results immediately.
@@ -78,6 +79,7 @@ public class JobGeoSyncService {
     }
 
     // ── Daily cleanup ────────────────────────────────────────────────────
+
     /**
      * Every day at 02:00 AM, remove geo-index entries whose jobs are no longer
      * OPEN_FOR_BIDS in PostgreSQL.
@@ -116,6 +118,7 @@ public class JobGeoSyncService {
     }
 
     // ── Retry failed geo-sync operations ─────────────────────────────────
+
     /**
      * Every 5 minutes, retry pending {@link FailedGeoSync} records that haven't
      * exceeded the maximum retry count.
@@ -172,6 +175,7 @@ public class JobGeoSyncService {
     }
 
     // ── Event-driven cache eviction (runs AFTER transaction commits) ─────
+
     /**
      * Granular cache eviction triggered after a job mutation commits.
      * <ul>

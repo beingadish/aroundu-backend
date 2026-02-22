@@ -12,7 +12,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -103,6 +102,7 @@ public class ThreadPoolConfig implements AsyncConfigurer {
     }
 
     // ── Virtual thread executor (Java 21+) ───────────────────────────────
+
     /**
      * Lightweight virtual threads ideal for massive I/O-bound concurrency. Each
      * task gets its own virtual thread — no pool sizing needed.
@@ -110,8 +110,7 @@ public class ThreadPoolConfig implements AsyncConfigurer {
     @Bean("virtualThreadExecutor")
     public Executor virtualThreadExecutor() {
         log.info("Initialized virtualThreadExecutor using Java 21 virtual threads");
-        return Executors.newThreadPerTaskExecutor(
-                Thread.ofVirtual().name("vt-", 0).factory());
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("vt-", 0).factory());
     }
 
     // ── AsyncConfigurer default executor ─────────────────────────────────
@@ -133,7 +132,6 @@ public class ThreadPoolConfig implements AsyncConfigurer {
 
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
-        return (ex, method, params)
-                -> log.error("Async method '{}' threw uncaught exception: {}", method.getName(), ex.getMessage(), ex);
+        return (ex, method, params) -> log.error("Async method '{}' threw uncaught exception: {}", method.getName(), ex.getMessage(), ex);
     }
 }

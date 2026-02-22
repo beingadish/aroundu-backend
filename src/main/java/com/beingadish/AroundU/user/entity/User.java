@@ -1,6 +1,8 @@
 package com.beingadish.AroundU.user.entity;
 
 import com.beingadish.AroundU.common.constants.enums.Currency;
+import com.beingadish.AroundU.common.entity.VerificationStatus;
+import com.beingadish.AroundU.location.entity.Address;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -13,8 +15,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.common.entity.VerificationStatus;
 
 @MappedSuperclass
 @Getter

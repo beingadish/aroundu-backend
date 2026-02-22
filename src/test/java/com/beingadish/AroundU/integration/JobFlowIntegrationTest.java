@@ -1,20 +1,22 @@
 package com.beingadish.AroundU.integration;
 
 import com.beingadish.AroundU.common.constants.enums.*;
-import com.beingadish.AroundU.job.dto.*;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.common.entity.VerificationStatus;
-import com.beingadish.AroundU.location.entity.Address;
 import com.beingadish.AroundU.common.entity.Skill;
-import com.beingadish.AroundU.location.repository.AddressRepository;
-import com.beingadish.AroundU.user.repository.ClientRepository;
-import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.common.entity.VerificationStatus;
 import com.beingadish.AroundU.common.repository.SkillRepository;
-import com.beingadish.AroundU.user.repository.WorkerRepository;
-import com.beingadish.AroundU.job.service.JobService;
-import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.beingadish.AroundU.common.util.PageResponse;
-import org.junit.jupiter.api.*;
+import com.beingadish.AroundU.fixtures.TestFixtures;
+import com.beingadish.AroundU.job.dto.*;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.job.service.JobService;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.location.repository.AddressRepository;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -22,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for the Job creation → update → status-change flow. Uses

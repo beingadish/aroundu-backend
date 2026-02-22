@@ -1,312 +1,493 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AroundU Portal</title>
-  <style>
-    :root { --bg:#0f172a; --panel:#0f172a; --card:#111827; --accent:#38bdf8; --text:#e5e7eb; --muted:#94a3b8; --success:#34d399; --danger:#f87171; --disabled:#475569; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:"Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--text); }
-    header { padding:18px 22px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #1f2937; }
-    h1 { margin:0; font-size:22px; letter-spacing:0.4px; }
-    a { color:var(--accent); text-decoration:none; }
-    main { padding:18px; display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; }
-    .panel { background:var(--card); border:1px solid #1f2937; border-radius:12px; padding:14px; }
-    .panel h2 { margin:0 0 8px 0; font-size:16px; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); }
-    label { display:block; font-size:12px; color:var(--muted); margin:10px 0 4px; }
-    input, textarea, select { width:100%; padding:9px 10px; border-radius:10px; border:1px solid #374151; background:#0f172a; color:var(--text); font-size:13px; }
-    textarea { min-height:110px; resize:vertical; }
-    button { margin-top:10px; padding:10px 12px; border:none; border-radius:10px; font-weight:700; cursor:pointer; }
-    .primary { background:var(--accent); color:#0b1021; }
-    .ghost { background:transparent; border:1px solid #374151; color:var(--text); }
-    .danger { background:var(--danger); color:#0b1021; }
-    .success { background:var(--success); color:#0b1021; }
-    .disabled { background:var(--disabled); color:#0b1021; cursor:not-allowed; }
-    .row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
-    .console { background:#0b1021; border:1px solid #1f2937; border-radius:10px; padding:12px; font-family:SFMono-Regular,Consolas,monospace; font-size:12px; min-height:160px; white-space:pre-wrap; }
-    .pill { padding:6px 10px; border-radius:16px; border:1px solid #1f2937; color:var(--muted); font-size:12px; }
-    .badges { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-    .badge { background:#0b1021; color:var(--muted); padding:5px 8px; border-radius:12px; border:1px solid #1f2937; font-size:12px; }
-    .hidden { display:none; }
-    .card-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; margin-top:10px; }
-    .card { background:#0f172a; border:1px solid #1f2937; border-radius:10px; padding:10px; font-size:13px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AroundU Portal</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #0f172a;
+            --card: #111827;
+            --accent: #38bdf8;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --success: #34d399;
+            --danger: #f87171;
+            --disabled: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        header {
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: 0.4px;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        main {
+            padding: 18px;
+            display: grid;
+            grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .panel h2 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--muted);
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin: 10px 0 4px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid #374151;
+            background: #0f172a;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .primary {
+            background: var(--accent);
+            color: #0b1021;
+        }
+
+        .ghost {
+            background: transparent;
+            border: 1px solid #374151;
+            color: var(--text);
+        }
+
+        .danger {
+            background: var(--danger);
+            color: #0b1021;
+        }
+
+        .success {
+            background: var(--success);
+            color: #0b1021;
+        }
+
+        .disabled {
+            background: var(--disabled);
+            color: #0b1021;
+            cursor: not-allowed;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns:repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .console {
+            background: #0b1021;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 12px;
+            font-family: SFMono-Regular, Consolas, monospace;
+            font-size: 12px;
+            min-height: 160px;
+            white-space: pre-wrap;
+        }
+
+        .pill {
+            padding: 6px 10px;
+            border-radius: 16px;
+            border: 1px solid #1f2937;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .badges {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: #0b1021;
+            color: var(--muted);
+            padding: 5px 8px;
+            border-radius: 12px;
+            border: 1px solid #1f2937;
+            font-size: 12px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .card-list {
+            display: grid;
+            grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .card {
+            background: #0f172a;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
-  <header>
+<header>
     <div>
-      <h1>AroundU</h1>
-      <div class="pill">Login • Signup • Client • Worker • Admin</div>
+        <h1>AroundU</h1>
+        <div class="pill">Login • Signup • Client • Worker • Admin</div>
     </div>
     <div class="pill">Need raw API testing? <a href="/frontend/api-tester.html">Open API Tester</a></div>
-  </header>
+</header>
 
-  <main>
+<main>
     <section class="panel" style="grid-column:1 / -1;">
-      <h2>Session</h2>
-      <div class="row">
-        <div>
-          <label>API Base (v1)</label>
-          <input id="baseUrl" value="/api/v1" placeholder="https://localhost:8080/api/v1" />
+        <h2>Session</h2>
+        <div class="row">
+            <div>
+                <label>API Base (v1)</label>
+                <input id="baseUrl" value="/api/v1" placeholder="https://localhost:8080/api/v1"/>
+            </div>
+            <div>
+                <label>Alt Base for Bids (no v1)</label>
+                <input id="altBase" value="/api" placeholder="https://localhost:8080/api"/>
+            </div>
         </div>
-        <div>
-          <label>Alt Base for Bids (no v1)</label>
-          <input id="altBase" value="/api" placeholder="https://localhost:8080/api" />
+        <div class="row">
+            <div>
+                <label>JWT (cookie/localStorage)</label>
+                <input id="jwtDisplay" readonly/>
+            </div>
+            <div>
+                <label>User</label>
+                <div class="badges">
+                    <span class="badge" id="userIdBadge">id: -</span>
+                    <span class="badge" id="roleBadge">role: -</span>
+                    <button class="ghost" id="copyToken" type="button">Copy</button>
+                    <button class="danger" id="clearToken" type="button">Logout</button>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="row">
-        <div>
-          <label>JWT (cookie/localStorage)</label>
-          <input id="jwtDisplay" readonly />
-        </div>
-        <div>
-          <label>User</label>
-          <div class="badges">
-            <span class="badge" id="userIdBadge">id: -</span>
-            <span class="badge" id="roleBadge">role: -</span>
-            <button class="ghost" id="copyToken" type="button">Copy</button>
-            <button class="danger" id="clearToken" type="button">Logout</button>
-          </div>
-        </div>
-      </div>
-      <p style="color:var(--muted); font-size:12px; margin:8px 0 0;">JWT is saved as cookie "au_jwt" (SameSite=Lax) + localStorage, and shared with the API tester.</p>
+        <p style="color:var(--muted); font-size:12px; margin:8px 0 0;">JWT is saved as cookie "au_jwt" (SameSite=Lax) +
+            localStorage, and shared with the API tester.</p>
     </section>
 
     <section class="panel" id="view-landing">
-      <h2>Welcome</h2>
-      <p>Choose an action to continue.</p>
-      <button class="primary" id="goLogin" type="button">Login</button>
-      <button class="ghost" id="goSignup" type="button">Sign up</button>
+        <h2>Welcome</h2>
+        <p>Choose an action to continue.</p>
+        <button class="primary" id="goLogin" type="button">Login</button>
+        <button class="ghost" id="goSignup" type="button">Sign up</button>
     </section>
 
     <section class="panel hidden" id="view-login">
-      <h2>Login</h2>
-      <label>Login as</label>
-      <select id="loginRole">
-        <option value="CLIENT">Client</option>
-        <option value="WORKER">Worker</option>
-        <option value="ADMIN">Admin</option>
-      </select>
-      <label>Email</label>
-      <input id="loginEmail" type="email" placeholder="user@example.com" />
-      <label>Password</label>
-      <input id="loginPassword" type="password" placeholder="••••••" />
-      <button class="primary" id="loginBtn" type="button">Login</button>
+        <h2>Login</h2>
+        <label>Login as</label>
+        <select id="loginRole">
+            <option value="CLIENT">Client</option>
+            <option value="WORKER">Worker</option>
+            <option value="ADMIN">Admin</option>
+        </select>
+        <label>Email</label>
+        <input id="loginEmail" type="email" placeholder="user@example.com"/>
+        <label>Password</label>
+        <input id="loginPassword" type="password" placeholder="••••••"/>
+        <button class="primary" id="loginBtn" type="button">Login</button>
     </section>
 
     <section class="panel hidden" id="view-signup">
-      <h2>Signup</h2>
-      <label>Signup as</label>
-      <select id="signupRole">
-        <option value="CLIENT">Client</option>
-        <option value="WORKER">Worker</option>
-      </select>
-      <div class="row">
-        <div><label>Name</label><input id="suName" /></div>
-        <div><label>Email</label><input id="suEmail" type="email" /></div>
-      </div>
-      <div class="row">
-        <div><label>Phone</label><input id="suPhone" /></div>
-        <div><label>Password</label><input id="suPassword" type="password" /></div>
-      </div>
-      <div class="row">
-        <div><label>Currency</label><input id="suCurrency" value="USD" /></div>
-        <div><label>Skill Ids (worker only, comma)</label><input id="suSkills" placeholder="1,2" /></div>
-      </div>
-      <label>Address (country, postalCode, city, area, lat, lon, fullAddress)</label>
-      <textarea id="suAddress" placeholder='{"country":"INDIA","postalCode":"560001","city":"Bangalore","area":"MG Road","latitude":12.97,"longitude":77.59,"fullAddress":"123 MG Road"}'></textarea>
-      <button class="primary" id="signupBtn" type="button">Create Account</button>
+        <h2>Signup</h2>
+        <label>Signup as</label>
+        <select id="signupRole">
+            <option value="CLIENT">Client</option>
+            <option value="WORKER">Worker</option>
+        </select>
+        <div class="row">
+            <div><label>Name</label><input id="suName"/></div>
+            <div><label>Email</label><input id="suEmail" type="email"/></div>
+        </div>
+        <div class="row">
+            <div><label>Phone</label><input id="suPhone"/></div>
+            <div><label>Password</label><input id="suPassword" type="password"/></div>
+        </div>
+        <div class="row">
+            <div><label>Currency</label><input id="suCurrency" value="USD"/></div>
+            <div><label>Skill Ids (worker only, comma)</label><input id="suSkills" placeholder="1,2"/></div>
+        </div>
+        <label>Address (country, postalCode, city, area, lat, lon, fullAddress)</label>
+        <textarea id="suAddress"
+                  placeholder='{"country":"INDIA","postalCode":"560001","city":"Bangalore","area":"MG Road","latitude":12.97,"longitude":77.59,"fullAddress":"123 MG Road"}'></textarea>
+        <button class="primary" id="signupBtn" type="button">Create Account</button>
     </section>
 
     <section class="panel hidden" id="view-client">
-      <h2>Client Dashboard</h2>
-      <div class="row">
-        <div><label>Title</label><input id="jobTitle" /></div>
-        <div><label>Short Description</label><input id="jobShort" /></div>
-      </div>
-      <label>Long Description</label><textarea id="jobLong"></textarea>
-      <div class="row">
-        <div><label>Price Amount</label><input id="jobPrice" type="number" step="0.01" /></div>
-        <div><label>Price Currency</label><input id="jobCurrency" value="USD" /></div>
-      </div>
-      <div class="row">
-        <div><label>Job Location Id</label><input id="jobLocation" type="number" /></div>
-        <div><label>Urgency</label><input id="jobUrgency" value="HIGH" placeholder="HIGH|MEDIUM/LOW" /></div>
-      </div>
-      <div class="row">
-        <div><label>Required Skill Ids (comma)</label><input id="jobSkills" placeholder="1,2" /></div>
-        <div><label>Payment Mode</label><input id="jobPay" value="CASH" placeholder="CASH|CARD" /></div>
-      </div>
-      <div class="row">
-        <button class="primary" id="createJob" type="button">Create Job</button>
-        <button class="ghost" id="refreshClientJobs" type="button">Refresh My Jobs</button>
-      </div>
-      <button class="disabled" type="button" title="Not implemented in backend yet">Add Address (coming soon)</button>
-      <div id="clientJobs" class="card-list"></div>
+        <h2>Client Dashboard</h2>
+        <div class="row">
+            <div><label>Title</label><input id="jobTitle"/></div>
+            <div><label>Short Description</label><input id="jobShort"/></div>
+        </div>
+        <label>Long Description</label><textarea id="jobLong"></textarea>
+        <div class="row">
+            <div><label>Price Amount</label><input id="jobPrice" type="number" step="0.01"/></div>
+            <div><label>Price Currency</label><input id="jobCurrency" value="USD"/></div>
+        </div>
+        <div class="row">
+            <div><label>Job Location Id</label><input id="jobLocation" type="number"/></div>
+            <div><label>Urgency</label><input id="jobUrgency" value="HIGH" placeholder="HIGH|MEDIUM/LOW"/></div>
+        </div>
+        <div class="row">
+            <div><label>Required Skill Ids (comma)</label><input id="jobSkills" placeholder="1,2"/></div>
+            <div><label>Payment Mode</label><input id="jobPay" value="CASH" placeholder="CASH|CARD"/></div>
+        </div>
+        <div class="row">
+            <button class="primary" id="createJob" type="button">Create Job</button>
+            <button class="ghost" id="refreshClientJobs" type="button">Refresh My Jobs</button>
+        </div>
+        <button class="disabled" type="button" title="Not implemented in backend yet">Add Address (coming soon)</button>
+        <div id="clientJobs" class="card-list"></div>
     </section>
 
     <section class="panel hidden" id="view-worker">
-      <h2>Worker Dashboard</h2>
-      <div class="row">
-        <div><label>Radius Km</label><input id="feedRadius" type="number" step="0.1" value="25" /></div>
-        <div><label>Skill Ids (comma)</label><input id="feedSkills" placeholder="1,2" /></div>
-      </div>
-      <div class="row">
-        <button class="primary" id="loadFeed" type="button">Load Feed</button>
-        <button class="ghost" id="refreshFeed" type="button">Refresh Feed</button>
-      </div>
-      <div id="workerFeed" class="card-list"></div>
-      <hr style="border:1px solid #1f2937; margin:12px 0;" />
-      <h3>Place Bid</h3>
-      <label>Job Id</label><input id="bidJobId" type="number" />
-      <div class="row">
-        <div><label>Bid Amount</label><input id="bidAmount" type="number" step="0.01" /></div>
-        <div><label>Partner Fee</label><input id="bidPartnerFee" type="number" step="0.01" /></div>
-      </div>
-      <label>Partner Name</label><input id="bidPartnerName" />
-      <label>Notes</label><input id="bidNotes" />
-      <button class="success" id="placeBid" type="button">Place Bid</button>
+        <h2>Worker Dashboard</h2>
+        <div class="row">
+            <div><label>Radius Km</label><input id="feedRadius" type="number" step="0.1" value="25"/></div>
+            <div><label>Skill Ids (comma)</label><input id="feedSkills" placeholder="1,2"/></div>
+        </div>
+        <div class="row">
+            <button class="primary" id="loadFeed" type="button">Load Feed</button>
+            <button class="ghost" id="refreshFeed" type="button">Refresh Feed</button>
+        </div>
+        <div id="workerFeed" class="card-list"></div>
+        <hr style="border:1px solid #1f2937; margin:12px 0;"/>
+        <h3>Place Bid</h3>
+        <label>Job Id</label><input id="bidJobId" type="number"/>
+        <div class="row">
+            <div><label>Bid Amount</label><input id="bidAmount" type="number" step="0.01"/></div>
+            <div><label>Partner Fee</label><input id="bidPartnerFee" type="number" step="0.01"/></div>
+        </div>
+        <label>Partner Name</label><input id="bidPartnerName"/>
+        <label>Notes</label><input id="bidNotes"/>
+        <button class="success" id="placeBid" type="button">Place Bid</button>
     </section>
 
     <section class="panel hidden" id="view-admin">
-      <h2>Admin Portal</h2>
-      <div class="row">
-        <button class="primary" id="adminClients" type="button">View All Clients</button>
-        <button class="primary" id="adminWorkers" type="button">View All Workers</button>
-      </div>
-      <div class="row">
-        <button class="ghost" id="adminJobs" type="button">View Jobs (basic)</button>
-        <button class="disabled" type="button" title="Sorting/search not implemented">Sorting & Search (coming soon)</button>
-      </div>
-      <div class="row">
-        <div>
-          <label>Delete Client Id</label><input id="delClientId" type="number" />
-          <button class="danger" id="delClientBtn" type="button">Delete Client</button>
+        <h2>Admin Portal</h2>
+        <div class="row">
+            <button class="primary" id="adminClients" type="button">View All Clients</button>
+            <button class="primary" id="adminWorkers" type="button">View All Workers</button>
         </div>
-        <div>
-          <label>Delete Worker Id</label><input id="delWorkerId" type="number" />
-          <button class="danger" id="delWorkerBtn" type="button">Delete Worker</button>
+        <div class="row">
+            <button class="ghost" id="adminJobs" type="button">View Jobs (basic)</button>
+            <button class="disabled" type="button" title="Sorting/search not implemented">Sorting & Search (coming
+                soon)
+            </button>
         </div>
-      </div>
-      <div class="row">
-        <div>
-          <label>Delete Job Id</label><input id="delJobId" type="number" />
-          <button class="danger" id="delJobBtn" type="button">Delete Job</button>
+        <div class="row">
+            <div>
+                <label>Delete Client Id</label><input id="delClientId" type="number"/>
+                <button class="danger" id="delClientBtn" type="button">Delete Client</button>
+            </div>
+            <div>
+                <label>Delete Worker Id</label><input id="delWorkerId" type="number"/>
+                <button class="danger" id="delWorkerBtn" type="button">Delete Worker</button>
+            </div>
         </div>
-        <div>
-          <button class="disabled" type="button" title="Delete All not implemented">Delete All (coming soon)</button>
+        <div class="row">
+            <div>
+                <label>Delete Job Id</label><input id="delJobId" type="number"/>
+                <button class="danger" id="delJobBtn" type="button">Delete Job</button>
+            </div>
+            <div>
+                <button class="disabled" type="button" title="Delete All not implemented">Delete All (coming soon)
+                </button>
+            </div>
         </div>
-      </div>
-      <div id="adminData" class="card-list"></div>
+        <div id="adminData" class="card-list"></div>
     </section>
 
     <section class="panel hidden" id="view-codes">
-      <h2>Codes (Start / Release)</h2>
-      <label>Job Id</label><input id="codeJobId" type="number" />
-      <div class="row">
-        <div>
-          <label>Start Code (Worker)</label><input id="startCode" />
-          <button class="primary" id="verifyStart" type="button">Verify Start</button>
+        <h2>Codes (Start / Release)</h2>
+        <label>Job Id</label><input id="codeJobId" type="number"/>
+        <div class="row">
+            <div>
+                <label>Start Code (Worker)</label><input id="startCode"/>
+                <button class="primary" id="verifyStart" type="button">Verify Start</button>
+            </div>
+            <div>
+                <label>Release Code (Client)</label><input id="releaseCode"/>
+                <button class="success" id="verifyRelease" type="button">Verify Release</button>
+            </div>
         </div>
-        <div>
-          <label>Release Code (Client)</label><input id="releaseCode" />
-          <button class="success" id="verifyRelease" type="button">Verify Release</button>
-        </div>
-      </div>
     </section>
 
     <section class="panel" style="grid-column:1 / -1;">
-      <h2>Activity</h2>
-      <div id="console" class="console">Ready. Login or register to start.</div>
+        <h2>Activity</h2>
+        <div id="console" class="console">Ready. Login or register to start.</div>
     </section>
-  </main>
+</main>
 
-  <script>
-    const views = ["view-landing","view-login","view-signup","view-client","view-worker","view-admin","view-codes"];
+<script>
+    const views = ["view-landing", "view-login", "view-signup", "view-client", "view-worker", "view-admin", "view-codes"];
     const consoleEl = document.getElementById("console");
     const jwtDisplay = document.getElementById("jwtDisplay");
     const userIdBadge = document.getElementById("userIdBadge");
     const roleBadge = document.getElementById("roleBadge");
 
     function showView(id) {
-      views.forEach(v => document.getElementById(v).classList.add("hidden"));
-      document.getElementById(id).classList.remove("hidden");
+        views.forEach(v => document.getElementById(v).classList.add("hidden"));
+        document.getElementById(id).classList.remove("hidden");
     }
 
     function log(msg, data) {
-      const ts = new Date().toLocaleTimeString();
-      const body = data ? `\n${JSON.stringify(data, null, 2)}` : "";
-      consoleEl.textContent = `[${ts}] ${msg}${body}`;
+        const ts = new Date().toLocaleTimeString();
+        const body = data ? `\n${JSON.stringify(data, null, 2)}` : "";
+        consoleEl.textContent = `[${ts}] ${msg}${body}`;
     }
 
     function parseCSV(str) {
-      return (str || "").split(',').map(v => v.trim()).filter(Boolean);
+        return (str || "").split(',').map(v => v.trim()).filter(Boolean);
     }
 
     function saveSession(token, userId, role) {
-      if (token) {
-        document.cookie = `au_jwt=${token}; path=/; SameSite=Lax`;
-        localStorage.setItem("au_jwt", token);
-        const cfg = JSON.parse(localStorage.getItem("au-api-config") || "{}");
-        cfg.token = token;
-        cfg.baseUrl = document.getElementById("baseUrl").value.trim() || "/api/v1";
-        cfg.altBaseUrl = document.getElementById("altBase").value.trim() || "/api";
-        localStorage.setItem("au-api-config", JSON.stringify(cfg));
-        jwtDisplay.value = token;
-      }
-      if (userId) { userIdBadge.textContent = `id: ${userId}`; localStorage.setItem("au_userId", userId); }
-      if (role) { roleBadge.textContent = `role: ${role}`; localStorage.setItem("au_role", role); }
+        if (token) {
+            document.cookie = `au_jwt=${token}; path=/; SameSite=Lax`;
+            localStorage.setItem("au_jwt", token);
+            const cfg = JSON.parse(localStorage.getItem("au-api-config") || "{}");
+            cfg.token = token;
+            cfg.baseUrl = document.getElementById("baseUrl").value.trim() || "/api/v1";
+            cfg.altBaseUrl = document.getElementById("altBase").value.trim() || "/api";
+            localStorage.setItem("au-api-config", JSON.stringify(cfg));
+            jwtDisplay.value = token;
+        }
+        if (userId) {
+            userIdBadge.textContent = `id: ${userId}`;
+            localStorage.setItem("au_userId", userId);
+        }
+        if (role) {
+            roleBadge.textContent = `role: ${role}`;
+            localStorage.setItem("au_role", role);
+        }
     }
 
     function loadSession() {
-      const fromLs = localStorage.getItem("au_jwt");
-      const fromCookie = document.cookie.split(';').map(v => v.trim()).find(v => v.startsWith("au_jwt="));
-      const token = fromLs || (fromCookie ? fromCookie.split('=')[1] : "");
-      if (token) jwtDisplay.value = token;
-      const userId = localStorage.getItem("au_userId") || "-";
-      const role = localStorage.getItem("au_role") || "-";
-      userIdBadge.textContent = `id: ${userId}`;
-      roleBadge.textContent = `role: ${role}`;
-      return { token, userId, role };
+        const fromLs = localStorage.getItem("au_jwt");
+        const fromCookie = document.cookie.split(';').map(v => v.trim()).find(v => v.startsWith("au_jwt="));
+        const token = fromLs || (fromCookie ? fromCookie.split('=')[1] : "");
+        if (token) jwtDisplay.value = token;
+        const userId = localStorage.getItem("au_userId") || "-";
+        const role = localStorage.getItem("au_role") || "-";
+        userIdBadge.textContent = `id: ${userId}`;
+        roleBadge.textContent = `role: ${role}`;
+        return {token, userId, role};
     }
 
     function logout() {
-      document.cookie = "au_jwt=; path=/; Max-Age=0";
-      ["au_jwt","au_userId","au_role"].forEach(k => localStorage.removeItem(k));
-      const cfg = JSON.parse(localStorage.getItem("au-api-config") || "{}");
-      delete cfg.token;
-      localStorage.setItem("au-api-config", JSON.stringify(cfg));
-      jwtDisplay.value = "";
-      userIdBadge.textContent = "id: -";
-      roleBadge.textContent = "role: -";
-      log("Logged out");
-      showView("view-landing");
+        document.cookie = "au_jwt=; path=/; Max-Age=0";
+        ["au_jwt", "au_userId", "au_role"].forEach(k => localStorage.removeItem(k));
+        const cfg = JSON.parse(localStorage.getItem("au-api-config") || "{}");
+        delete cfg.token;
+        localStorage.setItem("au-api-config", JSON.stringify(cfg));
+        jwtDisplay.value = "";
+        userIdBadge.textContent = "id: -";
+        roleBadge.textContent = "role: -";
+        log("Logged out");
+        showView("view-landing");
     }
 
     function copyToken() {
-      if (!jwtDisplay.value) { log("No token to copy"); return; }
-      navigator.clipboard.writeText(jwtDisplay.value).then(() => log("Token copied"));
+        if (!jwtDisplay.value) {
+            log("No token to copy");
+            return;
+        }
+        navigator.clipboard.writeText(jwtDisplay.value).then(() => log("Token copied"));
     }
 
     async function request(method, path, body, useAlt) {
-      const base = (useAlt ? document.getElementById("altBase").value : document.getElementById("baseUrl").value) || "";
-      const url = base.replace(/\/$/, "") + path;
-      const token = jwtDisplay.value || localStorage.getItem("au_jwt") || "";
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      log(`${method} ${url}${body ? "\nPayload: " + JSON.stringify(body) : ""}`);
-      const res = await fetch(url, { method, headers, body: method === "GET" ? undefined : JSON.stringify(body || {}) });
-      const text = await res.text();
-      let json; try { json = JSON.parse(text); } catch (_) { json = text; }
-      log(`${res.status} ${res.statusText}`, json);
-      return { res, json };
+        const base = (useAlt ? document.getElementById("altBase").value : document.getElementById("baseUrl").value) || "";
+        const url = base.replace(/\/$/, "") + path;
+        const token = jwtDisplay.value || localStorage.getItem("au_jwt") || "";
+        const headers = {"Content-Type": "application/json"};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        log(`${method} ${url}${body ? "\nPayload: " + JSON.stringify(body) : ""}`);
+        const res = await fetch(url, {
+            method,
+            headers,
+            body: method === "GET" ? undefined : JSON.stringify(body || {})
+        });
+        const text = await res.text();
+        let json;
+        try {
+            json = JSON.parse(text);
+        } catch (_) {
+            json = text;
+        }
+        log(`${res.status} ${res.statusText}`, json);
+        return {res, json};
     }
 
     function renderCards(containerId, items, mapper) {
-      const el = document.getElementById(containerId);
-      if (!items || items.length === 0) { el.innerHTML = "<div class='card'>No data</div>"; return; }
-      el.innerHTML = items.map(mapper).join("");
+        const el = document.getElementById(containerId);
+        if (!items || items.length === 0) {
+            el.innerHTML = "<div class='card'>No data</div>";
+            return;
+        }
+        el.innerHTML = items.map(mapper).join("");
     }
 
     // Navigation
@@ -317,155 +498,213 @@
 
     // Login
     document.getElementById("loginBtn").onclick = async () => {
-      const email = document.getElementById("loginEmail").value.trim();
-      const password = document.getElementById("loginPassword").value.trim();
-      const chosenRole = document.getElementById("loginRole").value;
-      if (!email || !password) { log("Email and password required"); return; }
-      const { res, json } = await request("POST", "/auth/login", { email, password });
-      if (res.ok && json && json.token) {
-        saveSession(json.token, json.userId, json.role || chosenRole);
-        if ((json.role || chosenRole) === "ROLE_CLIENT" || chosenRole === "CLIENT") { showView("view-client"); await loadClientJobs(); }
-        else if ((json.role || chosenRole) === "ROLE_WORKER" || chosenRole === "WORKER") { showView("view-worker"); await loadWorkerFeed(); }
-        else { showView("view-admin"); }
-      }
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value.trim();
+        const chosenRole = document.getElementById("loginRole").value;
+        if (!email || !password) {
+            log("Email and password required");
+            return;
+        }
+        const {res, json} = await request("POST", "/auth/login", {email, password});
+        if (res.ok && json && json.token) {
+            saveSession(json.token, json.userId, json.role || chosenRole);
+            if ((json.role || chosenRole) === "ROLE_CLIENT" || chosenRole === "CLIENT") {
+                showView("view-client");
+                await loadClientJobs();
+            } else if ((json.role || chosenRole) === "ROLE_WORKER" || chosenRole === "WORKER") {
+                showView("view-worker");
+                await loadWorkerFeed();
+            } else {
+                showView("view-admin");
+            }
+        }
     };
 
     // Signup
     document.getElementById("signupBtn").onclick = async () => {
-      const role = document.getElementById("signupRole").value;
-      const name = document.getElementById("suName").value.trim();
-      const email = document.getElementById("suEmail").value.trim();
-      const phoneNumber = document.getElementById("suPhone").value.trim();
-      const password = document.getElementById("suPassword").value.trim();
-      const currency = document.getElementById("suCurrency").value.trim();
-      let address;
-      try { address = JSON.parse(document.getElementById("suAddress").value || "{}"); } catch (_) { log("Invalid address JSON"); return; }
-      const basePayload = { name, email, phoneNumber, password, currency, currentAddress: address };
-      if (role === "CLIENT") {
-        await request("POST", "/client/register", { ...basePayload, savedAddresses: [] });
-      } else {
-        const skillIds = parseCSV(document.getElementById("suSkills").value);
-        await request("POST", "/worker/register", { ...basePayload, skillIds });
-      }
-      showView("view-login");
+        const role = document.getElementById("signupRole").value;
+        const name = document.getElementById("suName").value.trim();
+        const email = document.getElementById("suEmail").value.trim();
+        const phoneNumber = document.getElementById("suPhone").value.trim();
+        const password = document.getElementById("suPassword").value.trim();
+        const currency = document.getElementById("suCurrency").value.trim();
+        let address;
+        try {
+            address = JSON.parse(document.getElementById("suAddress").value || "{}");
+        } catch (_) {
+            log("Invalid address JSON");
+            return;
+        }
+        const basePayload = {name, email, phoneNumber, password, currency, currentAddress: address};
+        if (role === "CLIENT") {
+            await request("POST", "/client/register", {...basePayload, savedAddresses: []});
+        } else {
+            const skillIds = parseCSV(document.getElementById("suSkills").value);
+            await request("POST", "/worker/register", {...basePayload, skillIds});
+        }
+        showView("view-login");
     };
 
     // Client jobs
     async function loadClientJobs() {
-      const clientId = localStorage.getItem("au_userId");
-      if (!clientId) { log("Login as client first"); return; }
-      const { json } = await request("GET", `/jobs/client/${clientId}?page=0&size=10`);
-      const items = json && json.data && json.data.content ? json.data.content : [];
-      renderCards("clientJobs", items, j => `<div class="card"><strong>${j.title || "Job"}</strong><br/>Status: ${j.jobStatus || "-"}<br/>Price: ${j.price ? j.price.amount + " " + j.price.currency : "-"}<br/>Skills: ${(j.skillSet || []).map(s=>s.name||s.id).join(', ')}</div>`);
+        const clientId = localStorage.getItem("au_userId");
+        if (!clientId) {
+            log("Login as client first");
+            return;
+        }
+        const {json} = await request("GET", `/jobs/client/${clientId}?page=0&size=10`);
+        const items = json && json.data && json.data.content ? json.data.content : [];
+        renderCards("clientJobs", items, j => `<div class="card"><strong>${j.title || "Job"}</strong><br/>Status: ${j.jobStatus || "-"}<br/>Price: ${j.price ? j.price.amount + " " + j.price.currency : "-"}<br/>Skills: ${(j.skillSet || []).map(s => s.name || s.id).join(', ')}</div>`);
     }
+
     document.getElementById("refreshClientJobs").onclick = loadClientJobs;
 
     document.getElementById("createJob").onclick = async () => {
-      const clientId = localStorage.getItem("au_userId");
-      if (!clientId) { log("Login as client first"); return; }
-      const body = {
-        title: document.getElementById("jobTitle").value,
-        shortDescription: document.getElementById("jobShort").value,
-        longDescription: document.getElementById("jobLong").value,
-        price: { amount: Number(document.getElementById("jobPrice").value), currency: document.getElementById("jobCurrency").value || "USD" },
-        jobLocationId: Number(document.getElementById("jobLocation").value),
-        jobUrgency: document.getElementById("jobUrgency").value || "HIGH",
-        requiredSkillIds: parseCSV(document.getElementById("jobSkills").value).map(Number),
-        paymentMode: document.getElementById("jobPay").value || "CASH"
-      };
-      const res = await request("POST", `/jobs?clientId=${clientId}`, body);
-      if (res.res && res.res.ok) { await loadClientJobs(); }
+        const clientId = localStorage.getItem("au_userId");
+        if (!clientId) {
+            log("Login as client first");
+            return;
+        }
+        const body = {
+            title: document.getElementById("jobTitle").value,
+            shortDescription: document.getElementById("jobShort").value,
+            longDescription: document.getElementById("jobLong").value,
+            price: {
+                amount: Number(document.getElementById("jobPrice").value),
+                currency: document.getElementById("jobCurrency").value || "USD"
+            },
+            jobLocationId: Number(document.getElementById("jobLocation").value),
+            jobUrgency: document.getElementById("jobUrgency").value || "HIGH",
+            requiredSkillIds: parseCSV(document.getElementById("jobSkills").value).map(Number),
+            paymentMode: document.getElementById("jobPay").value || "CASH"
+        };
+        const res = await request("POST", `/jobs?clientId=${clientId}`, body);
+        if (res.res && res.res.ok) {
+            await loadClientJobs();
+        }
     };
 
     // Worker feed + bids
     async function loadWorkerFeed() {
-      const workerId = localStorage.getItem("au_userId");
-      if (!workerId) { log("Login as worker first"); return; }
-      const params = new URLSearchParams();
-      params.set("radiusKm", document.getElementById("feedRadius").value || 25);
-      parseCSV(document.getElementById("feedSkills").value).forEach(id => params.append("skillIds", id));
-      const { json } = await request("GET", `/jobs/worker/${workerId}/feed?${params.toString()}`);
-      const items = json && json.data && json.data.content ? json.data.content : [];
-      renderCards("workerFeed", items, j => `<div class="card"><strong>${j.title || "Job"}</strong><br/>Price: ${j.price ? j.price.amount + " " + j.price.currency : "-"}<br/>Status: ${j.jobStatus || "OPEN"}<br/>Skills: ${(j.skillSet || []).map(s=>s.name||s.id).join(', ')}<br/>Client: ${(j.createdBy && j.createdBy.name) || 'hidden'}</div>`);
+        const workerId = localStorage.getItem("au_userId");
+        if (!workerId) {
+            log("Login as worker first");
+            return;
+        }
+        const params = new URLSearchParams();
+        params.set("radiusKm", document.getElementById("feedRadius").value || 25);
+        parseCSV(document.getElementById("feedSkills").value).forEach(id => params.append("skillIds", id));
+        const {json} = await request("GET", `/jobs/worker/${workerId}/feed?${params.toString()}`);
+        const items = json && json.data && json.data.content ? json.data.content : [];
+        renderCards("workerFeed", items, j => `<div class="card"><strong>${j.title || "Job"}</strong><br/>Price: ${j.price ? j.price.amount + " " + j.price.currency : "-"}<br/>Status: ${j.jobStatus || "OPEN"}<br/>Skills: ${(j.skillSet || []).map(s => s.name || s.id).join(', ')}<br/>Client: ${(j.createdBy && j.createdBy.name) || 'hidden'}</div>`);
     }
+
     document.getElementById("loadFeed").onclick = loadWorkerFeed;
     document.getElementById("refreshFeed").onclick = loadWorkerFeed;
 
     document.getElementById("placeBid").onclick = async () => {
-      const workerId = localStorage.getItem("au_userId");
-      if (!workerId) { log("Login as worker first"); return; }
-      const jobId = document.getElementById("bidJobId").value;
-      if (!jobId) { log("Job Id required"); return; }
-      const body = {
-        bidAmount: Number(document.getElementById("bidAmount").value),
-        partnerName: document.getElementById("bidPartnerName").value || null,
-        partnerFee: document.getElementById("bidPartnerFee").value ? Number(document.getElementById("bidPartnerFee").value) : null,
-        notes: document.getElementById("bidNotes").value || null
-      };
-      await request("POST", `/jobs/${jobId}/bids?workerId=${workerId}`, body, true);
+        const workerId = localStorage.getItem("au_userId");
+        if (!workerId) {
+            log("Login as worker first");
+            return;
+        }
+        const jobId = document.getElementById("bidJobId").value;
+        if (!jobId) {
+            log("Job Id required");
+            return;
+        }
+        const body = {
+            bidAmount: Number(document.getElementById("bidAmount").value),
+            partnerName: document.getElementById("bidPartnerName").value || null,
+            partnerFee: document.getElementById("bidPartnerFee").value ? Number(document.getElementById("bidPartnerFee").value) : null,
+            notes: document.getElementById("bidNotes").value || null
+        };
+        await request("POST", `/jobs/${jobId}/bids?workerId=${workerId}`, body, true);
     };
 
     document.getElementById("verifyStart").onclick = async () => {
-      const workerId = localStorage.getItem("au_userId");
-      const jobId = document.getElementById("codeJobId").value;
-      const code = document.getElementById("startCode").value;
-      if (!workerId || !jobId || !code) { log("Worker login, job id, and code required"); return; }
-      await request("POST", `/jobs/${jobId}/codes/start?workerId=${workerId}`, { code });
+        const workerId = localStorage.getItem("au_userId");
+        const jobId = document.getElementById("codeJobId").value;
+        const code = document.getElementById("startCode").value;
+        if (!workerId || !jobId || !code) {
+            log("Worker login, job id, and code required");
+            return;
+        }
+        await request("POST", `/jobs/${jobId}/codes/start?workerId=${workerId}`, {code});
     };
 
     document.getElementById("verifyRelease").onclick = async () => {
-      const clientId = localStorage.getItem("au_userId");
-      const jobId = document.getElementById("codeJobId").value;
-      const code = document.getElementById("releaseCode").value;
-      if (!clientId || !jobId || !code) { log("Client login, job id, and code required"); return; }
-      await request("POST", `/jobs/${jobId}/codes/release?clientId=${clientId}`, { code });
+        const clientId = localStorage.getItem("au_userId");
+        const jobId = document.getElementById("codeJobId").value;
+        const code = document.getElementById("releaseCode").value;
+        if (!clientId || !jobId || !code) {
+            log("Client login, job id, and code required");
+            return;
+        }
+        await request("POST", `/jobs/${jobId}/codes/release?clientId=${clientId}`, {code});
     };
 
     // Admin
     document.getElementById("adminClients").onclick = async () => {
-      const { json } = await request("GET", "/client/all?page=0&size=20");
-      const items = json && json.data && json.data.content ? json.data.content : [];
-      renderCards("adminData", items, c => `<div class="card"><strong>${c.name || 'Client'}</strong><br/>Email: ${c.email || ''}<br/>Phone: ${c.phoneNumber || ''}</div>`);
+        const {json} = await request("GET", "/client/all?page=0&size=20");
+        const items = json && json.data && json.data.content ? json.data.content : [];
+        renderCards("adminData", items, c => `<div class="card"><strong>${c.name || 'Client'}</strong><br/>Email: ${c.email || ''}<br/>Phone: ${c.phoneNumber || ''}</div>`);
     };
     document.getElementById("adminWorkers").onclick = async () => {
-      const { json } = await request("GET", "/worker/all?page=0&size=20");
-      const items = json && json.data && json.data.content ? json.data.content : [];
-      renderCards("adminData", items, w => `<div class="card"><strong>${w.name || 'Worker'}</strong><br/>Email: ${w.email || ''}<br/>Skills: ${(w.skills || []).map(s=>s.name||s.id).join(', ')}</div>`);
+        const {json} = await request("GET", "/worker/all?page=0&size=20");
+        const items = json && json.data && json.data.content ? json.data.content : [];
+        renderCards("adminData", items, w => `<div class="card"><strong>${w.name || 'Worker'}</strong><br/>Email: ${w.email || ''}<br/>Skills: ${(w.skills || []).map(s => s.name || s.id).join(', ')}</div>`);
     };
     document.getElementById("adminJobs").onclick = async () => {
-      const { json } = await request("GET", "/jobs");
-      const items = json && json.data ? json.data : [];
-      renderCards("adminData", items, j => `<div class="card"><strong>${j.title || 'Job'}</strong><br/>City: ${j.jobLocation ? j.jobLocation.city : ''}<br/>Status: ${j.jobStatus || ''}</div>`);
+        const {json} = await request("GET", "/jobs");
+        const items = json && json.data ? json.data : [];
+        renderCards("adminData", items, j => `<div class="card"><strong>${j.title || 'Job'}</strong><br/>City: ${j.jobLocation ? j.jobLocation.city : ''}<br/>Status: ${j.jobStatus || ''}</div>`);
     };
 
     document.getElementById("delClientBtn").onclick = async () => {
-      const id = document.getElementById("delClientId").value;
-      if (!id) { log("Client id required"); return; }
-      await request("DELETE", `/client/${id}`);
+        const id = document.getElementById("delClientId").value;
+        if (!id) {
+            log("Client id required");
+            return;
+        }
+        await request("DELETE", `/client/${id}`);
     };
     document.getElementById("delWorkerBtn").onclick = async () => {
-      const id = document.getElementById("delWorkerId").value;
-      if (!id) { log("Worker id required"); return; }
-      await request("DELETE", `/worker/${id}`);
+        const id = document.getElementById("delWorkerId").value;
+        if (!id) {
+            log("Worker id required");
+            return;
+        }
+        await request("DELETE", `/worker/${id}`);
     };
     document.getElementById("delJobBtn").onclick = async () => {
-      const id = document.getElementById("delJobId").value;
-      if (!id) { log("Job id required"); return; }
-      await request("DELETE", `/jobs/${id}?clientId=${localStorage.getItem("au_userId") || 0}`);
+        const id = document.getElementById("delJobId").value;
+        if (!id) {
+            log("Job id required");
+            return;
+        }
+        await request("DELETE", `/jobs/${id}?clientId=${localStorage.getItem("au_userId") || 0}`);
     };
 
     // Initial load
-    (function init(){
-      const { token, role } = loadSession();
-      if (token) {
-        if (role === "ROLE_CLIENT" || role === "CLIENT") { showView("view-client"); loadClientJobs(); }
-        else if (role === "ROLE_WORKER" || role === "WORKER") { showView("view-worker"); loadWorkerFeed(); }
-        else if (role === "ROLE_ADMIN" || role === "ADMIN") { showView("view-admin"); }
-        else { showView("view-landing"); }
-      } else {
-        showView("view-landing");
-      }
+    (function init() {
+        const {token, role} = loadSession();
+        if (token) {
+            if (role === "ROLE_CLIENT" || role === "CLIENT") {
+                showView("view-client");
+                loadClientJobs();
+            } else if (role === "ROLE_WORKER" || role === "WORKER") {
+                showView("view-worker");
+                loadWorkerFeed();
+            } else if (role === "ROLE_ADMIN" || role === "ADMIN") {
+                showView("view-admin");
+            } else {
+                showView("view-landing");
+            }
+        } else {
+            showView("view-landing");
+        }
     })();
-  </script>
+</script>
 </body>
 </html>

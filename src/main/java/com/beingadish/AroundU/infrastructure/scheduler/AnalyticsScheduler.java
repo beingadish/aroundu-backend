@@ -1,26 +1,22 @@
 package com.beingadish.AroundU.infrastructure.scheduler;
 
-import com.beingadish.AroundU.infrastructure.config.SchedulerProperties;
+import com.beingadish.AroundU.bid.repository.BidRepository;
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
 import com.beingadish.AroundU.infrastructure.analytics.entity.AggregatedMetrics;
 import com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository;
-import com.beingadish.AroundU.bid.repository.BidRepository;
-import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
+import com.beingadish.AroundU.infrastructure.config.SchedulerProperties;
 import com.beingadish.AroundU.infrastructure.lock.LockServiceBase;
 import com.beingadish.AroundU.infrastructure.metrics.SchedulerMetricsService;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.Optional;
 
 /**

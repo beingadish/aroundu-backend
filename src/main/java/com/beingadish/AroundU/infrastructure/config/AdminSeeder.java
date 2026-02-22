@@ -31,7 +31,8 @@ public class AdminSeeder {
     CommandLineRunner seedAdmin() {
         return args -> {
             adminRepository.findByEmail(adminEmail).ifPresentOrElse(
-                    a -> {}, // already exists, skip
+                    a -> {
+                    }, // already exists, skip
                     () -> {
                         Admin admin = Admin.builder()
                                 .name(adminName)

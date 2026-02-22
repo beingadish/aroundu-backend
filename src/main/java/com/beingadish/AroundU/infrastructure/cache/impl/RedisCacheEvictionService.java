@@ -1,7 +1,7 @@
 package com.beingadish.AroundU.infrastructure.cache.impl;
 
-import com.beingadish.AroundU.infrastructure.config.RedisConfig;
 import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
+import com.beingadish.AroundU.infrastructure.config.RedisConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -64,6 +64,7 @@ public class RedisCacheEvictionService implements CacheEvictionService {
     }
 
     // ── Internals ────────────────────────────────────────────────────────
+
     /**
      * Cursor-based SCAN + batch DELETE — non-blocking, unlike {@code KEYS}.
      */

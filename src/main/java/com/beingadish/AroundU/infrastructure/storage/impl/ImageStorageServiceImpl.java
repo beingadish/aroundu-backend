@@ -1,9 +1,10 @@
 package com.beingadish.AroundU.infrastructure.storage.impl;
 
-import com.beingadish.AroundU.infrastructure.storage.ImageStorageService;
 import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.infrastructure.storage.ImageStorageService;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retry.Retry;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -32,24 +33,28 @@ public class ImageStorageServiceImpl implements ImageStorageService {
 
     private final CircuitBreaker circuitBreaker;
     private final Retry retry;
-    private final MetricsService metricsService;
 
     /**
      * Simulates local storage for fallback (in production: temp disk path).
+     * -- GETTER --
+     * Returns local storage map (visible for tests).
      */
+    @Getter
     private final Map<String, byte[]> localStorage = new ConcurrentHashMap<>();
 
     /**
      * Queue of file names awaiting async upload to S3.
+     * -- GETTER --
+     * Returns pending S3 upload queue (visible for monitoring / tests).
      */
+    @Getter
     private final Queue<String> pendingS3Uploads = new ConcurrentLinkedQueue<>();
 
     public ImageStorageServiceImpl(@Qualifier("imageUploadCircuitBreaker") CircuitBreaker circuitBreaker,
-            @Qualifier("imageUploadRetry") Retry retry,
-            MetricsService metricsService) {
+                                   @Qualifier("imageUploadRetry") Retry retry,
+                                   MetricsService metricsService) {
         this.circuitBreaker = circuitBreaker;
         this.retry = retry;
-        this.metricsService = metricsService;
     }
 
     @Override
@@ -80,15 +85,15 @@ public class ImageStorageServiceImpl implements ImageStorageService {
     }
 
     @Override
-    public boolean deleteImage(String fileName) {
+    public void deleteImage(String fileName) {
         localStorage.remove(fileName);
         pendingS3Uploads.remove(fileName);
         // TODO: also delete from S3 with resilience wrapping
         log.info("Deleted image: {}", fileName);
-        return true;
     }
 
     // ── Internals ────────────────────────────────────────────────────────
+
     /**
      * Actual S3 upload. Replace with real AWS SDK call.
      */
@@ -107,17 +112,4 @@ public class ImageStorageServiceImpl implements ImageStorageService {
         return "/local-images/" + fileName;
     }
 
-    /**
-     * Returns pending S3 upload queue (visible for monitoring / tests).
-     */
-    public Queue<String> getPendingS3Uploads() {
-        return pendingS3Uploads;
-    }
-
-    /**
-     * Returns local storage map (visible for tests).
-     */
-    public Map<String, byte[]> getLocalStorage() {
-        return localStorage;
-    }
 }

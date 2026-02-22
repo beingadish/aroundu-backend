@@ -1,11 +1,7 @@
 package com.beingadish.AroundU.location.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -83,12 +79,6 @@ public class FailedGeoSync {
     @Builder.Default
     private boolean resolved = false;
 
-    public enum SyncOperation {
-        ADD,
-        REMOVE,
-        UPDATE
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -104,5 +94,11 @@ public class FailedGeoSync {
     @Override
     public int hashCode() {
         return getClass().hashCode();
+    }
+
+    public enum SyncOperation {
+        ADD,
+        REMOVE,
+        UPDATE
     }
 }

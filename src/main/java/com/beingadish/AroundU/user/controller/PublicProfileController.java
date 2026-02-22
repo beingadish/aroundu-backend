@@ -36,8 +36,8 @@ public class PublicProfileController {
     @GetMapping("/worker/{workerId}")
     @Operation(summary = "Get public worker profile", description = "Returns non-sensitive worker profile information")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Worker profile found"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Worker not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Worker profile found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Worker not found")
     })
     public ResponseEntity<ApiResponse<PublicWorkerProfileDTO>> getWorkerPublicProfile(
             @Parameter(description = "Worker ID", required = true) @PathVariable Long workerId) {
@@ -61,8 +61,8 @@ public class PublicProfileController {
     @GetMapping("/client/{clientId}")
     @Operation(summary = "Get public client profile", description = "Returns non-sensitive client profile information")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client profile found"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Client not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client profile found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Client not found")
     })
     public ResponseEntity<ApiResponse<PublicClientProfileDTO>> getClientPublicProfile(
             @Parameter(description = "Client ID", required = true) @PathVariable Long clientId) {

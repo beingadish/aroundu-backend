@@ -1,10 +1,12 @@
 package com.beingadish.AroundU.Controller.Auth;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
+import com.beingadish.AroundU.user.controller.AuthController;
 import com.beingadish.AroundU.user.dto.auth.LoginRequestDTO;
 import com.beingadish.AroundU.user.dto.auth.LoginResponseDTO;
 import com.beingadish.AroundU.user.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,25 +22,23 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
-import jakarta.persistence.EntityManagerFactory;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import com.beingadish.AroundU.user.controller.AuthController;
 
 @WebMvcTest(value = AuthController.class, excludeAutoConfiguration = {
-    DataSourceAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class,
-    JpaRepositoriesAutoConfiguration.class
+        DataSourceAutoConfiguration.class,
+        HibernateJpaAutoConfiguration.class,
+        JpaRepositoriesAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestWebSecurityConfig.class)
 @TestPropertySource(properties = {
-    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
-    "spring.data.jpa.repositories.enabled=false"
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+        "spring.data.jpa.repositories.enabled=false"
 })
 class AuthControllerTest {
 
@@ -133,8 +133,8 @@ class AuthControllerTest {
                 .thenReturn(new LoginResponseDTO(7L, "jwt-token", "Bearer", "client@example.com", "ROLE_CLIENT"));
 
         mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(7))
                 .andExpect(jsonPath("$.token").value("jwt-token"))
@@ -153,8 +153,8 @@ class AuthControllerTest {
                 .thenReturn(new LoginResponseDTO(15L, "jwt-worker-token", "Bearer", "worker@example.com", "ROLE_WORKER"));
 
         mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(15))
                 .andExpect(jsonPath("$.token").value("jwt-worker-token"))
@@ -171,8 +171,8 @@ class AuthControllerTest {
                 .thenReturn(new LoginResponseDTO(99L, "jwt-admin-token", "Bearer", "admin@example.com", "ROLE_ADMIN"));
 
         mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(99))
                 .andExpect(jsonPath("$.token").value("jwt-admin-token"))

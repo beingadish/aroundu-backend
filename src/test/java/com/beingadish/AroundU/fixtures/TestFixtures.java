@@ -1,22 +1,22 @@
 package com.beingadish.AroundU.fixtures;
 
-import com.beingadish.AroundU.common.constants.enums.*;
 import com.beingadish.AroundU.bid.dto.BidCreateRequest;
 import com.beingadish.AroundU.bid.dto.BidHandshakeRequest;
+import com.beingadish.AroundU.bid.entity.Bid;
+import com.beingadish.AroundU.common.constants.enums.*;
 import com.beingadish.AroundU.common.dto.PriceDTO;
-import com.beingadish.AroundU.job.dto.*;
-import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
-import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.common.entity.Price;
+import com.beingadish.AroundU.common.entity.Skill;
 import com.beingadish.AroundU.common.entity.VerificationStatus;
+import com.beingadish.AroundU.job.dto.*;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.entity.JobConfirmationCode;
-import com.beingadish.AroundU.bid.entity.Bid;
-import com.beingadish.AroundU.payment.entity.PaymentTransaction;
 import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.common.entity.Skill;
-import com.beingadish.AroundU.common.entity.Price;
+import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
+import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
+import com.beingadish.AroundU.payment.entity.PaymentTransaction;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;

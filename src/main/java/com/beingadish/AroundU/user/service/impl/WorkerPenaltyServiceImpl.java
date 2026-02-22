@@ -30,13 +30,11 @@ import java.util.List;
 @Transactional
 public class WorkerPenaltyServiceImpl implements WorkerPenaltyService {
 
+    private final WorkerRepository workerRepository;
     @Value("${worker.penalty.cancellation-threshold:3}")
     private int cancellationThreshold;
-
     @Value("${worker.penalty.block-days:7}")
     private int blockDays;
-
-    private final WorkerRepository workerRepository;
 
     @Override
     public Worker recordCancellation(Long workerId) {

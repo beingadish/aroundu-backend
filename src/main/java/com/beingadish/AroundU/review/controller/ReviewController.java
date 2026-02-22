@@ -35,11 +35,11 @@ public class ReviewController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Submit review", description = "Client submits a review for a completed job's assigned worker")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Review submitted",
-                content = @Content(schema = @Schema(implementation = ReviewResponseDTO.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Job not found"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Review already exists")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Review submitted",
+                    content = @Content(schema = @Schema(implementation = ReviewResponseDTO.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Job not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Review already exists")
     })
     public ResponseEntity<ApiResponse<ReviewResponseDTO>> submitReview(
             @Parameter(description = "Job ID", required = true) @PathVariable Long jobId,
@@ -53,11 +53,11 @@ public class ReviewController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Worker submits review", description = "Worker submits a review for the client after job completion")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Worker review submitted",
-                content = @Content(schema = @Schema(implementation = ReviewResponseDTO.class))),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Job not found"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Review already exists")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Worker review submitted",
+                    content = @Content(schema = @Schema(implementation = ReviewResponseDTO.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Job not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Review already exists")
     })
     public ResponseEntity<ApiResponse<ReviewResponseDTO>> submitWorkerReview(
             @Parameter(description = "Job ID", required = true) @PathVariable Long jobId,
@@ -80,8 +80,8 @@ public class ReviewController {
     @GetMapping("/workers/{workerId}")
     @Operation(summary = "Get worker reviews", description = "Retrieve all reviews for a worker (public)")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Reviews retrieved"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Worker not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Reviews retrieved"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Worker not found")
     })
     public ResponseEntity<ApiResponse<List<ReviewResponseDTO>>> getWorkerReviews(
             @Parameter(description = "Worker ID", required = true) @PathVariable Long workerId) {
@@ -93,8 +93,8 @@ public class ReviewController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Get job review", description = "Retrieve the review for a specific job")
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Review found"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No review found for job")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Review found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "No review found for job")
     })
     public ResponseEntity<ApiResponse<ReviewResponseDTO>> getJobReview(
             @Parameter(description = "Job ID", required = true) @PathVariable Long jobId) {

@@ -3,6 +3,7 @@ package com.beingadish.AroundU.Controller;
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
 import com.beingadish.AroundU.common.constants.enums.PaymentMode;
 import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
+import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.beingadish.AroundU.payment.controller.PaymentController;
 import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
 import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
@@ -10,7 +11,6 @@ import com.beingadish.AroundU.payment.dto.PaymentResponseDTO;
 import com.beingadish.AroundU.payment.entity.PaymentTransaction;
 import com.beingadish.AroundU.payment.mapper.PaymentTransactionMapper;
 import com.beingadish.AroundU.payment.service.PaymentService;
-import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,28 +33,31 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = PaymentController.class, excludeAutoConfiguration = {
-    DataSourceAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class,
-    JpaRepositoriesAutoConfiguration.class
+        DataSourceAutoConfiguration.class,
+        HibernateJpaAutoConfiguration.class,
+        JpaRepositoriesAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestWebSecurityConfig.class)
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
-    + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
-    + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
-    "spring.data.jpa.repositories.enabled=false"
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
+                + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
+                + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+        "spring.data.jpa.repositories.enabled=false"
 })
 @DisplayName("PaymentController")
 class PaymentControllerTest {
 
+    private static final String JOBS_BASE = "/api/v1/jobs";
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -63,7 +66,6 @@ class PaymentControllerTest {
     private PaymentService paymentService;
     @MockitoBean
     private PaymentTransactionMapper paymentTransactionMapper;
-
     // ── JPA/Security infrastructure mocks ────────────────────────
     @SuppressWarnings("unused")
     @MockitoBean(name = "entityManagerFactory")
@@ -135,8 +137,6 @@ class PaymentControllerTest {
         when(entityManagerFactory.createEntityManager()).thenReturn(sharedEntityManager);
     }
 
-    private static final String JOBS_BASE = "/api/v1/jobs";
-
     private PaymentTransaction sampleTransaction(PaymentStatus status) {
         return PaymentTransaction.builder()
                 .id(1L)
@@ -169,9 +169,9 @@ class PaymentControllerTest {
             when(paymentTransactionMapper.toDto(tx)).thenReturn(sampleResponseDTO(PaymentStatus.ESCROW_LOCKED));
 
             mockMvc.perform(post(JOBS_BASE + "/100/payments/lock")
-                    .param("clientId", "1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.paymentLockRequest(500.0))))
+                            .param("clientId", "1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.paymentLockRequest(500.0))))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(1))
                     .andExpect(jsonPath("$.status").value("ESCROW_LOCKED"));
@@ -184,9 +184,9 @@ class PaymentControllerTest {
                     .thenThrow(new EntityNotFoundException("Job not found"));
 
             mockMvc.perform(post(JOBS_BASE + "/999/payments/lock")
-                    .param("clientId", "1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.paymentLockRequest(500.0))))
+                            .param("clientId", "1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.paymentLockRequest(500.0))))
                     .andExpect(status().isNotFound());
         }
 
@@ -197,9 +197,9 @@ class PaymentControllerTest {
             // amount is null
 
             mockMvc.perform(post(JOBS_BASE + "/100/payments/lock")
-                    .param("clientId", "1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(req)))
+                            .param("clientId", "1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isBadRequest());
         }
     }
@@ -218,9 +218,9 @@ class PaymentControllerTest {
             when(paymentTransactionMapper.toDto(tx)).thenReturn(sampleResponseDTO(PaymentStatus.RELEASED));
 
             mockMvc.perform(post(JOBS_BASE + "/100/payments/release")
-                    .param("clientId", "1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.paymentReleaseRequest("RELEASE456"))))
+                            .param("clientId", "1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.paymentReleaseRequest("RELEASE456"))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.status").value("RELEASED"));
         }
@@ -232,9 +232,9 @@ class PaymentControllerTest {
                     .thenThrow(new EntityNotFoundException("Job not found"));
 
             mockMvc.perform(post(JOBS_BASE + "/999/payments/release")
-                    .param("clientId", "1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.paymentReleaseRequest("RELEASE456"))))
+                            .param("clientId", "1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.paymentReleaseRequest("RELEASE456"))))
                     .andExpect(status().isNotFound());
         }
 
@@ -245,9 +245,9 @@ class PaymentControllerTest {
                     .thenThrow(new IllegalStateException("Payment already released"));
 
             mockMvc.perform(post(JOBS_BASE + "/100/payments/release")
-                    .param("clientId", "1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.paymentReleaseRequest("RELEASE456"))))
+                            .param("clientId", "1")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.paymentReleaseRequest("RELEASE456"))))
                     .andExpect(status().isConflict());
         }
     }

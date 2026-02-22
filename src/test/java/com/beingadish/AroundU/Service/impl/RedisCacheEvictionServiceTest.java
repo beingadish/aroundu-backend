@@ -1,5 +1,6 @@
 package com.beingadish.AroundU.Service.impl;
 
+import com.beingadish.AroundU.infrastructure.cache.impl.RedisCacheEvictionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,12 +16,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import com.beingadish.AroundU.infrastructure.cache.impl.RedisCacheEvictionService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("RedisCacheEvictionService")

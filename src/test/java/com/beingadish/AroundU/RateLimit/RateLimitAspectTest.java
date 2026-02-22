@@ -1,8 +1,9 @@
 package com.beingadish.AroundU.RateLimit;
 
 import com.beingadish.AroundU.common.exception.RateLimitExceededException;
+import com.beingadish.AroundU.infrastructure.ratelimit.RateLimit;
+import com.beingadish.AroundU.infrastructure.ratelimit.RateLimitAspect;
 import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
-import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.ConsumptionProbe;
 import io.github.bucket4j.distributed.BucketProxy;
@@ -33,12 +34,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import com.beingadish.AroundU.infrastructure.ratelimit.RateLimitAspect;
-import com.beingadish.AroundU.infrastructure.ratelimit.RateLimit;
 
 /**
  * Tests for the rate-limiting aspect.

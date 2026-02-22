@@ -6,7 +6,7 @@ package com.beingadish.AroundU.job.event;
  * eviction and geo-index maintenance after the transaction commits.
  *
  * @param locationChanged {@code true} when the job's physical location was
- * changed (relevant for geo-index / worker-feed cache).
+ *                        changed (relevant for geo-index / worker-feed cache).
  */
 public record JobModifiedEvent(Long jobId, Long clientId, Type type, boolean locationChanged) {
 

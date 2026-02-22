@@ -1,25 +1,28 @@
 package com.beingadish.AroundU.Service;
 
+import com.beingadish.AroundU.bid.repository.BidRepository;
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.common.constants.enums.SortDirection;
+import com.beingadish.AroundU.common.entity.Skill;
+import com.beingadish.AroundU.common.util.DistanceUtils;
+import com.beingadish.AroundU.common.util.PageResponse;
+import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import com.beingadish.AroundU.job.dto.JobSummaryDTO;
 import com.beingadish.AroundU.job.dto.WorkerJobFeedRequest;
-import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.location.entity.FailedGeoSync;
 import com.beingadish.AroundU.job.entity.Job;
-import com.beingadish.AroundU.common.entity.Skill;
-import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.job.event.JobModifiedEvent;
 import com.beingadish.AroundU.job.exception.JobValidationException;
 import com.beingadish.AroundU.job.mapper.JobMapper;
-import com.beingadish.AroundU.bid.repository.BidRepository;
-import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
 import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.user.repository.WorkerReadRepository;
-import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
 import com.beingadish.AroundU.job.service.impl.JobServiceImpl;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.location.entity.FailedGeoSync;
+import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
+import com.beingadish.AroundU.location.service.JobGeoService;
 import com.beingadish.AroundU.location.service.JobGeoSyncService;
-import com.beingadish.AroundU.common.util.DistanceUtils;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.user.repository.WorkerReadRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,22 +34,15 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import com.beingadish.AroundU.common.util.PageResponse;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import com.beingadish.AroundU.location.service.JobGeoService;
-import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 
 /**
  * Comprehensive geo-search tests covering:

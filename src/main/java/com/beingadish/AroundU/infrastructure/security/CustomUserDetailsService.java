@@ -6,7 +6,6 @@ import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.user.repository.AdminRepository;
 import com.beingadish.AroundU.user.repository.ClientReadRepository;
 import com.beingadish.AroundU.user.repository.WorkerReadRepository;
-import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;

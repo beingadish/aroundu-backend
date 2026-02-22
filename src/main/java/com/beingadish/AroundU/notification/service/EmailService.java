@@ -40,8 +40,8 @@ public interface EmailService {
      * sent.
      *
      * @param recipients list of email addresses
-     * @param subject shared subject line
-     * @param body shared body text
+     * @param subject    shared subject line
+     * @param body       shared body text
      * @return future that completes when all emails have been dispatched
      */
     CompletableFuture<Void> sendBulkEmailAsync(List<String> recipients, String subject, String body);

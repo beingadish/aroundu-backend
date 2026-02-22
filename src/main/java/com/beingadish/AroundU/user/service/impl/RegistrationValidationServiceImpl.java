@@ -1,8 +1,8 @@
 package com.beingadish.AroundU.user.service.impl;
 
+import com.beingadish.AroundU.bid.service.BloomFilterMetricsService;
 import com.beingadish.AroundU.user.repository.ClientReadRepository;
 import com.beingadish.AroundU.user.repository.WorkerReadRepository;
-import com.beingadish.AroundU.bid.service.BloomFilterMetricsService;
 import com.beingadish.AroundU.user.service.RegistrationValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

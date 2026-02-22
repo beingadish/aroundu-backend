@@ -61,11 +61,11 @@ public class ProfileConfig {
         private static final String WORKER = "WORKER";
 
         private static final String[] AUTH_WHITELIST = {
-            "/api/v1/auth/**",
-            "/api/v1/client/register",
-            "/api/v1/worker/register",
-            "/actuator/health",
-            "/actuator/info"
+                "/api/v1/auth/**",
+                "/api/v1/client/register",
+                "/api/v1/worker/register",
+                "/actuator/health",
+                "/actuator/info"
         };
 
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -95,26 +95,26 @@ public class ProfileConfig {
                     .csrf(AbstractHttpConfigurer::disable)
                     .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                     .exceptionHandling(exception -> exception
-                    .accessDeniedHandler(new CustomAccessDeniedHandler())
-                    .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
+                            .accessDeniedHandler(new CustomAccessDeniedHandler())
+                            .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                     )
                     .headers(headers -> headers
-                    .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests"))
-                    .httpStrictTransportSecurity(Customizer.withDefaults())
-                    .referrerPolicy(ref -> ref.policy(ReferrerPolicy.NO_REFERRER))
+                            .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; object-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests"))
+                            .httpStrictTransportSecurity(Customizer.withDefaults())
+                            .referrerPolicy(ref -> ref.policy(ReferrerPolicy.NO_REFERRER))
                     )
                     .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(AUTH_WHITELIST).permitAll()
-                    // Actuator endpoints restricted to ADMIN
-                    .requestMatchers("/actuator/**").hasRole(ADMIN)
-                    .requestMatchers("/api/v1/client/all", "/api/v1/worker/all").hasRole(ADMIN)
-                    .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
-                    .requestMatchers("/api/v1/client/**").hasAnyRole(CLIENT, ADMIN)
-                    .requestMatchers("/api/v1/worker/**").hasAnyRole(WORKER, ADMIN)
-                    .requestMatchers("/api/v1/jobs/**").hasAnyRole(ADMIN, CLIENT, WORKER)
-                    .requestMatchers("/api/v1/bids/**").hasAnyRole(ADMIN, CLIENT, WORKER)
-                    .requestMatchers("/api/v1/payments/**").hasAnyRole(ADMIN, CLIENT, WORKER)
-                    .anyRequest().authenticated()
+                            .requestMatchers(AUTH_WHITELIST).permitAll()
+                            // Actuator endpoints restricted to ADMIN
+                            .requestMatchers("/actuator/**").hasRole(ADMIN)
+                            .requestMatchers("/api/v1/client/all", "/api/v1/worker/all").hasRole(ADMIN)
+                            .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
+                            .requestMatchers("/api/v1/client/**").hasAnyRole(CLIENT, ADMIN)
+                            .requestMatchers("/api/v1/worker/**").hasAnyRole(WORKER, ADMIN)
+                            .requestMatchers("/api/v1/jobs/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                            .requestMatchers("/api/v1/bids/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                            .requestMatchers("/api/v1/payments/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                            .anyRequest().authenticated()
                     )
                     .authenticationProvider(authenticationProvider())
                     .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

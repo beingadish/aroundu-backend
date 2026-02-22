@@ -1,10 +1,10 @@
 package com.beingadish.AroundU.Service;
 
-import com.beingadish.AroundU.notification.entity.FailedNotification;
-import com.beingadish.AroundU.notification.repository.FailedNotificationRepository;
-import com.beingadish.AroundU.notification.service.impl.NotificationServiceImpl;
 import com.beingadish.AroundU.common.util.AsyncUtils;
 import com.beingadish.AroundU.common.util.ParallelProcessingUtils;
+import com.beingadish.AroundU.notification.repository.FailedNotificationRepository;
+import com.beingadish.AroundU.notification.service.EmailService;
+import com.beingadish.AroundU.notification.service.impl.NotificationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,30 +14,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.function.Function;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import com.beingadish.AroundU.notification.service.EmailService;
 
 /**
  * Tests for multi-threading, parallel processing, and async utilities.

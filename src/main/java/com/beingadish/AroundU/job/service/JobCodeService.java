@@ -17,7 +17,7 @@ public interface JobCodeService {
      * selected a bid. If codes already exist for the job, the existing record
      * is returned.
      *
-     * @param jobId the job ID
+     * @param jobId    the job ID
      * @param clientId the owning client ID
      * @return the created or existing confirmation codes
      */
@@ -27,7 +27,7 @@ public interface JobCodeService {
      * Regenerates OTPs for a job, invalidating any previous codes.
      * Rate-limited: callers should not regenerate more than once per minute.
      *
-     * @param jobId the job ID
+     * @param jobId    the job ID
      * @param clientId the owning client ID
      * @return the new confirmation codes
      */
@@ -38,9 +38,9 @@ public interface JobCodeService {
      * IN_PROGRESS. Tracks failed attempts and locks after
      * {@link JobConfirmationCode#MAX_ATTEMPTS} failures.
      *
-     * @param jobId the job ID
+     * @param jobId    the job ID
      * @param workerId the assigned worker ID
-     * @param code the 6-digit start OTP
+     * @param code     the 6-digit start OTP
      * @return the updated confirmation codes
      */
     JobConfirmationCode verifyStartCode(Long jobId, Long workerId, String code);
@@ -50,9 +50,9 @@ public interface JobCodeService {
      * complete. Tracks failed attempts and locks after
      * {@link JobConfirmationCode#MAX_ATTEMPTS} failures.
      *
-     * @param jobId the job ID
+     * @param jobId    the job ID
      * @param clientId the owning client ID
-     * @param code the 6-digit release OTP
+     * @param code     the 6-digit release OTP
      * @return the updated confirmation codes
      */
     JobConfirmationCode verifyReleaseCode(Long jobId, Long clientId, String code);

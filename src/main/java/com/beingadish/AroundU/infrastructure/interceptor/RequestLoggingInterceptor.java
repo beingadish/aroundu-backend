@@ -43,8 +43,7 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
-            Object handler, Exception ex) {
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         Long startTime = (Long) request.getAttribute(START_TIME_ATTR);
         long elapsed = startTime != null ? System.currentTimeMillis() - startTime : -1;
 
@@ -81,42 +80,24 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
      */
     private String resolveStatusText(int status) {
         return switch (status) {
-            case 200 ->
-                "OK";
-            case 201 ->
-                "Created";
-            case 204 ->
-                "No Content";
-            case 301 ->
-                "Moved Permanently";
-            case 302 ->
-                "Found";
-            case 304 ->
-                "Not Modified";
-            case 400 ->
-                "Bad Request";
-            case 401 ->
-                "Unauthorized";
-            case 403 ->
-                "Forbidden";
-            case 404 ->
-                "Not Found";
-            case 405 ->
-                "Method Not Allowed";
-            case 409 ->
-                "Conflict";
-            case 422 ->
-                "Unprocessable Entity";
-            case 429 ->
-                "Too Many Requests";
-            case 500 ->
-                "Internal Server Error";
-            case 502 ->
-                "Bad Gateway";
-            case 503 ->
-                "Service Unavailable";
-            default ->
-                "";
+            case 200 -> "OK";
+            case 201 -> "Created";
+            case 204 -> "No Content";
+            case 301 -> "Moved Permanently";
+            case 302 -> "Found";
+            case 304 -> "Not Modified";
+            case 400 -> "Bad Request";
+            case 401 -> "Unauthorized";
+            case 403 -> "Forbidden";
+            case 404 -> "Not Found";
+            case 405 -> "Method Not Allowed";
+            case 409 -> "Conflict";
+            case 422 -> "Unprocessable Entity";
+            case 429 -> "Too Many Requests";
+            case 500 -> "Internal Server Error";
+            case 502 -> "Bad Gateway";
+            case 503 -> "Service Unavailable";
+            default -> "";
         };
     }
 }

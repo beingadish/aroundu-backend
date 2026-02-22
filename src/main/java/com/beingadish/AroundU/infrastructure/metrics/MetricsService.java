@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -144,6 +143,7 @@ public class MetricsService {
     }
 
     // ── Thread pool instrumentation ──────────────────────────────────────
+
     /**
      * Instruments a {@link ThreadPoolTaskExecutor} or {@link ExecutorService}
      * with Micrometer metrics. Call this from config classes after executor
@@ -154,7 +154,7 @@ public class MetricsService {
      * {@code executor.pool.core}, {@code executor.pool.max}.
      *
      * @param executor the executor to instrument
-     * @param name logical name (e.g. "notification", "database")
+     * @param name     logical name (e.g. "notification", "database")
      */
     public void instrumentExecutor(Executor executor, String name) {
         ExecutorService es = unwrapExecutorService(executor);
@@ -177,6 +177,7 @@ public class MetricsService {
     }
 
     // ── Convenience helpers ──────────────────────────────────────────────
+
     /**
      * Record the result of a timed operation, returning the result.
      */

@@ -11,7 +11,7 @@ public interface UserProfileService {
      * Uploads a profile image for the given user, replacing any existing one.
      *
      * @param userId the user (client or worker) ID
-     * @param file the image file
+     * @param file   the image file
      * @return the public URL of the uploaded image
      */
     String uploadProfileImage(Long userId, MultipartFile file);

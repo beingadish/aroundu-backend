@@ -1,12 +1,12 @@
 package com.beingadish.AroundU.Controller;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
-import com.beingadish.AroundU.common.constants.enums.BidStatus;
 import com.beingadish.AroundU.bid.controller.BidController;
 import com.beingadish.AroundU.bid.dto.BidCreateRequest;
 import com.beingadish.AroundU.bid.dto.BidHandshakeRequest;
 import com.beingadish.AroundU.bid.dto.BidResponseDTO;
 import com.beingadish.AroundU.bid.service.BidService;
+import com.beingadish.AroundU.common.constants.enums.BidStatus;
 import com.beingadish.AroundU.fixtures.TestFixtures;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
@@ -32,35 +32,38 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(value = BidController.class, excludeAutoConfiguration = {
-    DataSourceAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class,
-    JpaRepositoriesAutoConfiguration.class
+        DataSourceAutoConfiguration.class,
+        HibernateJpaAutoConfiguration.class,
+        JpaRepositoriesAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestWebSecurityConfig.class)
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
-    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
-    + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
-    + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
-    "spring.data.jpa.repositories.enabled=false"
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
+                + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
+                + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+        "spring.data.jpa.repositories.enabled=false"
 })
 @DisplayName("BidController")
 class BidControllerTest {
 
+    private static final String BASE = "/api/v1/bid";
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
     @MockitoBean
     private BidService bidService;
-
     // ── JPA/Security infrastructure mocks ────────────────────────
     @SuppressWarnings("unused")
     @MockitoBean(name = "entityManagerFactory")
@@ -132,8 +135,6 @@ class BidControllerTest {
         when(entityManagerFactory.createEntityManager()).thenReturn(sharedEntityManager);
     }
 
-    private static final String BASE = "/api/v1/bid";
-
     private BidResponseDTO sampleResponse() {
         BidResponseDTO dto = new BidResponseDTO();
         dto.setId(200L);
@@ -156,9 +157,9 @@ class BidControllerTest {
                     .thenReturn(sampleResponse());
 
             mockMvc.perform(post(BASE + "/jobs/100/bids")
-                    .param("workerId", "10")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.bidCreateRequest(450.0))))
+                            .param("workerId", "10")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.bidCreateRequest(450.0))))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(200))
                     .andExpect(jsonPath("$.bidAmount").value(450.0));
@@ -171,9 +172,9 @@ class BidControllerTest {
             // bidAmount is null
 
             mockMvc.perform(post(BASE + "/jobs/100/bids")
-                    .param("workerId", "10")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(req)))
+                            .param("workerId", "10")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isBadRequest());
         }
 
@@ -184,9 +185,9 @@ class BidControllerTest {
                     .thenThrow(new EntityNotFoundException("Job not found"));
 
             mockMvc.perform(post(BASE + "/jobs/999/bids")
-                    .param("workerId", "10")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.bidCreateRequest(450.0))))
+                            .param("workerId", "10")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.bidCreateRequest(450.0))))
                     .andExpect(status().isNotFound());
         }
     }
@@ -247,9 +248,9 @@ class BidControllerTest {
                     .thenReturn(sampleResponse());
 
             mockMvc.perform(post(BASE + "/bids/200/handshake")
-                    .param("workerId", "10")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(TestFixtures.handshakeRequest(true))))
+                            .param("workerId", "10")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(TestFixtures.handshakeRequest(true))))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.id").value(200));
         }
@@ -261,9 +262,9 @@ class BidControllerTest {
             // accepted is null
 
             mockMvc.perform(post(BASE + "/bids/200/handshake")
-                    .param("workerId", "10")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(req)))
+                            .param("workerId", "10")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(req)))
                     .andExpect(status().isBadRequest());
         }
     }

@@ -190,6 +190,7 @@ public class JobCodeServiceImpl implements JobCodeService {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────
+
     /**
      * Generates a cryptographically secure 6-digit OTP.
      */

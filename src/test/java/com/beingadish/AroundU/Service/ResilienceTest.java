@@ -1,12 +1,15 @@
 package com.beingadish.AroundU.Service;
 
-import com.beingadish.AroundU.infrastructure.config.ResilienceConfig;
 import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
-import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
-import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
-import com.beingadish.AroundU.payment.entity.PaymentTransaction;
-import com.beingadish.AroundU.notification.service.impl.EmailServiceImpl;
+import com.beingadish.AroundU.infrastructure.config.ResilienceConfig;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import com.beingadish.AroundU.infrastructure.storage.impl.ImageStorageServiceImpl;
+import com.beingadish.AroundU.notification.service.EmailService;
+import com.beingadish.AroundU.notification.service.impl.EmailServiceImpl;
+import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
+import com.beingadish.AroundU.payment.entity.PaymentTransaction;
+import com.beingadish.AroundU.payment.service.PaymentService;
+import com.beingadish.AroundU.payment.service.ResilientPaymentService;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
@@ -15,7 +18,10 @@ import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryConfig;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -24,13 +30,10 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import com.beingadish.AroundU.payment.service.ResilientPaymentService;
-import com.beingadish.AroundU.payment.service.PaymentService;
-import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
-import com.beingadish.AroundU.notification.service.EmailService;
 
 /**
  * Comprehensive unit tests for the Resilience4j integration.
@@ -51,6 +54,22 @@ import com.beingadish.AroundU.notification.service.EmailService;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Resilience4j Integration")
 class ResilienceTest {
+
+    // =====================================================================
+    //  Helpers
+    // =====================================================================
+    private static void recordSuccess(CircuitBreaker cb) {
+        cb.onSuccess(0, java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+
+    private static void recordFailure(CircuitBreaker cb) {
+        cb.onError(0, java.util.concurrent.TimeUnit.MILLISECONDS,
+                new RuntimeException("test failure"));
+    }
+
+    private static void forceOpen(CircuitBreaker cb) {
+        cb.transitionToOpenState();
+    }
 
     // =====================================================================
     //  1 · Circuit Breaker core behaviour
@@ -257,7 +276,7 @@ class ResilienceTest {
             assertThat(i2).isBetween(100L, 300L);
             assertThat(i3).isBetween(100L, 300L);
 
-            // At least two out of three should differ (randomization is working)  
+            // At least two out of three should differ (randomization is working)
             // (not guaranteed but extremely likely with 50 % jitter)
         }
     }
@@ -582,21 +601,5 @@ class ResilienceTest {
             assertThat(ResilienceConfig.CB_EMAIL_SERVICE).isEqualTo("email-service");
             assertThat(ResilienceConfig.CB_IMAGE_UPLOAD).isEqualTo("image-upload");
         }
-    }
-
-    // =====================================================================
-    //  Helpers
-    // =====================================================================
-    private static void recordSuccess(CircuitBreaker cb) {
-        cb.onSuccess(0, java.util.concurrent.TimeUnit.MILLISECONDS);
-    }
-
-    private static void recordFailure(CircuitBreaker cb) {
-        cb.onError(0, java.util.concurrent.TimeUnit.MILLISECONDS,
-                new RuntimeException("test failure"));
-    }
-
-    private static void forceOpen(CircuitBreaker cb) {
-        cb.transitionToOpenState();
     }
 }

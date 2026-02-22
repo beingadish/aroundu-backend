@@ -1,5 +1,7 @@
 package com.beingadish.AroundU.payment.service;
 
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.notification.service.EmailService;
 import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
 import com.beingadish.AroundU.payment.dto.PaymentReleaseRequest;
 import com.beingadish.AroundU.payment.entity.PaymentTransaction;
@@ -13,8 +15,6 @@ import org.springframework.stereotype.Service;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
-import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
-import com.beingadish.AroundU.notification.service.EmailService;
 
 /**
  * Resilient decorator around the core {@link PaymentService}.
@@ -28,7 +28,7 @@ import com.beingadish.AroundU.notification.service.EmailService;
  * <li>Returns a {@code PENDING_ESCROW} transaction so the user isn't left
  * hanging</li>
  * </ol>
- *
+ * <p>
  * Marked {@code @Primary} so any component injecting {@link PaymentService}
  * gets the resilient version while the raw implementation is still accessible
  * via {@code @Qualifier("paymentServiceImpl")}.
@@ -50,10 +50,10 @@ public class ResilientPaymentService implements PaymentService {
     private final Queue<FailedPaymentRecord> manualProcessingQueue = new ConcurrentLinkedQueue<>();
 
     public ResilientPaymentService(@Qualifier("paymentServiceImpl") PaymentService delegate,
-            @Qualifier("paymentGatewayCircuitBreaker") CircuitBreaker circuitBreaker,
-            @Qualifier("paymentGatewayRetry") Retry retry,
-            MetricsService metricsService,
-            EmailService emailService) {
+                                   @Qualifier("paymentGatewayCircuitBreaker") CircuitBreaker circuitBreaker,
+                                   @Qualifier("paymentGatewayRetry") Retry retry,
+                                   MetricsService metricsService,
+                                   EmailService emailService) {
         this.delegate = delegate;
         this.circuitBreaker = circuitBreaker;
         this.retry = retry;
@@ -95,10 +95,10 @@ public class ResilientPaymentService implements PaymentService {
 
     // ── Failure handling ─────────────────────────────────────────────────
     private PaymentTransaction handlePaymentFailure(String operation,
-            Long jobId,
-            Long clientId,
-            Double amount,
-            Exception e) {
+                                                    Long jobId,
+                                                    Long clientId,
+                                                    Double amount,
+                                                    Exception e) {
         log.error("CRITICAL: Payment {} failed for job={} client={} after all retries: {}",
                 operation, jobId, clientId, e.getMessage(), e);
 
@@ -138,11 +138,11 @@ public class ResilientPaymentService implements PaymentService {
      * Record of a payment that failed and is pending manual resolution.
      */
     public record FailedPaymentRecord(String operation,
-            Long jobId,
-            Long clientId,
-            Double amount,
-            long failedAtMillis,
-            String errorMessage) {
+                                      Long jobId,
+                                      Long clientId,
+                                      Double amount,
+                                      long failedAtMillis,
+                                      String errorMessage) {
 
     }
 }

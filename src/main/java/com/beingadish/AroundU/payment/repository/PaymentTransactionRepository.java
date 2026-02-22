@@ -19,6 +19,6 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     @Query("SELECT COALESCE(SUM(p.amount), 0.0) FROM PaymentTransaction p "
             + "WHERE p.status = :status AND p.createdAt BETWEEN :start AND :end")
     Double sumAmountByStatusAndCreatedAtBetween(@Param("status") PaymentStatus status,
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end);
+                                                @Param("start") LocalDateTime start,
+                                                @Param("end") LocalDateTime end);
 }
