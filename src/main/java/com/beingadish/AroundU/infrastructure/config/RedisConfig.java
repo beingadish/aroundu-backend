@@ -1,8 +1,10 @@
 package com.beingadish.AroundU.infrastructure.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.interceptor.SimpleKey;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -29,12 +31,30 @@ public class RedisConfig {
     public static final String CACHE_USER_PROFILE = "user:profile";
     public static final String CACHE_WORKER_SKILLS = "worker:skills";
 
-    private static RedisCacheConfiguration baseConfig(Duration ttl) {
+    // Create properly configured serializer
+    private GenericJackson2JsonRedisSerializer redisSerializer() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        mapper.activateDefaultTyping(
+                mapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL
+        );
+
+        return new GenericJackson2JsonRedisSerializer(mapper);
+    }
+
+    private RedisCacheConfiguration baseConfig(Duration ttl) {
         return RedisCacheConfiguration
                 .defaultCacheConfig()
                 .entryTtl(ttl)
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
+                .serializeKeysWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer())
+                )
+                .serializeValuesWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(redisSerializer())
+                )
                 .disableCachingNullValues();
     }
 
@@ -56,13 +76,17 @@ public class RedisConfig {
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+
+        GenericJackson2JsonRedisSerializer serializer = redisSerializer();
+
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setValueSerializer(serializer);
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashValueSerializer(serializer);
         template.afterPropertiesSet();
+
         return template;
     }
 }

@@ -36,10 +36,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import com.beingadish.AroundU.common.util.PageResponse;
 
 import java.util.*;
 
@@ -376,7 +376,7 @@ class JobServiceImplTest {
             when(jobMapper.toSummaryDto(any(Job.class))).thenReturn(new JobSummaryDTO());
             when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(10L, TestFixtures.workerFeedRequest());
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(10L, TestFixtures.workerFeedRequest());
 
             assertNotNull(result);
             assertFalse(result.isEmpty());
@@ -393,7 +393,7 @@ class JobServiceImplTest {
             when(jobMapper.toSummaryDto(any(Job.class))).thenReturn(new JobSummaryDTO());
             when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(10L, TestFixtures.workerFeedRequest());
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(10L, TestFixtures.workerFeedRequest());
 
             assertFalse(result.isEmpty());
             verify(jobRepository).findOpenJobsBySkills(eq(JobStatus.OPEN_FOR_BIDS), anyCollection(), any());

@@ -7,30 +7,43 @@ import com.beingadish.AroundU.job.dto.JobStatusUpdateRequest;
 import com.beingadish.AroundU.job.dto.JobSummaryDTO;
 import com.beingadish.AroundU.job.dto.JobUpdateRequest;
 import com.beingadish.AroundU.job.dto.WorkerJobFeedRequest;
-import org.springframework.data.domain.Page;
+import com.beingadish.AroundU.common.util.PageResponse;
 
 import java.util.List;
 
 public interface JobService {
-	JobDetailDTO createJob(Long clientId, JobCreateRequest request);
 
-	JobDetailDTO updateJob(Long jobId, Long clientId, JobUpdateRequest request);
+    JobDetailDTO createJob(Long clientId, JobCreateRequest request);
 
-	JobDetailDTO getJobDetail(Long jobId);
+    JobDetailDTO updateJob(Long jobId, Long clientId, JobUpdateRequest request);
 
-	List<JobSummaryDTO> listJobs(String city, String area, List<Long> skillIds);
+    JobDetailDTO getJobDetail(Long jobId);
 
-	Page<JobSummaryDTO> getClientJobs(Long clientId, JobFilterRequest filterRequest);
+    List<JobSummaryDTO> listJobs(String city, String area, List<Long> skillIds);
 
-	Page<JobSummaryDTO> getClientPastJobs(Long clientId, int page, int size);
+    PageResponse<JobSummaryDTO> getClientJobs(Long clientId, JobFilterRequest filterRequest);
 
-	JobDetailDTO getJobForClient(Long jobId, Long clientId);
+    PageResponse<JobSummaryDTO> getClientPastJobs(Long clientId, int page, int size);
 
-	JobDetailDTO updateJobStatus(Long jobId, Long clientId, JobStatusUpdateRequest request);
+    JobDetailDTO getJobForClient(Long jobId, Long clientId);
 
-	Page<JobSummaryDTO> getWorkerFeed(Long workerId, WorkerJobFeedRequest request);
+    JobDetailDTO updateJobStatus(Long jobId, Long clientId, JobStatusUpdateRequest request);
 
-	JobDetailDTO getJobForWorker(Long jobId, Long workerId);
+    /**
+     * Worker updates job status (e.g. mark as IN_PROGRESS or
+     * COMPLETED_PENDING_PAYMENT).
+     */
+    JobDetailDTO updateJobStatusByWorker(Long jobId, Long workerId, JobStatusUpdateRequest request);
 
-	void deleteJob(Long jobId, Long clientId);
+    PageResponse<JobSummaryDTO> getWorkerFeed(Long workerId, WorkerJobFeedRequest request);
+
+    JobDetailDTO getJobForWorker(Long jobId, Long workerId);
+
+    /**
+     * Worker cancels an accepted/in-progress job. Triggers cancellation
+     * penalty.
+     */
+    JobDetailDTO cancelJobByWorker(Long jobId, Long workerId);
+
+    void deleteJob(Long jobId, Long clientId);
 }

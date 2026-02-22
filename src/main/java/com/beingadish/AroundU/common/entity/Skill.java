@@ -14,7 +14,9 @@ import java.util.Set;
 import com.beingadish.AroundU.job.entity.Job;
 
 @Entity
-@Table(name = "skills")
+@Table(name = "skills", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_skill_name_lower", columnNames = "name")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,6 +31,19 @@ public class Skill {
     @Column(unique = true, nullable = false)
     @NotBlank
     private String name;
+
+    /**
+     * Normalises a raw skill name: trims, collapses whitespace, and lowercases.
+     *
+     * @param raw the raw input string
+     * @return normalised skill name
+     */
+    public static String normalize(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        return raw.strip().replaceAll("\\s+", " ").toLowerCase();
+    }
 
     @ManyToMany(mappedBy = "skillSet")
     @Builder.Default

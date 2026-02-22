@@ -46,4 +46,36 @@ public class Worker extends User {
 
     @OneToMany(mappedBy = "worker")
     private List<Review> reviews;
+
+    // ── Cancellation penalty fields ───────────────────────────
+    /**
+     * Number of times this worker has cancelled an accepted/in-progress job.
+     */
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer cancellationCount = 0;
+
+    /**
+     * If non-null, the worker is blocked from accepting new jobs until this
+     * timestamp.
+     */
+    @Column
+    private LocalDateTime blockedUntil;
+
+    /**
+     * Returns true if this worker is currently serving a cancellation block.
+     */
+    public boolean isBlocked() {
+        return blockedUntil != null && LocalDateTime.now().isBefore(blockedUntil);
+    }
+
+    /**
+     * Increment cancellation count and return the new value.
+     */
+    public int incrementCancellationCount() {
+        if (cancellationCount == null) {
+            cancellationCount = 0;
+        }
+        return ++cancellationCount;
+    }
 }

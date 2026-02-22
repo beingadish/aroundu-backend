@@ -13,6 +13,12 @@ public class URIConstants {
     public static final String WORKER_BASE = BASE + "/worker";
     public static final String JOB_BASE = BASE + "/jobs";
     public static final String BID_BASE = BASE + "/bid";
+    public static final String REVIEW_BASE = BASE + "/reviews";
+    public static final String CHAT_BASE = BASE + "/chat";
+    public static final String PUBLIC_BASE = BASE + "/public";
+    public static final String SKILL_BASE = BASE + "/skills";
+    public static final String ADMIN_BASE = BASE + "/admin";
+    public static final String USER_BASE = BASE + "/users";
 
     // Auth endpoints
     public static final String REGISTER = "/register";

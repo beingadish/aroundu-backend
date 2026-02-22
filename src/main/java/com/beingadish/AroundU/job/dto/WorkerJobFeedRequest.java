@@ -45,4 +45,16 @@ public class WorkerJobFeedRequest {
      * When true, results are sorted by proximity to the worker's location.
      */
     private Boolean sortByDistance = false;
+
+    /**
+     * Produces a deterministic, stable cache key based on all request fields.
+     * Must NOT rely on {@link Object#hashCode()}.
+     */
+    public String toCacheKey() {
+        return page + ":" + size
+                + ":" + sortBy + ":" + sortDirection
+                + ":" + secondarySortBy + ":" + secondarySortDirection
+                + ":" + skillIds + ":" + radiusKm
+                + ":" + sortByDistance;
+    }
 }

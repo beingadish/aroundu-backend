@@ -60,4 +60,17 @@ public class JobFilterRequest {
      * Longitude of the reference point for distance sorting.
      */
     private Double distanceLongitude;
+
+    /**
+     * Produces a deterministic, stable cache key based on all filter fields.
+     * Must NOT rely on {@link Object#hashCode()}.
+     */
+    public String toCacheKey() {
+        return page + ":" + size
+                + ":" + sortBy + ":" + sortDirection
+                + ":" + secondarySortBy + ":" + secondarySortDirection
+                + ":" + statuses
+                + ":" + startDate + ":" + endDate
+                + ":" + sortByDistance + ":" + distanceLatitude + ":" + distanceLongitude;
+    }
 }

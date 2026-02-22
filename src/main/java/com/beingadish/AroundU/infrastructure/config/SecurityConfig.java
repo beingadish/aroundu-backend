@@ -50,7 +50,8 @@ public class SecurityConfig {
         "/swagger-ui/**",
         "/swagger-ui.html",
         "/actuator/health",
-        "/actuator/info"
+        "/actuator/health/**",
+        "/actuator/prometheus"
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -96,10 +97,17 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/client/**").hasAnyRole(CLIENT, ADMIN)
                 // Allow both admin and worker on worker endpoints
                 .requestMatchers("/api/v1/worker/**").hasAnyRole(WORKER, ADMIN)
+                // Public profile endpoints — any authenticated user
+                .requestMatchers("/api/v1/public/**").authenticated()
                 // Shared resources: allow admin or relevant role
                 .requestMatchers("/api/v1/jobs/**").hasAnyRole(ADMIN, CLIENT, WORKER)
                 .requestMatchers("/api/v1/bids/**").hasAnyRole(ADMIN, CLIENT, WORKER)
                 .requestMatchers("/api/v1/payments/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                // Reviews & Chat — any authenticated user
+                .requestMatchers("/api/v1/reviews/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                .requestMatchers("/api/v1/chat/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                .requestMatchers("/api/v1/users/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                .requestMatchers("/api/v1/skills/**").hasAnyRole(ADMIN, CLIENT, WORKER)
                 .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

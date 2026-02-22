@@ -160,7 +160,7 @@ class JobCodeServiceImplTest {
 
         assertSame(confirmation, result);
         assertEquals(JobCodeStatus.COMPLETED, confirmation.getStatus());
-        assertEquals(JobStatus.COMPLETED, job.getJobStatus());
+        assertEquals(JobStatus.COMPLETED_PENDING_PAYMENT, job.getJobStatus());
         verify(jobRepository).save(job);
         verify(codeRepository).save(confirmation);
     }
@@ -179,5 +179,67 @@ class JobCodeServiceImplTest {
         when(codeRepository.findByJob(job)).thenReturn(Optional.of(confirmation));
 
         assertThrows(IllegalStateException.class, () -> jobCodeService.verifyReleaseCode(job.getId(), client.getId(), "654321"));
+    }
+
+    @Test
+    void verifyStartCode_rejectsWhenCodeIsWrong() {
+        JobConfirmationCode confirmation = JobConfirmationCode.builder()
+                .job(job)
+                .startCode("123456")
+                .releaseCode("654321")
+                .status(JobCodeStatus.START_PENDING)
+                .startCodeAttempts(0)
+                .build();
+
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(codeRepository.findByJob(job)).thenReturn(Optional.of(confirmation));
+
+        assertThrows(IllegalStateException.class, ()
+                -> jobCodeService.verifyStartCode(job.getId(), worker.getId(), "WRONG1"));
+    }
+
+    @Test
+    void verifyStartCode_rejectsWhenLockedOutDueToMaxAttempts() {
+        JobConfirmationCode confirmation = JobConfirmationCode.builder()
+                .job(job)
+                .startCode("123456")
+                .releaseCode("654321")
+                .status(JobCodeStatus.START_PENDING)
+                .startCodeAttempts(5) // MAX_ATTEMPTS = 5
+                .build();
+
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(codeRepository.findByJob(job)).thenReturn(Optional.of(confirmation));
+
+        assertThrows(IllegalStateException.class, ()
+                -> jobCodeService.verifyStartCode(job.getId(), worker.getId(), "123456"));
+    }
+
+    @Test
+    void regenerateCodes_createsNewCodesWhenClientOwnsJob() {
+        JobConfirmationCode existing = JobConfirmationCode.builder()
+                .job(job)
+                .startCode("OLD111")
+                .releaseCode("OLD222")
+                .status(JobCodeStatus.START_PENDING)
+                .build();
+
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(codeRepository.findByJob(job)).thenReturn(Optional.of(existing));
+        when(codeRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        JobConfirmationCode result = jobCodeService.regenerateCodes(job.getId(), client.getId());
+
+        assertNotEquals("OLD111", result.getStartCode());
+        assertNotEquals("OLD222", result.getReleaseCode());
+        verify(codeRepository).save(existing);
+    }
+
+    @Test
+    void regenerateCodes_rejectsWhenClientDoesNotOwnJob() {
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+
+        assertThrows(IllegalStateException.class, ()
+                -> jobCodeService.regenerateCodes(job.getId(), 99L));
     }
 }

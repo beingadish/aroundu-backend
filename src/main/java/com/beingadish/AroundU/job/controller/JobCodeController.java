@@ -79,4 +79,18 @@ public class JobCodeController {
             @Valid @RequestBody JobCodeVerifyRequest request) {
         return ResponseEntity.ok(codeMapper.toDtoWithoutCodes(jobCodeService.verifyReleaseCode(jobId, clientId, request.getCode())));
     }
+
+    @PostMapping("/{jobId}/otp/regenerate")
+    @Operation(summary = "Regenerate OTP codes",
+            description = "Client regenerates start/release OTPs, invalidating previous codes. Rate-limited to once per minute.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OTP regenerated",
+                content = @Content(schema = @Schema(implementation = JobCodeResponseDTO.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Rate limited or invalid state")
+    })
+    public ResponseEntity<JobCodeResponseDTO> regenerate(
+            @Parameter(description = "Job ID", required = true) @PathVariable Long jobId,
+            @Parameter(description = "Client ID (job owner)", required = true) @RequestParam Long clientId) {
+        return ResponseEntity.ok(codeMapper.toDtoWithStartCodeOnly(jobCodeService.regenerateCodes(jobId, clientId)));
+    }
 }

@@ -25,8 +25,8 @@ import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfigurat
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import com.beingadish.AroundU.common.util.PageResponse;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
@@ -262,7 +262,7 @@ class JobControllerTest {
             JobSummaryDTO summary = new JobSummaryDTO();
             summary.setId(100L);
             summary.setTitle("Fix plumbing");
-            Page<JobSummaryDTO> page = new PageImpl<>(List.of(summary));
+            PageResponse<JobSummaryDTO> page = new PageResponse<>(new PageImpl<>(List.of(summary)));
             when(jobService.getWorkerFeed(eq(10L), any(WorkerJobFeedRequest.class))).thenReturn(page);
 
             mockMvc.perform(get(BASE + "/worker/10/feed")
@@ -282,7 +282,7 @@ class JobControllerTest {
         void clientJobs_Success() throws Exception {
             JobSummaryDTO summary = new JobSummaryDTO();
             summary.setId(100L);
-            Page<JobSummaryDTO> page = new PageImpl<>(List.of(summary));
+            PageResponse<JobSummaryDTO> page = new PageResponse<>(new PageImpl<>(List.of(summary)));
             when(jobService.getClientJobs(eq(1L), any(JobFilterRequest.class))).thenReturn(page);
 
             mockMvc.perform(get(BASE + "/client/1")

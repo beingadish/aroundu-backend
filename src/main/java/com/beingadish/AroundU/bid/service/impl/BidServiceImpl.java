@@ -9,6 +9,8 @@ import com.beingadish.AroundU.bid.entity.Bid;
 import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.chat.entity.Conversation;
+import com.beingadish.AroundU.chat.repository.ConversationRepository;
 import com.beingadish.AroundU.bid.mapper.BidMapper;
 import com.beingadish.AroundU.bid.repository.BidRepository;
 import com.beingadish.AroundU.user.repository.ClientRepository;
@@ -19,6 +21,7 @@ import com.beingadish.AroundU.bid.service.BidService;
 import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,12 +30,21 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class BidServiceImpl implements BidService {
+
+    private static final List<JobStatus> WORKER_ACTIVE_STATUSES = List.of(
+            JobStatus.BID_SELECTED_AWAITING_HANDSHAKE,
+            JobStatus.READY_TO_START,
+            JobStatus.IN_PROGRESS,
+            JobStatus.COMPLETED_PENDING_PAYMENT
+    );
 
     private final BidRepository bidRepository;
     private final JobRepository jobRepository;
     private final WorkerRepository workerRepository;
     private final ClientRepository clientRepository;
+    private final ConversationRepository conversationRepository;
     private final BidMapper bidMapper;
     private final MetricsService metricsService;
     private final BidDuplicateCheckService bidDuplicateCheckService;
@@ -47,6 +59,14 @@ public class BidServiceImpl implements BidService {
             }
             if (!Boolean.TRUE.equals(worker.getIsOnDuty())) {
                 throw new IllegalStateException("Worker is not on duty");
+            }
+            // Cancellation penalty: blocked workers cannot bid
+            if (worker.isBlocked()) {
+                throw new IllegalStateException("Worker is temporarily blocked due to cancellation penalty");
+            }
+            // Single active job enforcement: worker cannot bid if already engaged
+            if (jobRepository.hasActiveJobAsWorker(workerId, WORKER_ACTIVE_STATUSES)) {
+                throw new IllegalStateException("Worker already has an active job and cannot place new bids");
             }
             bidDuplicateCheckService.validateNoDuplicateBid(workerId, jobId);
             Bid bid = bidMapper.toEntity(request, job, worker);
@@ -84,6 +104,10 @@ public class BidServiceImpl implements BidService {
         for (int i = 0; i < rejectedCount; i++) {
             metricsService.getBidsRejectedCounter().increment();
         }
+
+        // Auto-create conversation between client and worker for this job
+        autoCreateConversation(job, client.getId(), bid.getWorker().getId());
+
         return bidMapper.toDto(bid);
     }
 
@@ -110,5 +134,29 @@ public class BidServiceImpl implements BidService {
         bidRepository.save(bid);
         jobRepository.save(job);
         return bidMapper.toDto(bid);
+    }
+
+    /**
+     * Automatically creates a conversation between client and worker when a bid
+     * is accepted. If a conversation already exists for this job+participants
+     * pair, it is a no-op.
+     */
+    private void autoCreateConversation(Job job, Long clientId, Long workerId) {
+        try {
+            conversationRepository.findByJobAndParticipants(job.getId(), clientId, workerId)
+                    .orElseGet(() -> {
+                        Conversation conversation = Conversation.builder()
+                                .job(job)
+                                .participantOneId(clientId)
+                                .participantTwoId(workerId)
+                                .build();
+                        log.info("Auto-created conversation for job {} between client {} and worker {}",
+                                job.getId(), clientId, workerId);
+                        return conversationRepository.save(conversation);
+                    });
+        } catch (Exception e) {
+            // Don't fail the bid acceptance if conversation creation fails
+            log.error("Failed to auto-create conversation for job {}: {}", job.getId(), e.getMessage());
+        }
     }
 }
