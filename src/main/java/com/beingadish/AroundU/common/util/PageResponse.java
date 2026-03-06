@@ -1,5 +1,7 @@
 package com.beingadish.AroundU.common.util;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,12 +14,16 @@ import java.util.List;
  * Cache-safe, Jackson-serializable replacement for {@link Page}.
  * <p>
  * Must be a non-final POJO with a default constructor so that
- * {@code GenericJackson2JsonRedisSerializer} can round-trip it
- * through Redis (type info via {@code @class}).
+ * {@code GenericJackson2JsonRedisSerializer} can round-trip it through Redis
+ * (type info via {@code @class}).
+ * <p>
+ * {@code ignoreUnknown = true} ensures forward/backward compatibility when the
+ * shape of this class changes and stale Redis entries are still present.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PageResponse<T> {
 
     private List<T> content;
@@ -28,8 +34,8 @@ public class PageResponse<T> {
     private boolean last;
 
     /**
-     * Convenience constructor that converts a Spring {@link Page} into
-     * a cache-safe wrapper.
+     * Convenience constructor that converts a Spring {@link Page} into a
+     * cache-safe wrapper.
      */
     public PageResponse(Page<T> springPage) {
         this.content = springPage.getContent();
@@ -41,8 +47,12 @@ public class PageResponse<T> {
     }
 
     /**
-     * Convenience: mirrors {@link Page#isEmpty()}.
+     * Convenience: mirrors {@link Page#isEmpty()}. {@code @JsonIgnore} prevents
+     * this computed property from being written into the Redis cache (which
+     * would cause deserialization failures since there is no corresponding
+     * setter).
      */
+    @JsonIgnore
     public boolean isEmpty() {
         return content == null || content.isEmpty();
     }

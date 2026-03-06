@@ -125,6 +125,12 @@ public class BidServiceImpl implements BidService {
             throw new IllegalStateException("Bid is not selected by client");
         }
         if (Boolean.TRUE.equals(request.getAccepted())) {
+            // Single active job enforcement: worker cannot accept if already engaged
+            if (jobRepository.hasActiveJobAsWorker(workerId,
+                    List.of(JobStatus.READY_TO_START, JobStatus.IN_PROGRESS, JobStatus.COMPLETED_PENDING_PAYMENT))) {
+                throw new IllegalStateException(
+                        "Worker already has an active job. Complete or release the current job before accepting a new one.");
+            }
             bid.setStatus(BidStatus.SELECTED);
             job.setAssignedTo(bid.getWorker());
             job.setJobStatus(JobStatus.READY_TO_START);

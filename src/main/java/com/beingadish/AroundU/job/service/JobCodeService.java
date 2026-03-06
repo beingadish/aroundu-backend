@@ -17,7 +17,7 @@ public interface JobCodeService {
      * selected a bid. If codes already exist for the job, the existing record
      * is returned.
      *
-     * @param jobId    the job ID
+     * @param jobId the job ID
      * @param clientId the owning client ID
      * @return the created or existing confirmation codes
      */
@@ -27,7 +27,7 @@ public interface JobCodeService {
      * Regenerates OTPs for a job, invalidating any previous codes.
      * Rate-limited: callers should not regenerate more than once per minute.
      *
-     * @param jobId    the job ID
+     * @param jobId the job ID
      * @param clientId the owning client ID
      * @return the new confirmation codes
      */
@@ -38,22 +38,35 @@ public interface JobCodeService {
      * IN_PROGRESS. Tracks failed attempts and locks after
      * {@link JobConfirmationCode#MAX_ATTEMPTS} failures.
      *
-     * @param jobId    the job ID
+     * @param jobId the job ID
      * @param workerId the assigned worker ID
-     * @param code     the 6-digit start OTP
+     * @param code the 6-digit start OTP
      * @return the updated confirmation codes
      */
     JobConfirmationCode verifyStartCode(Long jobId, Long workerId, String code);
 
     /**
-     * Verifies the client-provided release OTP. On success, marks the job as
-     * complete. Tracks failed attempts and locks after
-     * {@link JobConfirmationCode#MAX_ATTEMPTS} failures.
+     * Verifies the worker-entered release OTP. The client shares this code with
+     * the worker verbally once they are satisfied with the work. On success,
+     * marks the job as COMPLETED_PENDING_PAYMENT. Tracks failed attempts and
+     * locks after {@link JobConfirmationCode#MAX_ATTEMPTS} failures.
      *
-     * @param jobId    the job ID
-     * @param clientId the owning client ID
-     * @param code     the 6-digit release OTP
+     * @param jobId the job ID
+     * @param workerId the assigned worker ID
+     * @param code the 6-digit release OTP
      * @return the updated confirmation codes
      */
-    JobConfirmationCode verifyReleaseCode(Long jobId, Long clientId, String code);
+    JobConfirmationCode verifyReleaseCode(Long jobId, Long workerId, String code);
+
+    /**
+     * Fetches existing confirmation codes for a job. Only the code relevant to
+     * the current step is returned: start code when START_PENDING, release code
+     * when RELEASE_PENDING. Returns an empty optional if no codes have been
+     * generated yet.
+     *
+     * @param jobId the job ID
+     * @param clientId the owning client ID
+     * @return the confirmation codes record
+     */
+    JobConfirmationCode fetchCodes(Long jobId, Long clientId);
 }

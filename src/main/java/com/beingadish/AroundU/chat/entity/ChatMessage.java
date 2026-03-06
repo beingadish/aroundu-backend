@@ -37,6 +37,10 @@ public class ChatMessage {
     private Long senderId;
 
     @NotBlank
+    @Column(name = "sender_role", nullable = false, length = 10)
+    private String senderRole; // "WORKER" or "CLIENT"
+
+    @NotBlank
     @Size(max = 2000)
     @Column(nullable = false, length = 2000)
     private String content;

@@ -96,6 +96,21 @@ public class WorkerController {
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(updated));
     }
 
+    @PatchMapping("/me/duty-status")
+    @PreAuthorize("hasRole('WORKER')")
+    @Operation(summary = "Update duty status", description = "Quickly toggle the worker's on-duty availability without a full profile update", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Duty status updated"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Worker not found")
+    })
+    public ResponseEntity<ApiResponse<WorkerDetailDTO>> updateMyDutyStatus(@RequestBody java.util.Map<String, Boolean> body) {
+        Long workerId = authenticationPrincipalId();
+        boolean isOnDuty = Boolean.TRUE.equals(body.get("isOnDuty"));
+        WorkerDetailDTO updated = workerService.updateDutyStatus(workerId, isOnDuty);
+        return ResponseEntity.ok(ApiResponse.success(updated));
+    }
+
     private Long authenticationPrincipalId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Object principal = authentication != null ? authentication.getPrincipal() : null;

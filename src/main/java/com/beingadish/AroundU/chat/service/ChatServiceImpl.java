@@ -43,13 +43,12 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public ChatMessageResponseDTO sendMessage(Long jobId, Long senderId, ChatMessageRequest request) {
+    public ChatMessageResponseDTO sendMessage(Long jobId, Long senderId, String senderRole, ChatMessageRequest request) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new JobNotFoundException("Job not found with id: " + jobId));
 
         Long recipientId = request.getRecipientId();
 
-        // Validate sender is a participant in this job
         Long clientId = job.getCreatedBy().getId();
         Long workerId = job.getAssignedTo() != null ? job.getAssignedTo().getId() : null;
 
@@ -57,8 +56,9 @@ public class ChatServiceImpl implements ChatService {
             throw new ChatValidationException("Cannot send messages for a job without an assigned worker");
         }
 
-        boolean senderIsClient = senderId.equals(clientId);
-        boolean senderIsWorker = senderId.equals(workerId);
+        // Validate using role + id to avoid collisions between worker/client tables
+        boolean senderIsClient = "CLIENT".equalsIgnoreCase(senderRole) && senderId.equals(clientId);
+        boolean senderIsWorker = "WORKER".equalsIgnoreCase(senderRole) && senderId.equals(workerId);
 
         if (!senderIsClient && !senderIsWorker) {
             throw new ChatValidationException("Sender is not a participant of this job");
@@ -88,6 +88,7 @@ public class ChatServiceImpl implements ChatService {
         ChatMessage message = ChatMessage.builder()
                 .conversation(conversation)
                 .senderId(senderId)
+                .senderRole(senderRole.toUpperCase())
                 .content(request.getContent().trim())
                 .isRead(false)
                 .build();
@@ -97,7 +98,7 @@ public class ChatServiceImpl implements ChatService {
         conversation.setLastMessageAt(LocalDateTime.now());
         conversationRepository.save(conversation);
 
-        log.info("Message sent in conversation {} for job {} by user {}", conversation.getId(), jobId, senderId);
+        log.info("Message sent in conversation {} for job {} by {} {}", conversation.getId(), jobId, senderRole, senderId);
         return chatMessageMapper.toDto(saved);
     }
 

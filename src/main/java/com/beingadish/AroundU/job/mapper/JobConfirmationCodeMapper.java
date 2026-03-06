@@ -46,4 +46,24 @@ public interface JobConfirmationCodeMapper {
         dto.setReleaseCode(null);
         return dto;
     }
+
+    /**
+     * Maps to DTO for the client fetch endpoint. Shows only the code relevant
+     * to the current step: start code while START_PENDING, release code while
+     * RELEASE_PENDING, neither once COMPLETED.
+     */
+    default JobCodeResponseDTO toDtoForClientFetch(JobConfirmationCode entity) {
+        JobCodeResponseDTO dto = toDto(entity);
+        switch (entity.getStatus()) {
+            case START_PENDING ->
+                dto.setReleaseCode(null);
+            case RELEASE_PENDING ->
+                dto.setStartCode(null);
+            default -> {
+                dto.setStartCode(null);
+                dto.setReleaseCode(null);
+            }
+        }
+        return dto;
+    }
 }
