@@ -1,24 +1,23 @@
 package com.beingadish.AroundU.unit.service;
 
-import com.beingadish.AroundU.common.constants.enums.BidStatus;
-import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.bid.dto.BidCreateRequest;
-import com.beingadish.AroundU.bid.dto.BidHandshakeRequest;
 import com.beingadish.AroundU.bid.dto.BidResponseDTO;
 import com.beingadish.AroundU.bid.entity.Bid;
-import com.beingadish.AroundU.job.entity.Job;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.bid.mapper.BidMapper;
 import com.beingadish.AroundU.bid.repository.BidRepository;
-import com.beingadish.AroundU.user.repository.ClientRepository;
-import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.user.repository.WorkerRepository;
 import com.beingadish.AroundU.bid.service.BidDuplicateCheckService;
-import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import com.beingadish.AroundU.bid.service.impl.BidServiceImpl;
+import com.beingadish.AroundU.common.constants.enums.BidStatus;
+import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.fixtures.JobTestBuilder;
 import com.beingadish.AroundU.fixtures.TestFixtures;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import jakarta.persistence.EntityNotFoundException;
@@ -35,7 +34,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

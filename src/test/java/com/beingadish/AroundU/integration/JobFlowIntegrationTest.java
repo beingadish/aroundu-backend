@@ -13,10 +13,10 @@ import com.beingadish.AroundU.common.repository.SkillRepository;
 import com.beingadish.AroundU.user.repository.WorkerRepository;
 import com.beingadish.AroundU.job.service.JobService;
 import com.beingadish.AroundU.fixtures.TestFixtures;
+import com.beingadish.AroundU.common.util.PageResponse;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -139,7 +139,7 @@ class JobFlowIntegrationTest {
         JobFilterRequest filter = new JobFilterRequest();
         filter.setPage(0);
         filter.setSize(10);
-        Page<JobSummaryDTO> page = jobService.getClientJobs(savedClient.getId(), filter);
+        PageResponse<JobSummaryDTO> page = jobService.getClientJobs(savedClient.getId(), filter);
 
         assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(2);
     }

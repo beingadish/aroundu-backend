@@ -16,7 +16,7 @@ RUN chmod +x mvnw && \
 
 # Copy source and build (skip tests – they run in CI)
 COPY src src
-RUN ./mvnw package -DskipTests -B -q && \
+RUN ./mvnw package -Dmaven.test.skip=true -B -q && \
     mv target/*.jar target/app.jar
 
 # ── Stage 2: Runtime ─────────────────────────────────────────

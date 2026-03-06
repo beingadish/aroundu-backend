@@ -1,9 +1,10 @@
 package com.beingadish.AroundU.infrastructure.cache;
 
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.common.repository.SkillRepository;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.job.service.JobService;
 import com.beingadish.AroundU.location.service.JobGeoSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import com.beingadish.AroundU.job.service.JobService;
 
 /**
  * Pre-loads frequently accessed data into the Redis cache on application

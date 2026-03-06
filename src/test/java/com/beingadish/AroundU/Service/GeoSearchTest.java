@@ -31,6 +31,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import com.beingadish.AroundU.common.util.PageResponse;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -243,7 +244,7 @@ class GeoSearchTest {
             when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
             WorkerJobFeedRequest request = feedRequest(5.0);
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, request);
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, request);
 
             assertThat(result.getContent()).hasSize(2);
             // Verify geo search was called with correct coordinates and radius
@@ -271,7 +272,7 @@ class GeoSearchTest {
             when(jobMapper.toSummaryDto(boundaryJob)).thenReturn(summaryDto(30L));
             when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(5.0));
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(5.0));
 
             assertThat(result.getContent()).hasSize(1);
             assertThat(result.getContent().getFirst().getId()).isEqualTo(30L);
@@ -294,7 +295,7 @@ class GeoSearchTest {
             when(jobMapper.toSummaryDto(skillJob)).thenReturn(summaryDto(50L));
             when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(5.0));
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(5.0));
 
             assertThat(result.getContent()).hasSize(1);
             // Verify fallback to skill-based search
@@ -331,7 +332,7 @@ class GeoSearchTest {
             WorkerJobFeedRequest req = feedRequest(25.0);
             req.setSortByDistance(true);
             req.setSortDirection(SortDirection.ASC);  // nearest first
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, req);
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, req);
 
             List<JobSummaryDTO> content = result.getContent();
             assertThat(content).hasSize(3);
@@ -361,7 +362,7 @@ class GeoSearchTest {
             when(jobRepository.findOpenJobsBySkills(eq(JobStatus.OPEN_FOR_BIDS), isNull(), any()))
                     .thenReturn(skillPage);
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(null));
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(null));
             assertThat(result.getContent()).isEmpty();
         }
 
@@ -460,7 +461,7 @@ class GeoSearchTest {
             WorkerJobFeedRequest req = feedRequest(25.0);
             req.setSkillIds(List.of(10L)); // Only plumbing
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, req);
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, req);
 
             // Only job1 (Plumbing) passes the skill filter
             assertThat(result.getContent()).hasSize(1);
@@ -498,7 +499,7 @@ class GeoSearchTest {
             WorkerJobFeedRequest req = feedRequest(25.0);
             req.setSkillIds(List.of(10L)); // Only plumbing
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, req);
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, req);
 
             // Only 2 jobs match plumbing skill
             assertThat(result.getContent()).hasSize(2);
@@ -703,7 +704,7 @@ class GeoSearchTest {
             when(jobMapper.toSummaryDto(job)).thenReturn(dto);
             when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(25.0));
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(25.0));
 
             JobSummaryDTO returned = result.getContent().getFirst();
             assertThat(returned.getDistanceKm()).isNotNull();
@@ -728,7 +729,7 @@ class GeoSearchTest {
             when(jobMapper.toSummaryDto(job)).thenReturn(dto);
             when(bidRepository.countByJobIds(anyList())).thenReturn(Collections.emptyList());
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(null));
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(null));
 
             JobSummaryDTO returned = result.getContent().getFirst();
             assertThat(returned.getDistanceKm()).isNull();
@@ -757,7 +758,7 @@ class GeoSearchTest {
             when(jobRepository.findByIdInAndJobStatus(eq(geoJobIds), eq(JobStatus.OPEN_FOR_BIDS), any()))
                     .thenReturn(emptyPage);
 
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(25.0));
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(25.0));
 
             // Even though Redis returned job 1, it's filtered out by PG status check
             assertThat(result.getContent()).isEmpty();
@@ -777,7 +778,7 @@ class GeoSearchTest {
             when(jobRepository.findOpenJobsBySkills(any(), any(), any())).thenReturn(skillPage);
 
             // Should not throw, falls back to skill search
-            Page<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(25.0));
+            PageResponse<JobSummaryDTO> result = jobService.getWorkerFeed(1L, feedRequest(25.0));
             assertThat(result.getContent()).isEmpty();
         }
     }

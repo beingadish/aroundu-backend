@@ -1,20 +1,19 @@
 package com.beingadish.AroundU.job.mapper;
 
-import com.beingadish.AroundU.common.constants.enums.JobStatus;
-import com.beingadish.AroundU.job.dto.JobCreateRequest;
-import com.beingadish.AroundU.job.dto.JobDetailDTO;
-import com.beingadish.AroundU.job.dto.JobSummaryDTO;
-import com.beingadish.AroundU.job.dto.JobUpdateRequest;
-import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.common.entity.Skill;
 import com.beingadish.AroundU.common.mapper.AddressMapper;
 import com.beingadish.AroundU.common.mapper.PriceMapper;
 import com.beingadish.AroundU.common.mapper.SkillMapper;
+import com.beingadish.AroundU.job.dto.JobCreateRequest;
+import com.beingadish.AroundU.job.dto.JobDetailDTO;
+import com.beingadish.AroundU.job.dto.JobSummaryDTO;
+import com.beingadish.AroundU.job.dto.JobUpdateRequest;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.job.model.JobModel;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.user.mapper.UserMapper;
 import com.beingadish.AroundU.user.mapper.WorkerMapper;
-import com.beingadish.AroundU.job.model.JobModel;
 import org.mapstruct.*;
 
 import java.util.List;

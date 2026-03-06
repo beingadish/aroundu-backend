@@ -1,11 +1,14 @@
 package com.beingadish.AroundU.Service;
 
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
-import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.event.JobModifiedEvent;
-import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
 import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
+import com.beingadish.AroundU.location.service.JobGeoService;
+import com.beingadish.AroundU.location.service.JobGeoSyncService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,13 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import com.beingadish.AroundU.location.service.JobGeoService;
-import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
-import com.beingadish.AroundU.location.service.JobGeoSyncService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JobGeoSyncService")

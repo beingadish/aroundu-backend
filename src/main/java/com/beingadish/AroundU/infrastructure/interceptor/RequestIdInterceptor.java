@@ -36,6 +36,16 @@ public class RequestIdInterceptor implements HandlerInterceptor {
      */
     private static final ThreadLocal<String> REQUEST_ID_HOLDER = new ThreadLocal<>();
 
+    /**
+     * Static accessor so any code running on the same thread can retrieve the
+     * current request ID without a reference to the servlet request.
+     *
+     * @return the current request ID, or {@code null} if not set
+     */
+    public static String getCurrentRequestId() {
+        return REQUEST_ID_HOLDER.get();
+    }
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         // Honour an incoming request ID (e.g. from an API gateway) or generate a new one
@@ -67,19 +77,9 @@ public class RequestIdInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
-            Object handler, Exception ex) {
+                                Object handler, Exception ex) {
         // Clean up to prevent memory leaks in pooled threads
         MDC.remove(REQUEST_ID_MDC_KEY);
         REQUEST_ID_HOLDER.remove();
-    }
-
-    /**
-     * Static accessor so any code running on the same thread can retrieve the
-     * current request ID without a reference to the servlet request.
-     *
-     * @return the current request ID, or {@code null} if not set
-     */
-    public static String getCurrentRequestId() {
-        return REQUEST_ID_HOLDER.get();
     }
 }

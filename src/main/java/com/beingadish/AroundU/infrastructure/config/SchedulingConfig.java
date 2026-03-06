@@ -31,9 +31,7 @@ public class SchedulingConfig {
         scheduler.setThreadNamePrefix("sched-");
         scheduler.setAwaitTerminationSeconds(30);
         scheduler.setWaitForTasksToCompleteOnShutdown(true);
-        scheduler.setErrorHandler(t
-                -> org.slf4j.LoggerFactory.getLogger("SchedulerErrorHandler")
-                        .error("Scheduled task failed", t));
+        scheduler.setErrorHandler(t -> org.slf4j.LoggerFactory.getLogger("SchedulerErrorHandler").error("Scheduled task failed", t));
         scheduler.initialize();
         return scheduler;
     }
@@ -45,7 +43,6 @@ public class SchedulingConfig {
      */
     @Bean("longRunningExecutor")
     public Executor longRunningExecutor() {
-        return Executors.newThreadPerTaskExecutor(
-                Thread.ofVirtual().name("bg-task-", 0).factory());
+        return Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("bg-task-", 0).factory());
     }
 }

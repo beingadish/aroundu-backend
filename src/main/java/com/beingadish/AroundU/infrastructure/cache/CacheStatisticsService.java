@@ -26,11 +26,11 @@ public class CacheStatisticsService {
     private static final double HIT_RATE_THRESHOLD = 70.0;
 
     private static final String[] CACHE_NAMES = {
-        RedisConfig.CACHE_JOB_DETAIL,
-        RedisConfig.CACHE_CLIENT_JOBS,
-        RedisConfig.CACHE_WORKER_FEED,
-        RedisConfig.CACHE_USER_PROFILE,
-        RedisConfig.CACHE_WORKER_SKILLS
+            RedisConfig.CACHE_JOB_DETAIL,
+            RedisConfig.CACHE_CLIENT_JOBS,
+            RedisConfig.CACHE_WORKER_FEED,
+            RedisConfig.CACHE_USER_PROFILE,
+            RedisConfig.CACHE_WORKER_SKILLS
     };
 
     private final MeterRegistry meterRegistry;

@@ -2,6 +2,10 @@ package com.beingadish.AroundU.common.exception;
 
 import com.beingadish.AroundU.common.dto.ApiResponse;
 import com.beingadish.AroundU.bid.exception.DuplicateBidException;
+import com.beingadish.AroundU.chat.exception.ChatValidationException;
+import com.beingadish.AroundU.chat.exception.ConversationNotFoundException;
+import com.beingadish.AroundU.review.exception.ReviewNotFoundException;
+import com.beingadish.AroundU.review.exception.ReviewValidationException;
 import com.beingadish.AroundU.user.exception.ClientAlreadyExistException;
 import com.beingadish.AroundU.user.exception.ClientNotFoundException;
 import com.beingadish.AroundU.user.exception.ClientValidationException;
@@ -18,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -95,6 +100,30 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(ReviewNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleReviewNotFound(ReviewNotFoundException ex) {
+        log.warn("Review not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ReviewValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handleReviewValidation(ReviewValidationException ex) {
+        log.warn("Review validation error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ChatValidationException.class)
+    public ResponseEntity<ApiResponse<?>> handleChatValidation(ChatValidationException ex) {
+        log.warn("Chat validation error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConversationNotFoundException.class)
+    public ResponseEntity<ApiResponse<?>> handleConversationNotFound(ConversationNotFoundException ex) {
+        log.warn("Conversation not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<?>> handleAccessDenied(AccessDeniedException ex) {
         log.warn("Access denied: {}", ex.getMessage());
@@ -165,6 +194,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Illegal argument: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<?>> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        log.warn("Method not allowed: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

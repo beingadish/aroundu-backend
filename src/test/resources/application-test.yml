@@ -23,7 +23,7 @@ spring:
         enabled: false
 jwt:
   secret:
-    key: "6c4d9e78b643fa2d6c4d9e78b643fa2d" # 32+ chars for HMAC key
+    key: "this-is-a-dummy-test-secret-key-replace-in-prod" # 32+ chars for HMAC key
   expiration:
     ms: 3600000
 logging:

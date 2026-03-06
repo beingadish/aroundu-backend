@@ -1,6 +1,6 @@
 package com.beingadish.AroundU.infrastructure.metrics;
 
-import com.beingadish.AroundU.infrastructure.config.ResilienceConfig;
+import com.beingadish.AroundU.notification.service.EmailService;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import com.beingadish.AroundU.notification.service.EmailService;
 
 /**
  * Monitors all Resilience4j circuit breakers and retries, publishing custom
@@ -40,41 +39,35 @@ import com.beingadish.AroundU.notification.service.EmailService;
 @Slf4j
 public class ResilienceMonitoringService {
 
+    /**
+     * Timeout (ms) after which an open breaker triggers an admin alert.
+     */
+    private static final long OPEN_ALERT_THRESHOLD_MS = 5 * 60 * 1000L; // 5 minutes
     private final CircuitBreakerRegistry cbRegistry;
     private final RetryRegistry retryRegistry;
     private final EmailService emailService;
-
     /**
      * State gauge backing values: 0=CLOSED, 1=OPEN, 2=HALF_OPEN, 3=DISABLED,
      * 4=FORCED_OPEN
      */
     private final Map<String, AtomicInteger> cbStateGauges = new ConcurrentHashMap<>();
-
     /**
      * Tracks the epoch-millis when a breaker last transitioned to OPEN.
      */
     private final Map<String, Long> openSince = new ConcurrentHashMap<>();
-
     /**
      * De-duplication: don't spam alerts — at most once per open period.
      */
     private final Map<String, Boolean> alertSent = new ConcurrentHashMap<>();
-
     @Getter
     private final Counter cbOpenAlertCounter;
-
     @Getter
     private final Counter retryExhaustedCounter;
 
-    /**
-     * Timeout (ms) after which an open breaker triggers an admin alert.
-     */
-    private static final long OPEN_ALERT_THRESHOLD_MS = 5 * 60 * 1000L; // 5 minutes
-
     public ResilienceMonitoringService(CircuitBreakerRegistry cbRegistry,
-            RetryRegistry retryRegistry,
-            EmailService emailService,
-            MeterRegistry meterRegistry) {
+                                       RetryRegistry retryRegistry,
+                                       EmailService emailService,
+                                       MeterRegistry meterRegistry) {
         this.cbRegistry = cbRegistry;
         this.retryRegistry = retryRegistry;
         this.emailService = emailService;
@@ -115,7 +108,7 @@ public class ResilienceMonitoringService {
 
         // ── Retry event listeners ──
         retryRegistry.getAllRetries().forEach(r
-                -> r.getEventPublisher().onError(event -> {
+                        -> r.getEventPublisher().onError(event -> {
                     log.warn("Retry [{}] exhausted all {} attempts: {}",
                             r.getName(), event.getNumberOfRetryAttempts(),
                             event.getLastThrowable().getMessage());
@@ -125,6 +118,19 @@ public class ResilienceMonitoringService {
     }
 
     // ── Scheduled health check ───────────────────────────────────────────
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    private static int stateToInt(CircuitBreaker.State state) {
+        return switch (state) {
+            case CLOSED -> 0;
+            case OPEN -> 1;
+            case HALF_OPEN -> 2;
+            case DISABLED -> 3;
+            case FORCED_OPEN -> 4;
+            case METRICS_ONLY -> 5;
+        };
+    }
+
     /**
      * Runs every 60 seconds. For each breaker that is OPEN for more than 5
      * minutes, sends a single admin alert.
@@ -153,7 +159,7 @@ public class ResilienceMonitoringService {
                         emailService.sendAdminAlert(
                                 "CircuitBreaker OPEN > 5 min: " + name,
                                 String.format("Circuit breaker '%s' has been OPEN for %d seconds. "
-                                        + "External dependency may be down. Investigate immediately.",
+                                                + "External dependency may be down. Investigate immediately.",
                                         name, openDuration / 1000));
                         cbOpenAlertCounter.increment();
                         alertSent.put(name, true);
@@ -161,23 +167,5 @@ public class ResilienceMonitoringService {
                 }
             }
         });
-    }
-
-    // ── Helpers ──────────────────────────────────────────────────────────
-    private static int stateToInt(CircuitBreaker.State state) {
-        return switch (state) {
-            case CLOSED ->
-                0;
-            case OPEN ->
-                1;
-            case HALF_OPEN ->
-                2;
-            case DISABLED ->
-                3;
-            case FORCED_OPEN ->
-                4;
-            case METRICS_ONLY ->
-                5;
-        };
     }
 }

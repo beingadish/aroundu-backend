@@ -33,6 +33,22 @@ public class JobCodeController {
     private final JobCodeService jobCodeService;
     private final JobConfirmationCodeMapper codeMapper;
 
+    @GetMapping("/{jobId}/codes")
+    @Operation(
+            summary = "Fetch current job codes",
+            description = "Client retrieves existing codes for a job. Returns the start code while awaiting worker start, or the release code once work is in progress. Never exposes both codes at the same time.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Codes fetched",
+                content = @Content(schema = @Schema(implementation = JobCodeResponseDTO.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not the job owner"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Job or codes not found")
+    })
+    public ResponseEntity<JobCodeResponseDTO> fetchCodes(
+            @Parameter(description = "Job ID", required = true) @PathVariable Long jobId,
+            @Parameter(description = "Client ID (job owner)", required = true) @RequestParam Long clientId) {
+        return ResponseEntity.ok(codeMapper.toDtoForClientFetch(jobCodeService.fetchCodes(jobId, clientId)));
+    }
+
     @PostMapping("/{jobId}/codes")
     @Operation(summary = "Generate job codes", description = "Client generates start and release codes after selecting a bid. Only the start code is returned initially.")
     @ApiResponses({
@@ -65,7 +81,7 @@ public class JobCodeController {
     }
 
     @PostMapping("/{jobId}/codes/release")
-    @Operation(summary = "Verify release code", description = "Client confirms the release code to mark the job complete and trigger payout.")
+    @Operation(summary = "Verify release code", description = "Assigned worker enters the client-provided release code to confirm task completion and trigger payout.")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Release code verified, job completed",
                 content = @Content(schema = @Schema(implementation = JobCodeResponseDTO.class))),
@@ -75,8 +91,22 @@ public class JobCodeController {
     })
     public ResponseEntity<JobCodeResponseDTO> verifyRelease(
             @Parameter(description = "Job ID", required = true) @PathVariable Long jobId,
-            @Parameter(description = "Client ID (job owner)", required = true) @RequestParam Long clientId,
+            @Parameter(description = "Worker ID (assigned worker)", required = true) @RequestParam Long workerId,
             @Valid @RequestBody JobCodeVerifyRequest request) {
-        return ResponseEntity.ok(codeMapper.toDtoWithoutCodes(jobCodeService.verifyReleaseCode(jobId, clientId, request.getCode())));
+        return ResponseEntity.ok(codeMapper.toDtoWithoutCodes(jobCodeService.verifyReleaseCode(jobId, workerId, request.getCode())));
+    }
+
+    @PostMapping("/{jobId}/otp/regenerate")
+    @Operation(summary = "Regenerate OTP codes",
+            description = "Client regenerates start/release OTPs, invalidating previous codes. Rate-limited to once per minute.")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OTP regenerated",
+                content = @Content(schema = @Schema(implementation = JobCodeResponseDTO.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Rate limited or invalid state")
+    })
+    public ResponseEntity<JobCodeResponseDTO> regenerate(
+            @Parameter(description = "Job ID", required = true) @PathVariable Long jobId,
+            @Parameter(description = "Client ID (job owner)", required = true) @RequestParam Long clientId) {
+        return ResponseEntity.ok(codeMapper.toDtoWithStartCodeOnly(jobCodeService.regenerateCodes(jobId, clientId)));
     }
 }

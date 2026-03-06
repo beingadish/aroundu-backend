@@ -1,8 +1,8 @@
 package com.beingadish.AroundU.user.service.impl;
 
-import com.beingadish.AroundU.user.dto.worker.WorkerUpdateRequestDTO;
 import com.beingadish.AroundU.user.dto.worker.WorkerDetailDTO;
 import com.beingadish.AroundU.user.dto.worker.WorkerSignupRequestDTO;
+import com.beingadish.AroundU.user.dto.worker.WorkerUpdateRequestDTO;
 import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.user.exception.WorkerAlreadyExistException;
 import com.beingadish.AroundU.user.exception.WorkerNotFoundException;
@@ -120,6 +120,18 @@ public class WorkerServiceImpl implements WorkerService {
         log.info("Updated worker details for id={} email={}", workerId, updatedWorker.getEmail());
         WorkerModel updatedModel = workerMapper.toModel(updatedWorker);
         return workerMapper.modelToWorkerDetailDto(updatedModel);
+    }
+
+    @Override
+    @Transactional
+    public WorkerDetailDTO updateDutyStatus(Long workerId, boolean isOnDuty) {
+        Worker worker = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new WorkerNotFoundException("Worker with id %d does not exist".formatted(workerId)));
+        worker.setIsOnDuty(isOnDuty);
+        Worker updated = workerWriteRepository.save(worker);
+        log.info("Updated duty status for worker id={} isOnDuty={}", workerId, isOnDuty);
+        WorkerModel model = workerMapper.toModel(updated);
+        return workerMapper.modelToWorkerDetailDto(model);
     }
 
     @Override

@@ -20,6 +20,10 @@ public class SchedulerProperties {
     private String reminderCron = "0 0 */6 * * ?";
     private String cacheSyncCron = "0 */30 * * * ?";
     private String analyticsCron = "0 0 3 * * ?";
+    /**
+     * Daily EOD escrow settlement — default 18:00.
+     */
+    private String escrowSettlementCron = "0 0 18 * * ?";
 
     // ── Tunables ─────────────────────────────────────────────────────────
     /**

@@ -30,15 +30,14 @@ public class LockService extends LockServiceBase {
      * Attempt to acquire a distributed lock for the given task.
      *
      * @param taskName unique task identifier (e.g. "cleanup-users")
-     * @param ttl maximum expected duration + buffer
+     * @param ttl      maximum expected duration + buffer
      * @return {@code true} if the lock was acquired, {@code false} if another
      * instance already holds it
      */
     public boolean tryAcquireLock(String taskName, Duration ttl) {
         String key = KEY_PREFIX + taskName;
         try {
-            Boolean acquired = stringRedisTemplate.opsForValue()
-                    .setIfAbsent(key, "locked", ttl);
+            Boolean acquired = stringRedisTemplate.opsForValue().setIfAbsent(key, "locked", ttl);
             if (Boolean.TRUE.equals(acquired)) {
                 log.debug("Acquired lock for task={} ttl={}", taskName, ttl);
                 return true;

@@ -1,10 +1,10 @@
 package com.beingadish.AroundU.infrastructure.scheduler;
 
 import com.beingadish.AroundU.infrastructure.config.SchedulerProperties;
-import com.beingadish.AroundU.user.repository.ClientRepository;
-import com.beingadish.AroundU.user.repository.WorkerRepository;
 import com.beingadish.AroundU.infrastructure.lock.LockServiceBase;
 import com.beingadish.AroundU.infrastructure.metrics.SchedulerMetricsService;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;

@@ -3,12 +3,13 @@ package com.beingadish.AroundU.job.model;
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.common.constants.enums.JobUrgency;
 import com.beingadish.AroundU.common.constants.enums.PaymentMode;
+import com.beingadish.AroundU.common.model.AddressModel;
+import com.beingadish.AroundU.common.model.PriceModel;
+import com.beingadish.AroundU.common.model.SkillModel;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import com.beingadish.AroundU.common.model.PriceModel;
-import com.beingadish.AroundU.common.model.AddressModel;
-import com.beingadish.AroundU.common.model.SkillModel;
 
 @Data
 public class JobModel {

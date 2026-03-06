@@ -1,13 +1,21 @@
 package com.beingadish.AroundU.Controller.Client;
 
 import com.beingadish.AroundU.Config.TestWebSecurityConfig;
+import com.beingadish.AroundU.bid.repository.BidRepository;
 import com.beingadish.AroundU.common.constants.enums.Country;
 import com.beingadish.AroundU.common.constants.enums.Currency;
+import com.beingadish.AroundU.common.dto.AddressDTO;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
+import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.location.repository.AddressRepository;
+import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
+import com.beingadish.AroundU.user.controller.ClientController;
 import com.beingadish.AroundU.user.dto.client.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.user.dto.client.ClientRegisterRequestDTO;
 import com.beingadish.AroundU.user.dto.client.ClientUpdateRequestDTO;
-import com.beingadish.AroundU.common.dto.AddressDTO;
-import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
+import com.beingadish.AroundU.user.repository.*;
 import com.beingadish.AroundU.user.service.ClientService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManagerFactory;
@@ -37,22 +45,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.util.List;
 import java.util.ArrayList;
-
-import com.beingadish.AroundU.user.repository.AdminRepository;
-import com.beingadish.AroundU.location.repository.AddressRepository;
-import com.beingadish.AroundU.bid.repository.BidRepository;
-import com.beingadish.AroundU.user.repository.ClientReadRepository;
-import com.beingadish.AroundU.user.repository.ClientRepository;
-import com.beingadish.AroundU.user.repository.ClientWriteRepository;
-import com.beingadish.AroundU.job.repository.JobConfirmationCodeRepository;
-import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
-import com.beingadish.AroundU.common.repository.SkillRepository;
-import com.beingadish.AroundU.user.repository.WorkerReadRepository;
-import com.beingadish.AroundU.user.repository.WorkerRepository;
-import com.beingadish.AroundU.user.repository.WorkerWriteRepository;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -60,18 +54,17 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import com.beingadish.AroundU.user.controller.ClientController;
 
 @WebMvcTest(value = ClientController.class, excludeAutoConfiguration = {
-    DataSourceAutoConfiguration.class,
-    HibernateJpaAutoConfiguration.class,
-    JpaRepositoriesAutoConfiguration.class
+        DataSourceAutoConfiguration.class,
+        HibernateJpaAutoConfiguration.class,
+        JpaRepositoriesAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 @Import(TestWebSecurityConfig.class)
 @TestPropertySource(properties = {
-    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
-    "spring.data.jpa.repositories.enabled=false"
+        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
+        "spring.data.jpa.repositories.enabled=false"
 })
 class ClientControllerTest {
 
@@ -189,8 +182,8 @@ class ClientControllerTest {
                 .build());
 
         mockMvc.perform(post("/api/v1/client/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Success"));
@@ -206,7 +199,7 @@ class ClientControllerTest {
         when(clientService.getClientDetails(5L)).thenReturn(dto);
 
         mockMvc.perform(get("/api/v1/client/5")
-                .with(authenticatedUser(5L, "ROLE_CLIENT")))
+                        .with(authenticatedUser(5L, "ROLE_CLIENT")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isMap());
@@ -217,7 +210,7 @@ class ClientControllerTest {
     @Test
     void getClientDetailsForbiddenForDifferentClient() throws Exception {
         mockMvc.perform(get("/api/v1/client/10")
-                .with(authenticatedUser(1L, "ROLE_CLIENT")))
+                        .with(authenticatedUser(1L, "ROLE_CLIENT")))
                 .andExpect(status().isForbidden());
     }
 
@@ -230,7 +223,7 @@ class ClientControllerTest {
         when(clientService.getAllClients(0, 2)).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/client/all?page=0&size=2")
-                .with(authenticatedUser(99L, "ROLE_ADMIN")))
+                        .with(authenticatedUser(99L, "ROLE_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.content").isArray())
                 .andExpect(jsonPath("$.data.page").value(0))
@@ -240,7 +233,7 @@ class ClientControllerTest {
     @Test
     void adminCanDeleteClient() throws Exception {
         mockMvc.perform(delete("/api/v1/client/42")
-                .with(authenticatedUser(99L, "ROLE_ADMIN")))
+                        .with(authenticatedUser(99L, "ROLE_ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
@@ -254,9 +247,9 @@ class ClientControllerTest {
         when(clientService.updateClientDetails(7L, update)).thenReturn(response);
 
         mockMvc.perform(patch("/api/v1/client/update/7")
-                .with(authenticatedUser(7L, "ROLE_CLIENT"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(update)))
+                        .with(authenticatedUser(7L, "ROLE_CLIENT"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 

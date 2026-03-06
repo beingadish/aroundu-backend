@@ -2,11 +2,11 @@ package com.beingadish.AroundU;
 
 import com.beingadish.AroundU.common.constants.enums.Country;
 import com.beingadish.AroundU.common.constants.enums.Currency;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.user.entity.Worker;
-import com.beingadish.AroundU.user.entity.Admin;
 import com.beingadish.AroundU.common.entity.VerificationStatus;
 import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.user.entity.Admin;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.user.repository.AdminRepository;
 import com.beingadish.AroundU.user.repository.ClientRepository;
 import com.beingadish.AroundU.user.repository.WorkerRepository;

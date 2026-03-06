@@ -1,14 +1,14 @@
 package com.beingadish.AroundU.Config.Interceptors;
 
+import com.beingadish.AroundU.infrastructure.interceptor.ApiVersionInterceptor;
+import com.beingadish.AroundU.infrastructure.interceptor.RequestIdInterceptor;
+import com.beingadish.AroundU.infrastructure.interceptor.RequestLoggingInterceptor;
+import com.beingadish.AroundU.infrastructure.interceptor.UserContextInterceptor;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
 import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.user.repository.AdminRepository;
 import com.beingadish.AroundU.user.repository.ClientReadRepository;
 import com.beingadish.AroundU.user.repository.WorkerReadRepository;
-import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
-import com.beingadish.AroundU.infrastructure.interceptor.RequestIdInterceptor;
-import com.beingadish.AroundU.infrastructure.interceptor.RequestLoggingInterceptor;
-import com.beingadish.AroundU.infrastructure.interceptor.ApiVersionInterceptor;
-import com.beingadish.AroundU.infrastructure.interceptor.UserContextInterceptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for all custom HandlerInterceptor implementations.
@@ -36,9 +37,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class InterceptorTest {
 
+    private final Object handler = new Object();
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
-    private final Object handler = new Object();
 
     @BeforeEach
     void setUp() {

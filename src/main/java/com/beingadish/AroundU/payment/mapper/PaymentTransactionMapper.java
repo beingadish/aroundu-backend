@@ -1,11 +1,11 @@
 package com.beingadish.AroundU.payment.mapper;
 
 import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
+import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.payment.dto.PaymentLockRequest;
 import com.beingadish.AroundU.payment.dto.PaymentResponseDTO;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.payment.entity.PaymentTransaction;
+import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.user.entity.Worker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

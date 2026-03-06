@@ -1,15 +1,13 @@
 package com.beingadish.AroundU.fixtures;
 
+import com.beingadish.AroundU.bid.entity.Bid;
 import com.beingadish.AroundU.common.constants.enums.BidStatus;
-import com.beingadish.AroundU.common.constants.enums.Currency;
 import com.beingadish.AroundU.common.constants.enums.PaymentMode;
 import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
-import com.beingadish.AroundU.bid.entity.Bid;
 import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.payment.entity.PaymentTransaction;
 import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.user.entity.Worker;
-import com.beingadish.AroundU.payment.entity.PaymentTransaction;
-import com.beingadish.AroundU.common.entity.Price;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +23,11 @@ public final class TestDataBuilder {
     // ── Bid builder ──────────────────────────────────────────────
     public static BidBuilder aBid() {
         return new BidBuilder();
+    }
+
+    // ── PaymentTransaction builder ───────────────────────────────
+    public static PaymentBuilder aPayment() {
+        return new PaymentBuilder();
     }
 
     public static class BidBuilder {
@@ -78,11 +81,6 @@ public final class TestDataBuilder {
                     .updatedAt(LocalDateTime.now())
                     .build();
         }
-    }
-
-    // ── PaymentTransaction builder ───────────────────────────────
-    public static PaymentBuilder aPayment() {
-        return new PaymentBuilder();
     }
 
     public static class PaymentBuilder {

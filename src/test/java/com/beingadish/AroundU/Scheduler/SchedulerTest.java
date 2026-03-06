@@ -1,45 +1,46 @@
 package com.beingadish.AroundU.Scheduler;
 
-import com.beingadish.AroundU.infrastructure.config.SchedulerProperties;
-import com.beingadish.AroundU.common.constants.enums.*;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.user.entity.Worker;
-import com.beingadish.AroundU.common.entity.VerificationStatus;
-import com.beingadish.AroundU.job.entity.Job;
-import com.beingadish.AroundU.job.entity.JobConfirmationCode;
-import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.common.entity.Price;
-import com.beingadish.AroundU.common.entity.Skill;
-import com.beingadish.AroundU.infrastructure.analytics.entity.AggregatedMetrics;
-import com.beingadish.AroundU.payment.entity.PaymentTransaction;
-import com.beingadish.AroundU.job.event.JobExpiredEvent;
-import com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository;
 import com.beingadish.AroundU.bid.repository.BidRepository;
-import com.beingadish.AroundU.user.repository.ClientRepository;
-import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
-import com.beingadish.AroundU.user.repository.WorkerRepository;
-import com.beingadish.AroundU.infrastructure.metrics.SchedulerMetricsService;
-import com.beingadish.AroundU.infrastructure.lock.NoOpLockService;
+import com.beingadish.AroundU.common.constants.enums.Country;
+import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.common.constants.enums.JobUrgency;
+import com.beingadish.AroundU.common.constants.enums.PaymentStatus;
+import com.beingadish.AroundU.infrastructure.analytics.entity.AggregatedMetrics;
+import com.beingadish.AroundU.infrastructure.analytics.repository.AggregatedMetricsRepository;
+import com.beingadish.AroundU.infrastructure.config.SchedulerProperties;
 import com.beingadish.AroundU.infrastructure.lock.LockServiceBase;
+import com.beingadish.AroundU.infrastructure.lock.NoOpLockService;
+import com.beingadish.AroundU.infrastructure.metrics.SchedulerMetricsService;
+import com.beingadish.AroundU.infrastructure.scheduler.*;
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.job.event.JobExpiredEvent;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.location.entity.Address;
 import com.beingadish.AroundU.location.service.JobGeoService;
 import com.beingadish.AroundU.notification.service.EmailService;
-import com.beingadish.AroundU.infrastructure.scheduler.UserCleanupScheduler;
-import com.beingadish.AroundU.infrastructure.scheduler.JobExpirationScheduler;
-import com.beingadish.AroundU.infrastructure.scheduler.ReminderScheduler;
-import com.beingadish.AroundU.infrastructure.scheduler.CacheSyncScheduler;
-import com.beingadish.AroundU.infrastructure.scheduler.AnalyticsScheduler;
+import com.beingadish.AroundU.payment.repository.PaymentTransactionRepository;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.user.repository.WorkerRepository;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.*;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -63,11 +64,69 @@ class SchedulerTest {
     private SchedulerProperties props;
     private SchedulerMetricsService schedulerMetrics;
 
+    private static Address testAddress() {
+        return Address.builder()
+                .country(Country.US)
+                .postalCode("10001")
+                .latitude(40.7128)
+                .longitude(-74.006)
+                .build();
+    }
+
+    /**
+     * Set private {@code id} field via reflection for entities without setters.
+     */
+    private static void setId(Object entity, Long id) {
+        try {
+            java.lang.reflect.Field idField = findIdField(entity.getClass());
+            idField.setAccessible(true);
+            idField.set(entity, id);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set id on " + entity.getClass().getSimpleName(), e);
+        }
+    }
+
+    private static java.lang.reflect.Field findIdField(Class<?> clazz) throws NoSuchFieldException {
+        while (clazz != null) {
+            try {
+                return clazz.getDeclaredField("id");
+            } catch (NoSuchFieldException e) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException("id");
+    }
+
     @BeforeEach
     void baseSetUp() {
         props = new SchedulerProperties();
         props.setEnabled(true);
         schedulerMetrics = new SchedulerMetricsService(new SimpleMeterRegistry());
+    }
+
+    /**
+     * Stub lock service that grants or denies all lock requests.
+     */
+    static class StubLockService extends LockServiceBase {
+
+        final boolean grant;
+        int acquireCount = 0;
+        int releaseCount = 0;
+
+        StubLockService(boolean grant) {
+            this.grant = grant;
+        }
+
+        @Override
+        public boolean tryAcquireLock(String taskName, Duration ttl) {
+            acquireCount++;
+            return grant;
+        }
+
+        @Override
+        public void releaseLock(String taskName) {
+            releaseCount++;
+        }
     }
 
     // =====================================================================
@@ -94,15 +153,14 @@ class SchedulerTest {
     @DisplayName("UserCleanupScheduler")
     class UserCleanupTests {
 
+        private static final Instant FIXED_INSTANT
+                = LocalDateTime.of(2026, 2, 18, 2, 0).toInstant(ZoneOffset.UTC);
         @Mock
         private ClientRepository clientRepository;
         @Mock
         private WorkerRepository workerRepository;
         private StubLockService lockService;
         private UserCleanupScheduler scheduler;
-
-        private static final Instant FIXED_INSTANT
-                = LocalDateTime.of(2026, 2, 18, 2, 0).toInstant(ZoneOffset.UTC);
 
         @BeforeEach
         void setUp() {
@@ -227,6 +285,8 @@ class SchedulerTest {
     @DisplayName("JobExpirationScheduler")
     class JobExpirationTests {
 
+        private static final Instant FIXED_INSTANT
+                = LocalDateTime.of(2026, 2, 18, 12, 0).toInstant(ZoneOffset.UTC);
         @Mock
         private JobRepository jobRepository;
         @Mock
@@ -235,9 +295,6 @@ class SchedulerTest {
         private ApplicationEventPublisher eventPublisher;
         private StubLockService lockService;
         private JobExpirationScheduler scheduler;
-
-        private static final Instant FIXED_INSTANT
-                = LocalDateTime.of(2026, 2, 18, 12, 0).toInstant(ZoneOffset.UTC);
 
         @BeforeEach
         void setUp() {
@@ -345,15 +402,14 @@ class SchedulerTest {
     @DisplayName("ReminderScheduler")
     class ReminderTests {
 
+        private static final Instant FIXED_INSTANT
+                = LocalDateTime.of(2026, 2, 18, 6, 0).toInstant(ZoneOffset.UTC);
         @Mock
         private JobRepository jobRepository;
         @Mock
         private EmailService emailService;
         private StubLockService lockService;
         private ReminderScheduler scheduler;
-
-        private static final Instant FIXED_INSTANT
-                = LocalDateTime.of(2026, 2, 18, 6, 0).toInstant(ZoneOffset.UTC);
 
         @BeforeEach
         void setUp() {
@@ -542,12 +598,18 @@ class SchedulerTest {
     }
 
     // =====================================================================
+    //  Helpers
+    // =====================================================================
+
+    // =====================================================================
     //  6 · AnalyticsScheduler
     // =====================================================================
     @Nested
     @DisplayName("AnalyticsScheduler")
     class AnalyticsTests {
 
+        private static final Instant FIXED_INSTANT
+                = LocalDateTime.of(2026, 2, 18, 3, 0).toInstant(ZoneOffset.UTC);
         @Mock
         private JobRepository jobRepository;
         @Mock
@@ -558,9 +620,6 @@ class SchedulerTest {
         private AggregatedMetricsRepository metricsRepository;
         private StubLockService lockService;
         private AnalyticsScheduler scheduler;
-
-        private static final Instant FIXED_INSTANT
-                = LocalDateTime.of(2026, 2, 18, 3, 0).toInstant(ZoneOffset.UTC);
 
         @BeforeEach
         void setUp() {
@@ -789,66 +848,5 @@ class SchedulerTest {
             verify(clientRepository).findInactiveClientsBefore(cap2.capture());
             assertThat(cap2.getValue()).isEqualTo(LocalDateTime.of(2024, 5, 18, 2, 0));
         }
-    }
-
-    // =====================================================================
-    //  Helpers
-    // =====================================================================
-    /**
-     * Stub lock service that grants or denies all lock requests.
-     */
-    static class StubLockService extends LockServiceBase {
-
-        final boolean grant;
-        int acquireCount = 0;
-        int releaseCount = 0;
-
-        StubLockService(boolean grant) {
-            this.grant = grant;
-        }
-
-        @Override
-        public boolean tryAcquireLock(String taskName, Duration ttl) {
-            acquireCount++;
-            return grant;
-        }
-
-        @Override
-        public void releaseLock(String taskName) {
-            releaseCount++;
-        }
-    }
-
-    private static Address testAddress() {
-        return Address.builder()
-                .country(Country.US)
-                .postalCode("10001")
-                .latitude(40.7128)
-                .longitude(-74.006)
-                .build();
-    }
-
-    /**
-     * Set private {@code id} field via reflection for entities without setters.
-     */
-    private static void setId(Object entity, Long id) {
-        try {
-            java.lang.reflect.Field idField = findIdField(entity.getClass());
-            idField.setAccessible(true);
-            idField.set(entity, id);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to set id on " + entity.getClass().getSimpleName(), e);
-        }
-    }
-
-    private static java.lang.reflect.Field findIdField(Class<?> clazz) throws NoSuchFieldException {
-        while (clazz != null) {
-            try {
-                return clazz.getDeclaredField("id");
-            } catch (NoSuchFieldException e) {
-                clazz = clazz.getSuperclass();
-            }
-        }
-        throw new NoSuchFieldException("id");
     }
 }

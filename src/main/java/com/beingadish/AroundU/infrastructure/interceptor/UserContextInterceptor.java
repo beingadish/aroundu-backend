@@ -1,13 +1,12 @@
 package com.beingadish.AroundU.infrastructure.interceptor;
 
-import com.beingadish.AroundU.user.entity.Admin;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
 import com.beingadish.AroundU.user.entity.Client;
 import com.beingadish.AroundU.user.entity.User;
 import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.user.repository.AdminRepository;
 import com.beingadish.AroundU.user.repository.ClientReadRepository;
 import com.beingadish.AroundU.user.repository.WorkerReadRepository;
-import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -81,12 +80,9 @@ public class UserContextInterceptor implements HandlerInterceptor {
 
     private Optional<? extends User> loadUser(String email, String role) {
         return switch (role) {
-            case "ROLE_CLIENT" ->
-                clientReadRepository.findByEmail(email).map(c -> (User) c);
-            case "ROLE_WORKER" ->
-                workerReadRepository.findByEmail(email).map(w -> (User) w);
-            case "ROLE_ADMIN" ->
-                adminRepository.findByEmail(email).map(a -> (User) a);
+            case "ROLE_CLIENT" -> clientReadRepository.findByEmail(email).map(c -> (User) c);
+            case "ROLE_WORKER" -> workerReadRepository.findByEmail(email).map(w -> (User) w);
+            case "ROLE_ADMIN" -> adminRepository.findByEmail(email).map(a -> (User) a);
             default -> {
                 log.warn("Unknown role '{}' — attempting to find user across all repositories", role);
                 Optional<Client> client = clientReadRepository.findByEmail(email);
@@ -103,10 +99,6 @@ public class UserContextInterceptor implements HandlerInterceptor {
     }
 
     private String extractRole(Authentication authentication) {
-        return authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(a -> a.startsWith("ROLE_"))
-                .findFirst()
-                .orElse("UNKNOWN");
+        return authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).filter(a -> a.startsWith("ROLE_")).findFirst().orElse("UNKNOWN");
     }
 }

@@ -1,5 +1,7 @@
 package com.beingadish.AroundU.user.entity;
 
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.location.entity.Address;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -13,8 +15,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import com.beingadish.AroundU.job.entity.Job;
-import com.beingadish.AroundU.location.entity.Address;
 
 @Entity
 @Table(name = "clients")

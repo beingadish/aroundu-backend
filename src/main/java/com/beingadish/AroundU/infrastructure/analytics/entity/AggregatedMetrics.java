@@ -1,11 +1,7 @@
 package com.beingadish.AroundU.infrastructure.analytics.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
@@ -18,7 +14,7 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "aggregated_metrics", uniqueConstraints = {
-    @UniqueConstraint(columnNames = "metricDate")
+        @UniqueConstraint(columnNames = "metricDate")
 })
 @Getter
 @Setter

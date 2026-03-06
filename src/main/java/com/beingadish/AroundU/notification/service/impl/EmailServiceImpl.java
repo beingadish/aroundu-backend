@@ -1,13 +1,12 @@
 package com.beingadish.AroundU.notification.service.impl;
 
-import com.beingadish.AroundU.notification.service.EmailService;
 import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.notification.service.EmailService;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.retry.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,20 +39,18 @@ public class EmailServiceImpl implements EmailService {
     private final Retry retry;
     private final MetricsService metricsService;
     private final Executor notificationExecutor;
-
-    @Value("${admin.email:admin@aroundu.com}")
-    private String adminEmail;
-
     /**
      * In-memory queue for failed emails; in production this would be a
      * persistent queue (e.g. Redis list, SQS, RabbitMQ).
      */
     private final Queue<QueuedEmail> emailRetryQueue = new ConcurrentLinkedQueue<>();
+    @Value("${admin.email:admin@aroundu.com}")
+    private String adminEmail;
 
     public EmailServiceImpl(@Qualifier("emailServiceCircuitBreaker") CircuitBreaker circuitBreaker,
-            @Qualifier("emailServiceRetry") Retry retry,
-            MetricsService metricsService,
-            @Qualifier("notificationExecutor") Executor notificationExecutor) {
+                            @Qualifier("emailServiceRetry") Retry retry,
+                            MetricsService metricsService,
+                            @Qualifier("notificationExecutor") Executor notificationExecutor) {
         this.circuitBreaker = circuitBreaker;
         this.retry = retry;
         this.metricsService = metricsService;
@@ -84,6 +81,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     // ── Asynchronous (non-blocking) ──────────────────────────────────────
+
     /**
      * Sends a single email asynchronously on the notification thread pool.
      * <p>
@@ -120,6 +118,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     // ── Internals ────────────────────────────────────────────────────────
+
     /**
      * Actual email send. In production this would call an SMTP library or REST
      * API (SendGrid, SES, etc.).
