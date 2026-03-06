@@ -147,13 +147,15 @@ public class JobCodeServiceImpl implements JobCodeService {
     }
 
     @Override
-    public JobConfirmationCode verifyReleaseCode(Long jobId, Long clientId, String code) {
+    public JobConfirmationCode verifyReleaseCode(Long jobId, Long workerId, String code) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new EntityNotFoundException("Job not found"));
-        validateClientOwnership(job, clientId);
 
         if (job.getAssignedTo() == null) {
             throw new IllegalStateException("Job has no assigned worker");
+        }
+        if (!job.getAssignedTo().getId().equals(workerId)) {
+            throw new IllegalStateException("Worker not assigned to this job");
         }
 
         JobConfirmationCode confirmation = codeRepository.findByJob(job)
@@ -167,10 +169,10 @@ public class JobCodeServiceImpl implements JobCodeService {
             throw new IllegalStateException("Job is not in a state that allows release code verification");
         }
         if (confirmation.isReleaseCodeLocked()) {
-            throw new IllegalStateException("Release code verification locked due to too many failed attempts. Please regenerate.");
+            throw new IllegalStateException("Release code verification locked due to too many failed attempts. Ask the client to regenerate.");
         }
         if (confirmation.isReleaseCodeExpired()) {
-            throw new IllegalStateException("Release code has expired. Please request a new code.");
+            throw new IllegalStateException("Release code has expired. Ask the client to regenerate.");
         }
 
         if (!confirmation.getReleaseCode().equals(code)) {
@@ -182,15 +184,28 @@ public class JobCodeServiceImpl implements JobCodeService {
 
         confirmation.setStatus(JobCodeStatus.COMPLETED);
         confirmation.setReleaseCodeAttempts(0);
-        job.setJobStatus(JobStatus.COMPLETED_PENDING_PAYMENT);
+        // Job is done the moment the worker confirms via release code.
+        // For escrow jobs the locked payment sits with the system and is
+        // disbursed to the worker by the EOD settlement CRON.
+        // For cash (OFFLINE) jobs the worker collects payment directly.
+        job.setJobStatus(JobStatus.COMPLETED);
         jobRepository.save(job);
 
-        log.info("Release OTP verified for jobId={} by clientId={}", jobId, clientId);
+        log.info("Release OTP verified for jobId={} by workerId={}", jobId, workerId);
         return codeRepository.save(confirmation);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────
+    @Override
+    @Transactional(readOnly = true)
+    public JobConfirmationCode fetchCodes(Long jobId, Long clientId) {
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new EntityNotFoundException("Job not found"));
+        validateClientOwnership(job, clientId);
+        return codeRepository.findByJob(job)
+                .orElseThrow(() -> new EntityNotFoundException("No codes have been generated for this job yet"));
+    }
 
+    // ── Helpers ──────────────────────────────────────────────────────────
     /**
      * Generates a cryptographically secure 6-digit OTP.
      */
@@ -200,6 +215,9 @@ public class JobCodeServiceImpl implements JobCodeService {
     }
 
     private void validateClientOwnership(Job job, Long clientId) {
+        if (job.getCreatedBy() == null) {
+            throw new IllegalStateException("Job has no owning client — data integrity issue");
+        }
         if (!job.getCreatedBy().getId().equals(clientId)) {
             throw new IllegalStateException("Client does not own this job");
         }

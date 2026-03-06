@@ -1,41 +1,51 @@
 package com.beingadish.AroundU.job.service.impl;
 
-import com.beingadish.AroundU.bid.repository.BidRepository;
+import com.beingadish.AroundU.infrastructure.config.RedisConfig;
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.common.constants.enums.SortDirection;
-import com.beingadish.AroundU.common.entity.Skill;
-import com.beingadish.AroundU.common.repository.SkillRepository;
-import com.beingadish.AroundU.common.service.SkillService;
-import com.beingadish.AroundU.common.util.DistanceUtils;
+import com.beingadish.AroundU.job.dto.JobCreateRequest;
+import com.beingadish.AroundU.job.dto.JobDetailDTO;
+import com.beingadish.AroundU.job.dto.JobFilterRequest;
+import com.beingadish.AroundU.job.dto.JobStatusUpdateRequest;
+import com.beingadish.AroundU.job.dto.JobSummaryDTO;
+import com.beingadish.AroundU.job.dto.JobUpdateRequest;
+import com.beingadish.AroundU.job.dto.WorkerJobFeedRequest;
 import com.beingadish.AroundU.common.util.PageResponse;
-import com.beingadish.AroundU.common.util.PopularityUtils;
-import com.beingadish.AroundU.common.util.SortValidator;
-import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
-import com.beingadish.AroundU.infrastructure.config.RedisConfig;
-import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
-import com.beingadish.AroundU.job.dto.*;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.location.entity.FailedGeoSync;
 import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.common.entity.Skill;
+import com.beingadish.AroundU.user.entity.Worker;
 import com.beingadish.AroundU.job.event.JobModifiedEvent;
 import com.beingadish.AroundU.job.exception.JobNotFoundException;
 import com.beingadish.AroundU.job.exception.JobValidationException;
 import com.beingadish.AroundU.job.mapper.JobMapper;
-import com.beingadish.AroundU.job.repository.JobRepository;
-import com.beingadish.AroundU.job.service.JobService;
-import com.beingadish.AroundU.location.entity.Address;
-import com.beingadish.AroundU.location.entity.FailedGeoSync;
 import com.beingadish.AroundU.location.repository.AddressRepository;
-import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
-import com.beingadish.AroundU.location.service.JobGeoService;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.user.entity.Worker;
+import com.beingadish.AroundU.bid.repository.BidRepository;
 import com.beingadish.AroundU.user.repository.ClientRepository;
+import com.beingadish.AroundU.location.repository.FailedGeoSyncRepository;
+import com.beingadish.AroundU.job.repository.JobRepository;
+import com.beingadish.AroundU.common.repository.SkillRepository;
+import com.beingadish.AroundU.common.service.SkillService;
 import com.beingadish.AroundU.user.repository.WorkerReadRepository;
+import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
+import com.beingadish.AroundU.location.service.JobGeoService;
+import com.beingadish.AroundU.job.service.JobService;
+import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
+import com.beingadish.AroundU.common.util.DistanceUtils;
+import com.beingadish.AroundU.common.util.PopularityUtils;
+import com.beingadish.AroundU.common.util.SortValidator;
 import com.beingadish.AroundU.user.service.WorkerPenaltyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +53,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -415,10 +432,49 @@ public class JobServiceImpl implements JobService {
     @Transactional(readOnly = true)
     public JobDetailDTO getJobForWorker(Long jobId, Long workerId) {
         Job job = jobRepository.findById(jobId).orElseThrow(() -> new JobNotFoundException("Job not found"));
-        if (job.getJobStatus() == JobStatus.OPEN_FOR_BIDS || (job.getAssignedTo() != null && Objects.equals(job.getAssignedTo().getId(), workerId))) {
+        if (job.getJobStatus() == JobStatus.OPEN_FOR_BIDS
+                || (job.getAssignedTo() != null && Objects.equals(job.getAssignedTo().getId(), workerId))
+                || bidRepository.existsByWorkerIdAndJobId(workerId, jobId)) {
             return jobMapper.toDetailDto(job);
         }
         throw new AccessDeniedException("Worker cannot view this job");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<JobSummaryDTO> getWorkerMyJobs(Long workerId, List<String> statuses) {
+        Worker worker = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new JobValidationException("Worker not found"));
+
+        List<com.beingadish.AroundU.bid.entity.Bid> bids = bidRepository.findByWorker(worker);
+
+        List<Job> jobs = bids.stream()
+                .map(com.beingadish.AroundU.bid.entity.Bid::getJob)
+                .distinct()
+                .collect(java.util.stream.Collectors.toList());
+
+        if (statuses != null && !statuses.isEmpty()) {
+            List<JobStatus> filterStatuses = statuses.stream()
+                    .map(s -> {
+                        try {
+                            return JobStatus.valueOf(s);
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+            if (!filterStatuses.isEmpty()) {
+                jobs = jobs.stream()
+                        .filter(j -> filterStatuses.contains(j.getJobStatus()))
+                        .toList();
+            }
+        }
+
+        return jobs.stream()
+                .sorted(Comparator.comparing(Job::getCreatedAt).reversed())
+                .map(jobMapper::toSummaryDto)
+                .toList();
     }
 
     @Override
@@ -446,15 +502,22 @@ public class JobServiceImpl implements JobService {
             throw new JobValidationException("Job is already in status " + target);
         }
         boolean allowed = switch (current) {
-            case CREATED -> target == JobStatus.OPEN_FOR_BIDS;
-            case OPEN_FOR_BIDS -> target == JobStatus.BID_SELECTED_AWAITING_HANDSHAKE || target == JobStatus.CANCELLED;
-            case BID_SELECTED_AWAITING_HANDSHAKE -> target == JobStatus.READY_TO_START || target == JobStatus.CANCELLED;
-            case READY_TO_START -> target == JobStatus.IN_PROGRESS || target == JobStatus.CANCELLED;
+            case CREATED ->
+                target == JobStatus.OPEN_FOR_BIDS;
+            case OPEN_FOR_BIDS ->
+                target == JobStatus.BID_SELECTED_AWAITING_HANDSHAKE || target == JobStatus.CANCELLED;
+            case BID_SELECTED_AWAITING_HANDSHAKE ->
+                target == JobStatus.READY_TO_START || target == JobStatus.CANCELLED;
+            case READY_TO_START ->
+                target == JobStatus.IN_PROGRESS || target == JobStatus.CANCELLED;
             case IN_PROGRESS ->
-                    target == JobStatus.COMPLETED_PENDING_PAYMENT || target == JobStatus.COMPLETED || target == JobStatus.CANCELLED;
-            case COMPLETED_PENDING_PAYMENT -> target == JobStatus.PAYMENT_RELEASED || target == JobStatus.COMPLETED;
-            case PAYMENT_RELEASED -> target == JobStatus.COMPLETED;
-            case COMPLETED, CANCELLED, JOB_CLOSED_DUE_TO_EXPIRATION -> false;
+                target == JobStatus.COMPLETED_PENDING_PAYMENT || target == JobStatus.COMPLETED || target == JobStatus.CANCELLED;
+            case COMPLETED_PENDING_PAYMENT ->
+                target == JobStatus.PAYMENT_RELEASED || target == JobStatus.COMPLETED;
+            case PAYMENT_RELEASED ->
+                target == JobStatus.COMPLETED;
+            case COMPLETED, CANCELLED, JOB_CLOSED_DUE_TO_EXPIRATION ->
+                false;
         };
         if (!allowed) {
             throw new JobValidationException("Invalid status transition from " + current + " to " + target);
@@ -472,7 +535,6 @@ public class JobServiceImpl implements JobService {
     }
 
     // ── Sorting helpers ──────────────────────────────────────────
-
     /**
      * Enriches a DTO with the distance (in km) from the given reference point.
      */
@@ -540,7 +602,6 @@ public class JobServiceImpl implements JobService {
     }
 
     // ── Safe Redis geo wrappers ──────────────────────────────────
-
     /**
      * Adds a job to the Redis geo-index. If the Redis write fails, records the
      * failure in PostgreSQL for later retry, ensuring the PostgreSQL
@@ -569,7 +630,7 @@ public class JobServiceImpl implements JobService {
     }
 
     private void recordFailedSync(Long jobId, FailedGeoSync.SyncOperation operation,
-                                  Double latitude, Double longitude, String error) {
+            Double latitude, Double longitude, String error) {
         try {
             if (!failedGeoSyncRepository.existsByJobIdAndOperationAndResolvedFalse(jobId, operation)) {
                 failedGeoSyncRepository.save(FailedGeoSync.builder()

@@ -5,6 +5,7 @@ import com.beingadish.AroundU.chat.dto.ChatMessageResponseDTO;
 import com.beingadish.AroundU.chat.dto.ConversationResponseDTO;
 import com.beingadish.AroundU.chat.service.ChatService;
 import com.beingadish.AroundU.common.dto.ApiResponse;
+import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -16,6 +17,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +34,23 @@ public class ChatController {
 
     private final ChatService chatService;
 
+    private Long principalId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal up) {
+            return up.getId();
+        }
+        return Long.parseLong(auth.getName());
+    }
+
+    private String principalRole() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return "UNKNOWN";
+        return auth.getAuthorities().stream()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .findFirst()
+                .orElse("UNKNOWN");
+    }
+
     @PostMapping("/jobs/{jobId}/messages")
     @Operation(summary = "Send message", description = "Send a chat message within a job conversation")
     @ApiResponses({
@@ -41,9 +61,8 @@ public class ChatController {
     })
     public ResponseEntity<ApiResponse<ChatMessageResponseDTO>> sendMessage(
             @Parameter(description = "Job ID", required = true) @PathVariable Long jobId,
-            @Parameter(description = "Sender user ID", required = true) @RequestParam Long senderId,
             @Valid @RequestBody ChatMessageRequest request) {
-        ChatMessageResponseDTO dto = chatService.sendMessage(jobId, senderId, request);
+        ChatMessageResponseDTO dto = chatService.sendMessage(jobId, principalId(), principalRole(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(dto));
     }
 
@@ -56,10 +75,9 @@ public class ChatController {
     })
     public ResponseEntity<ApiResponse<List<ChatMessageResponseDTO>>> getMessages(
             @Parameter(description = "Conversation ID", required = true) @PathVariable Long conversationId,
-            @Parameter(description = "User ID (must be a participant)", required = true) @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
-        List<ChatMessageResponseDTO> messages = chatService.getMessages(conversationId, userId, page, size);
+        List<ChatMessageResponseDTO> messages = chatService.getMessages(conversationId, principalId(), page, size);
         return ResponseEntity.ok(ApiResponse.success(messages));
     }
 
@@ -68,9 +86,8 @@ public class ChatController {
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Conversations listed")
     })
-    public ResponseEntity<ApiResponse<List<ConversationResponseDTO>>> getConversations(
-            @Parameter(description = "User ID", required = true) @RequestParam Long userId) {
-        List<ConversationResponseDTO> conversations = chatService.getConversations(userId);
+    public ResponseEntity<ApiResponse<List<ConversationResponseDTO>>> getConversations() {
+        List<ConversationResponseDTO> conversations = chatService.getConversations(principalId());
         return ResponseEntity.ok(ApiResponse.success(conversations));
     }
 
@@ -81,9 +98,8 @@ public class ChatController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Conversation not found")
     })
     public ResponseEntity<ApiResponse<String>> markAsRead(
-            @Parameter(description = "Conversation ID", required = true) @PathVariable Long conversationId,
-            @Parameter(description = "User ID", required = true) @RequestParam Long userId) {
-        chatService.markAsRead(conversationId, userId);
+            @Parameter(description = "Conversation ID", required = true) @PathVariable Long conversationId) {
+        chatService.markAsRead(conversationId, principalId());
         return ResponseEntity.ok(ApiResponse.success("Messages marked as read"));
     }
 }

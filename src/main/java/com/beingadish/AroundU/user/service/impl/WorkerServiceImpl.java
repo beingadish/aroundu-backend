@@ -124,6 +124,18 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     @Transactional
+    public WorkerDetailDTO updateDutyStatus(Long workerId, boolean isOnDuty) {
+        Worker worker = workerReadRepository.findById(workerId)
+                .orElseThrow(() -> new WorkerNotFoundException("Worker with id %d does not exist".formatted(workerId)));
+        worker.setIsOnDuty(isOnDuty);
+        Worker updated = workerWriteRepository.save(worker);
+        log.info("Updated duty status for worker id={} isOnDuty={}", workerId, isOnDuty);
+        WorkerModel model = workerMapper.toModel(updated);
+        return workerMapper.modelToWorkerDetailDto(model);
+    }
+
+    @Override
+    @Transactional
     public void deleteWorker(Long workerId) {
         Worker worker = workerReadRepository.findById(workerId)
                 .orElseThrow(() -> new WorkerNotFoundException("Worker with id %d does not exist".formatted(workerId)));

@@ -1,10 +1,15 @@
 package com.beingadish.AroundU.job.controller;
 
 import com.beingadish.AroundU.common.dto.ApiResponse;
-import com.beingadish.AroundU.common.util.PageResponse;
-import com.beingadish.AroundU.infrastructure.ratelimit.RateLimit;
-import com.beingadish.AroundU.job.dto.*;
+import com.beingadish.AroundU.job.dto.JobCreateRequest;
+import com.beingadish.AroundU.job.dto.JobDetailDTO;
+import com.beingadish.AroundU.job.dto.JobFilterRequest;
+import com.beingadish.AroundU.job.dto.JobStatusUpdateRequest;
+import com.beingadish.AroundU.job.dto.JobSummaryDTO;
+import com.beingadish.AroundU.job.dto.JobUpdateRequest;
+import com.beingadish.AroundU.job.dto.WorkerJobFeedRequest;
 import com.beingadish.AroundU.job.service.JobService;
+import com.beingadish.AroundU.common.util.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,6 +25,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import com.beingadish.AroundU.infrastructure.ratelimit.RateLimit;
+
 import static com.beingadish.AroundU.common.constants.URIConstants.JOB_BASE;
 
 @RestController
@@ -33,9 +40,9 @@ public class JobController {
     @PostMapping
     @Operation(summary = "Create job", description = "Client creates a job with required skills and location. Only CLIENT role permitted.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Job created"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Only clients can create jobs")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Job created"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Only clients can create jobs")
     })
     @PreAuthorize("hasRole('ADMIN') or (hasRole('CLIENT') and #clientId == authentication.principal.id)")
     @RateLimit(capacity = 5, refillTokens = 5, refillMinutes = 60)
@@ -64,9 +71,9 @@ public class JobController {
     @PreAuthorize("hasRole('ADMIN') or #workerId == authentication.principal.id")
     @Operation(summary = "Worker updates job status", description = "Worker can start task or mark complete", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Status updated"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid transition"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not the assigned worker")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Status updated"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid transition"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not the assigned worker")
     })
     public ResponseEntity<ApiResponse<JobDetailDTO>> updateJobStatusByWorker(@PathVariable Long jobId, @RequestParam Long workerId, @Valid @RequestBody JobStatusUpdateRequest request) {
         JobDetailDTO dto = jobService.updateJobStatusByWorker(jobId, workerId, request);
@@ -79,9 +86,9 @@ public class JobController {
             description = "Worker cancels an accepted/in-progress job. Triggers cancellation penalty.",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Job cancelled, penalty applied"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid state for cancellation"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not the assigned worker")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Job cancelled, penalty applied"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid state for cancellation"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Not the assigned worker")
     })
     public ResponseEntity<ApiResponse<JobDetailDTO>> cancelJobByWorker(
             @PathVariable Long jobId, @RequestParam Long workerId) {
@@ -93,9 +100,9 @@ public class JobController {
     @PreAuthorize("hasRole('ADMIN') or #clientId == authentication.principal.id")
     @Operation(summary = "Delete job", description = "Client deletes a job they created", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<ApiResponse<String>> deleteJob(@PathVariable Long jobId, @RequestParam Long clientId) {
         jobService.deleteJob(jobId, clientId);
@@ -141,6 +148,15 @@ public class JobController {
     public ResponseEntity<ApiResponse<JobDetailDTO>> getJobForWorker(@PathVariable Long workerId, @PathVariable Long jobId) {
         JobDetailDTO dto = jobService.getJobForWorker(jobId, workerId);
         return ResponseEntity.ok(ApiResponse.success(dto));
+    }
+
+    @GetMapping("/worker/{workerId}/my-jobs")
+    @PreAuthorize("hasRole('ADMIN') or #workerId == authentication.principal.id")
+    @Operation(summary = "Worker job history", description = "All jobs the worker has bid on, optionally filtered by status codes", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<List<JobSummaryDTO>>> getWorkerMyJobs(
+            @PathVariable Long workerId,
+            @RequestParam(required = false) List<String> statuses) {
+        return ResponseEntity.ok(ApiResponse.success(jobService.getWorkerMyJobs(workerId, statuses)));
     }
 
     @GetMapping("/{jobId}")

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface WorkerService {
+
     void registerWorker(WorkerSignupRequestDTO workerSignupRequestDTO);
 
     WorkerDetailDTO getWorkerDetails(Long workerId);
@@ -15,6 +16,8 @@ public interface WorkerService {
     Page<WorkerDetailDTO> getAllWorkers(int page, int size);
 
     WorkerDetailDTO updateWorkerDetails(Long workerId, WorkerUpdateRequestDTO updateRequest);
+
+    WorkerDetailDTO updateDutyStatus(Long workerId, boolean isOnDuty);
 
     void deleteWorker(Long workerId);
 }

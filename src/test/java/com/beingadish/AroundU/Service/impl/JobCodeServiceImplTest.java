@@ -141,7 +141,7 @@ class JobCodeServiceImplTest {
     }
 
     @Test
-    void verifyReleaseCode_completesWhenOwnerAndStatusValid() {
+    void verifyReleaseCode_completesWhenWorkerMatchesAndStatusValid() {
         job.setJobStatus(JobStatus.IN_PROGRESS);
         JobConfirmationCode confirmation = JobConfirmationCode.builder()
                 .job(job)
@@ -154,7 +154,7 @@ class JobCodeServiceImplTest {
         when(codeRepository.findByJob(job)).thenReturn(Optional.of(confirmation));
         when(codeRepository.save(confirmation)).thenReturn(confirmation);
 
-        JobConfirmationCode result = jobCodeService.verifyReleaseCode(job.getId(), client.getId(), "654321");
+        JobConfirmationCode result = jobCodeService.verifyReleaseCode(job.getId(), worker.getId(), "654321");
 
         assertSame(confirmation, result);
         assertEquals(JobCodeStatus.COMPLETED, confirmation.getStatus());
@@ -176,7 +176,7 @@ class JobCodeServiceImplTest {
         when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
         when(codeRepository.findByJob(job)).thenReturn(Optional.of(confirmation));
 
-        assertThrows(IllegalStateException.class, () -> jobCodeService.verifyReleaseCode(job.getId(), client.getId(), "654321"));
+        assertThrows(IllegalStateException.class, () -> jobCodeService.verifyReleaseCode(job.getId(), worker.getId(), "654321"));
     }
 
     @Test

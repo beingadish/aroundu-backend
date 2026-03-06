@@ -10,8 +10,9 @@ public interface ChatService {
 
     /**
      * Send a message within a job conversation. Creates conversation if needed.
+     * senderRole must be "WORKER" or "CLIENT".
      */
-    ChatMessageResponseDTO sendMessage(Long jobId, Long senderId, ChatMessageRequest request);
+    ChatMessageResponseDTO sendMessage(Long jobId, Long senderId, String senderRole, ChatMessageRequest request);
 
     /**
      * Get messages for a conversation (paginated, newest first).

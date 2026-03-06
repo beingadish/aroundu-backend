@@ -1,8 +1,5 @@
 package com.beingadish.AroundU.review.entity;
 
-import com.beingadish.AroundU.job.entity.Job;
-import com.beingadish.AroundU.user.entity.Client;
-import com.beingadish.AroundU.user.entity.Worker;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -15,9 +12,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+import com.beingadish.AroundU.job.entity.Job;
+import com.beingadish.AroundU.user.entity.Client;
+import com.beingadish.AroundU.user.entity.Worker;
+
 @Entity
 @Table(name = "reviews", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"job_id", "reviewer_id"})
+    @UniqueConstraint(columnNames = {"job_id", "reviewer_id"})
 })
 @Getter
 @Setter

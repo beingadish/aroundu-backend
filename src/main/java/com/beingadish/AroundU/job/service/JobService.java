@@ -1,7 +1,13 @@
 package com.beingadish.AroundU.job.service;
 
+import com.beingadish.AroundU.job.dto.JobCreateRequest;
+import com.beingadish.AroundU.job.dto.JobDetailDTO;
+import com.beingadish.AroundU.job.dto.JobFilterRequest;
+import com.beingadish.AroundU.job.dto.JobStatusUpdateRequest;
+import com.beingadish.AroundU.job.dto.JobSummaryDTO;
+import com.beingadish.AroundU.job.dto.JobUpdateRequest;
+import com.beingadish.AroundU.job.dto.WorkerJobFeedRequest;
 import com.beingadish.AroundU.common.util.PageResponse;
-import com.beingadish.AroundU.job.dto.*;
 
 import java.util.List;
 
@@ -38,6 +44,12 @@ public interface JobService {
      * penalty.
      */
     JobDetailDTO cancelJobByWorker(Long jobId, Long workerId);
+
+    /**
+     * Returns all jobs the worker has a bid on (or has been assigned to),
+     * optionally filtered by job status codes.
+     */
+    List<JobSummaryDTO> getWorkerMyJobs(Long workerId, List<String> statuses);
 
     void deleteJob(Long jobId, Long clientId);
 }
