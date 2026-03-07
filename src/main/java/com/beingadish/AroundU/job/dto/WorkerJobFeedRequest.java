@@ -13,6 +13,19 @@ public class WorkerJobFeedRequest {
 
     private List<Long> skillIds;
     private Double radiusKm;
+
+    /**
+     * Worker's current GPS latitude — used for proximity search instead of
+     * stored address.
+     */
+    private Double latitude;
+
+    /**
+     * Worker's current GPS longitude — used for proximity search instead of
+     * stored address.
+     */
+    private Double longitude;
+
     @Min(0)
     private Integer page = 0;
     @Positive
@@ -55,6 +68,7 @@ public class WorkerJobFeedRequest {
                 + ":" + sortBy + ":" + sortDirection
                 + ":" + secondarySortBy + ":" + secondarySortDirection
                 + ":" + skillIds + ":" + radiusKm
-                + ":" + sortByDistance;
+                + ":" + sortByDistance
+                + ":" + latitude + ":" + longitude;
     }
 }

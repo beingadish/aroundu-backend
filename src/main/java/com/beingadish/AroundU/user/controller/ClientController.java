@@ -1,5 +1,6 @@
 package com.beingadish.AroundU.user.controller;
 
+import com.beingadish.AroundU.common.dto.AddressDTO;
 import com.beingadish.AroundU.common.dto.ApiResponse;
 import com.beingadish.AroundU.common.util.PageResponse;
 import com.beingadish.AroundU.infrastructure.ratelimit.RateLimit;
@@ -37,8 +38,8 @@ public class ClientController {
     @PostMapping(REGISTER)
     @Operation(summary = "Register client", description = "Creates a client account. Requires name, email, phoneNumber, password, currency, and a full currentAddress object.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Client registered"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Client registered"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ApiResponse.class)))
     })
     public ResponseEntity<ApiResponse<String>> registerClient(@Valid @RequestBody ClientRegisterRequestDTO request) {
         clientService.registerClient(request);
@@ -49,9 +50,9 @@ public class ClientController {
     @PreAuthorize("hasRole('ADMIN') or #clientId == authentication.principal.id")
     @Operation(summary = "Get client details", description = "Fetch client profile by id", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client found"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Client found"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
     @RateLimit(capacity = 100, refillTokens = 100, refillMinutes = 60)
     public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> getClientDetails(@PathVariable Long clientId) {
@@ -81,8 +82,8 @@ public class ClientController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "List clients", description = "Paged listing of clients (admin only)", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Page returned"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Page returned"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
     })
     public ResponseEntity<ApiResponse<PageResponse<ClientDetailsResponseDTO>>> getAllClients(@RequestParam int page, @RequestParam int size) {
         Page<ClientDetailsResponseDTO> p = clientService.getAllClients(page, size);
@@ -94,10 +95,10 @@ public class ClientController {
     @PreAuthorize("#clientId == authentication.principal.id or hasRole('ADMIN')")
     @Operation(summary = "Update client details", description = "Partial update of client profile fields", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Updated"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Updated"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> updateClientDetails(@PathVariable Long clientId, @Valid @RequestBody ClientUpdateRequestDTO updateRequestDetails) {
         ClientDetailsResponseDTO updated = clientService.updateClientDetails(clientId, updateRequestDetails);
@@ -108,12 +109,42 @@ public class ClientController {
     @PreAuthorize("hasRole('ADMIN') or #clientId == authentication.principal.id")
     @Operation(summary = "Delete client", description = "Deletes client and related data", security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Deleted"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<ApiResponse<String>> deleteClient(@PathVariable Long clientId) {
         clientService.deleteClient(clientId);
         return ResponseEntity.ok(ApiResponse.success("Client deleted successfully"));
+    }
+
+    @PostMapping("/{clientId}/addresses")
+    @PreAuthorize("hasRole('ADMIN') or #clientId == authentication.principal.id")
+    @Operation(summary = "Add saved address", description = "Adds a new saved address to the client profile", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Address added"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Client not found")
+    })
+    public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> addSavedAddress(
+            @PathVariable Long clientId, @Valid @RequestBody AddressDTO addressDTO) {
+        ClientDetailsResponseDTO updated = clientService.addSavedAddress(clientId, addressDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(updated));
+    }
+
+    @DeleteMapping("/{clientId}/addresses/{addressId}")
+    @PreAuthorize("hasRole('ADMIN') or #clientId == authentication.principal.id")
+    @Operation(summary = "Delete saved address", description = "Removes a saved address from the client profile", security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Address deleted"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid address"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<ApiResponse<ClientDetailsResponseDTO>> deleteSavedAddress(
+            @PathVariable Long clientId, @PathVariable Long addressId) {
+        ClientDetailsResponseDTO updated = clientService.deleteSavedAddress(clientId, addressId);
+        return ResponseEntity.ok(ApiResponse.success(updated));
     }
 }

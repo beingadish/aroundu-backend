@@ -46,8 +46,9 @@ public class ChatMessage {
     private String content;
 
     @Builder.Default
-    @Column(name = "is_read", nullable = false)
-    private Boolean isRead = false;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private MessageStatus status = MessageStatus.SENT;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -55,8 +56,12 @@ public class ChatMessage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ChatMessage that = (ChatMessage) o;
         return id != null && Objects.equals(id, that.id);
     }

@@ -47,6 +47,27 @@ public class Address {
     @Size(max = 500)
     private String fullAddress;
 
+    /**
+     * Short human label: Home, Work, Other, etc.
+     */
+    @Column
+    @Size(max = 100)
+    private String addressLabel;
+
+    /**
+     * Recipient / contact name at this address.
+     */
+    @Column
+    @Size(max = 200)
+    private String contactName;
+
+    /**
+     * Recipient phone number at this address.
+     */
+    @Column
+    @Size(max = 20)
+    private String contactPhone;
+
     @ManyToOne
     @JoinColumn(name = "client_id")
     @JsonBackReference

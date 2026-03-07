@@ -7,11 +7,13 @@ import lombok.Data;
 
 @Data
 public class UserModel {
+
     private Long id;
     private String name;
     private String email;
     private String phoneNumber;
     private Currency currency;
+    private String country;
     private AddressModel currentAddress;
     private VerificationStatusModel verificationStatus;
     private String hashedPassword;

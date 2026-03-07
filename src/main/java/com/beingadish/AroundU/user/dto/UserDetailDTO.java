@@ -13,11 +13,13 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public abstract class UserDetailDTO {
+
     private Long id;
     private String name;
     private String email;
     private String phoneNumber;
     private Currency currency;
+    private String country;
     private AddressDTO currentAddress;
     private VerificationStatusDTO verificationStatus;
     private String profileImageUrl;

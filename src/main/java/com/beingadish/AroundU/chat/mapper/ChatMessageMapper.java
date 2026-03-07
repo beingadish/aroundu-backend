@@ -11,6 +11,7 @@ import java.util.List;
 public interface ChatMessageMapper {
 
     @Mapping(target = "conversationId", source = "conversation.id")
+    @Mapping(target = "status", source = "status")
     ChatMessageResponseDTO toDto(ChatMessage message);
 
     List<ChatMessageResponseDTO> toDtoList(List<ChatMessage> messages);

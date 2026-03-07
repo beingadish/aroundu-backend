@@ -52,6 +52,9 @@ public abstract class User {
     @Enumerated(EnumType.STRING)
     private Currency currency;
 
+    @Column(length = 10)
+    private String country;
+
     @NotNull
     @NotEmpty
     private String hashedPassword;

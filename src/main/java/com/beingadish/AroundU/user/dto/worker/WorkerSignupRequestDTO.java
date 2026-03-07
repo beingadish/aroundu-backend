@@ -12,6 +12,7 @@ import java.util.List;
 
 @Data
 public class WorkerSignupRequestDTO {
+
     @NotBlank
     private String name;
     @Email
@@ -23,6 +24,7 @@ public class WorkerSignupRequestDTO {
     private String password;
     @NotNull
     private Currency currency;
+    private String country;
     @Valid
     @NotNull
     private AddressDTO currentAddress;

@@ -3,6 +3,7 @@ package com.beingadish.AroundU.chat.controller;
 import com.beingadish.AroundU.chat.dto.ChatMessageRequest;
 import com.beingadish.AroundU.chat.dto.ChatMessageResponseDTO;
 import com.beingadish.AroundU.chat.dto.ConversationResponseDTO;
+import com.beingadish.AroundU.chat.dto.JobConversationsDTO;
 import com.beingadish.AroundU.chat.service.ChatService;
 import com.beingadish.AroundU.common.dto.ApiResponse;
 import com.beingadish.AroundU.infrastructure.security.UserPrincipal;
@@ -44,7 +45,9 @@ public class ChatController {
 
     private String principalRole() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null) return "UNKNOWN";
+        if (auth == null) {
+            return "UNKNOWN";
+        }
         return auth.getAuthorities().stream()
                 .map(a -> a.getAuthority().replace("ROLE_", ""))
                 .findFirst()
@@ -82,7 +85,7 @@ public class ChatController {
     }
 
     @GetMapping("/conversations")
-    @Operation(summary = "List conversations", description = "Get all conversations for the authenticated user")
+    @Operation(summary = "List conversations", description = "Get all conversations for the authenticated user (flat list)")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Conversations listed")
     })
@@ -91,15 +94,38 @@ public class ChatController {
         return ResponseEntity.ok(ApiResponse.success(conversations));
     }
 
+    @GetMapping("/conversations/grouped")
+    @Operation(summary = "List conversations grouped by job",
+            description = "Get conversations grouped by job — ideal for client/provider view")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Grouped conversations listed")
+    })
+    public ResponseEntity<ApiResponse<List<JobConversationsDTO>>> getConversationsGroupedByJob() {
+        List<JobConversationsDTO> grouped = chatService.getConversationsGroupedByJob(principalId());
+        return ResponseEntity.ok(ApiResponse.success(grouped));
+    }
+
+    @PostMapping("/conversations/{conversationId}/delivered")
+    @Operation(summary = "Mark as delivered", description = "Mark all messages in a conversation as delivered")
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Messages marked as delivered"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Conversation not found")
+    })
+    public ResponseEntity<ApiResponse<List<Long>>> markAsDelivered(
+            @Parameter(description = "Conversation ID", required = true) @PathVariable Long conversationId) {
+        List<Long> updatedIds = chatService.markAsDelivered(conversationId, principalId());
+        return ResponseEntity.ok(ApiResponse.success(updatedIds));
+    }
+
     @PostMapping("/conversations/{conversationId}/read")
     @Operation(summary = "Mark as read", description = "Mark all messages in a conversation as read for the user")
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Messages marked as read"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Conversation not found")
     })
-    public ResponseEntity<ApiResponse<String>> markAsRead(
+    public ResponseEntity<ApiResponse<List<Long>>> markAsRead(
             @Parameter(description = "Conversation ID", required = true) @PathVariable Long conversationId) {
-        chatService.markAsRead(conversationId, principalId());
-        return ResponseEntity.ok(ApiResponse.success("Messages marked as read"));
+        List<Long> updatedIds = chatService.markAsRead(conversationId, principalId());
+        return ResponseEntity.ok(ApiResponse.success(updatedIds));
     }
 }

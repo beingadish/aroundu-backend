@@ -116,6 +116,10 @@ public class WorkerServiceImpl implements WorkerService {
             foundWorker.setCurrency(updateRequest.getCurrency());
         }
 
+        if (updateRequest.getCountry() != null && !updateRequest.getCountry().isBlank()) {
+            foundWorker.setCountry(updateRequest.getCountry().trim().toUpperCase());
+        }
+
         Worker updatedWorker = workerWriteRepository.save(foundWorker);
         log.info("Updated worker details for id={} email={}", workerId, updatedWorker.getEmail());
         WorkerModel updatedModel = workerMapper.toModel(updatedWorker);

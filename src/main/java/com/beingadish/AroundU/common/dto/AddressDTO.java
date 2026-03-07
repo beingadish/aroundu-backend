@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AddressDTO {
+
     private Long id;
     @NotNull
     private Country country;
@@ -25,4 +26,13 @@ public class AddressDTO {
     private Double longitude;
     @Size(max = 500)
     private String fullAddress;
+
+    @Size(max = 100)
+    private String addressLabel;
+
+    @Size(max = 200)
+    private String contactName;
+
+    @Size(max = 20)
+    private String contactPhone;
 }

@@ -1,5 +1,6 @@
 package com.beingadish.AroundU.user.dto.client;
 
+import com.beingadish.AroundU.common.constants.enums.Currency;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -17,4 +18,8 @@ public class ClientUpdateRequestDTO {
     private String phoneNumber;
 
     private String profileImageUrl;
+
+    private Currency currency;
+
+    private String country;
 }

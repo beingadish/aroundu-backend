@@ -29,4 +29,5 @@ public class WorkerUpdateRequestDTO {
     private Boolean isOnDuty;
     private String payoutAccount;
     private Currency currency;
+    private String country;
 }

@@ -1,5 +1,9 @@
 package com.beingadish.AroundU.user.service.impl;
 
+import com.beingadish.AroundU.common.dto.AddressDTO;
+import com.beingadish.AroundU.common.mapper.AddressMapper;
+import com.beingadish.AroundU.location.entity.Address;
+import com.beingadish.AroundU.location.repository.AddressRepository;
 import com.beingadish.AroundU.user.dto.client.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.user.dto.client.ClientRegisterRequestDTO;
 import com.beingadish.AroundU.user.dto.client.ClientUpdateRequestDTO;
@@ -30,6 +34,8 @@ public class ClientServiceImpl implements ClientService {
     private final ClientReadRepository clientReadRepository;
     private final ClientWriteRepository clientWriteRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AddressMapper addressMapper;
+    private final AddressRepository addressRepository;
 
     @Override
     @Transactional
@@ -59,8 +65,18 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new ClientNotFoundException("Client with id %d does not exists".formatted(clientId)));
 
         log.debug("Fetched client details for id={}", clientId);
-        ClientModel model = clientMapper.entityToModel(clientEntity);
-        return clientMapper.modelToClientDetailsResponseDto(model);
+        return mapToResponse(clientEntity);
+    }
+
+    private ClientDetailsResponseDTO mapToResponse(Client entity) {
+        ClientModel model = clientMapper.entityToModel(entity);
+        ClientDetailsResponseDTO dto = clientMapper.modelToClientDetailsResponseDto(model);
+        dto.setSavedAddresses(
+                entity.getSavedAddresses() == null
+                ? java.util.List.of()
+                : addressMapper.toDtoList(entity.getSavedAddresses())
+        );
+        return dto;
     }
 
     @Override
@@ -68,7 +84,7 @@ public class ClientServiceImpl implements ClientService {
     public Page<ClientDetailsResponseDTO> getAllClients(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Client> pageData = clientReadRepository.findAll(pageable);
-        return pageData.map(clientMapper::entityToModel).map(clientMapper::modelToClientDetailsResponseDto);
+        return pageData.map(this::mapToResponse);
     }
 
     @Override
@@ -96,10 +112,17 @@ public class ClientServiceImpl implements ClientService {
             foundClientEntity.setProfileImageUrl(updateRequest.getProfileImageUrl());
         }
 
+        if (updateRequest.getCurrency() != null) {
+            foundClientEntity.setCurrency(updateRequest.getCurrency());
+        }
+
+        if (updateRequest.getCountry() != null && !updateRequest.getCountry().isBlank()) {
+            foundClientEntity.setCountry(updateRequest.getCountry().trim().toUpperCase());
+        }
+
         Client updatedClientEntity = clientWriteRepository.save(foundClientEntity);
         log.info("Updated client details for id={} email={}", clientId, updatedClientEntity.getEmail());
-        ClientModel updatedModel = clientMapper.entityToModel(updatedClientEntity);
-        return clientMapper.modelToClientDetailsResponseDto(updatedModel);
+        return mapToResponse(updatedClientEntity);
     }
 
     @Override
@@ -110,5 +133,42 @@ public class ClientServiceImpl implements ClientService {
 
         clientWriteRepository.deleteById(clientId);
         log.info("Deleted client id={} email={}", clientId, client.getEmail());
+    }
+
+    @Override
+    @Transactional
+    public ClientDetailsResponseDTO addSavedAddress(Long clientId, AddressDTO addressDTO) {
+        Client client = clientReadRepository.findById(clientId)
+                .orElseThrow(() -> new ClientNotFoundException("Client with id %d does not exist".formatted(clientId)));
+
+        Address address = addressMapper.toEntity(addressDTO);
+        address.setClient(client);
+        if (client.getSavedAddresses() == null) {
+            client.setSavedAddresses(new java.util.ArrayList<>());
+        }
+        client.getSavedAddresses().add(address);
+        Client saved = clientWriteRepository.save(client);
+        log.info("Added saved address for client id={}", clientId);
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public ClientDetailsResponseDTO deleteSavedAddress(Long clientId, Long addressId) {
+        Client client = clientReadRepository.findById(clientId)
+                .orElseThrow(() -> new ClientNotFoundException("Client with id %d does not exist".formatted(clientId)));
+
+        if (client.getSavedAddresses() == null || client.getSavedAddresses().isEmpty()) {
+            throw new ClientValidationException("No saved addresses found");
+        }
+
+        boolean removed = client.getSavedAddresses().removeIf(a -> a.getAddressId().equals(addressId));
+        if (!removed) {
+            throw new ClientValidationException("Address with id %d not found in saved addresses".formatted(addressId));
+        }
+
+        Client saved = clientWriteRepository.save(client);
+        log.info("Deleted saved address id={} for client id={}", addressId, clientId);
+        return mapToResponse(saved);
     }
 }

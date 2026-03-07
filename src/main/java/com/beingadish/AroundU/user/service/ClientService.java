@@ -1,5 +1,6 @@
 package com.beingadish.AroundU.user.service;
 
+import com.beingadish.AroundU.common.dto.AddressDTO;
 import com.beingadish.AroundU.user.dto.client.ClientDetailsResponseDTO;
 import com.beingadish.AroundU.user.dto.client.ClientRegisterRequestDTO;
 import com.beingadish.AroundU.user.dto.client.ClientUpdateRequestDTO;
@@ -20,5 +21,9 @@ public interface ClientService {
     ClientDetailsResponseDTO updateClientDetails(Long clientId, ClientUpdateRequestDTO updateRequest);
 
     void deleteClient(Long clientId);
+
+    ClientDetailsResponseDTO addSavedAddress(Long clientId, AddressDTO addressDTO);
+
+    ClientDetailsResponseDTO deleteSavedAddress(Long clientId, Long addressId);
 
 }

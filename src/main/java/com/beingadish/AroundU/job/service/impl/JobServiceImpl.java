@@ -376,10 +376,19 @@ public class JobServiceImpl implements JobService {
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Double workerLat = worker.getCurrentAddress() != null ? worker.getCurrentAddress().getLatitude() : null;
-        Double workerLon = worker.getCurrentAddress() != null ? worker.getCurrentAddress().getLongitude() : null;
+        Double workerLat = request.getLatitude();
+        Double workerLon = request.getLongitude();
 
-        List<Long> geoJobIds = jobGeoService.findNearbyOpenJobs(workerLat, workerLon, radius, size * 3);
+        // Fall back to stored address if request doesn't provide live GPS coordinates
+        if (workerLat == null || workerLon == null) {
+            workerLat = worker.getCurrentAddress() != null ? worker.getCurrentAddress().getLatitude() : null;
+            workerLon = worker.getCurrentAddress() != null ? worker.getCurrentAddress().getLongitude() : null;
+        }
+
+        final Double finalWorkerLat = workerLat;
+        final Double finalWorkerLon = workerLon;
+
+        List<Long> geoJobIds = jobGeoService.findNearbyOpenJobs(finalWorkerLat, finalWorkerLon, radius, size * 3);
 
         Page<Job> jobsPage;
         if (!geoJobIds.isEmpty()) {
@@ -409,8 +418,8 @@ public class JobServiceImpl implements JobService {
                 .map(job -> {
                     JobSummaryDTO dto = jobMapper.toSummaryDto(job);
                     // Always enrich worker feed with distance when worker location is available
-                    if (workerLat != null && workerLon != null) {
-                        enrichWithDistance(dto, job, workerLat, workerLon);
+                    if (finalWorkerLat != null && finalWorkerLon != null) {
+                        enrichWithDistance(dto, job, finalWorkerLat, finalWorkerLon);
                     }
                     enrichWithPopularity(dto, job, bidCountsMap);
                     return dto;

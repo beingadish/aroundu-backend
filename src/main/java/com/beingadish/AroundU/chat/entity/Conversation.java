@@ -2,6 +2,7 @@ package com.beingadish.AroundU.chat.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -53,10 +54,28 @@ public class Conversation {
     @Column
     private LocalDateTime lastMessageAt;
 
+    @Size(max = 200)
+    @Column(length = 200)
+    private String lastMessageContent;
+
+    @Column(name = "last_message_sender_id")
+    private Long lastMessageSenderId;
+
+    /**
+     * Set when the associated job reaches a terminal state (COMPLETED /
+     * CANCELLED).
+     */
+    @Column
+    private LocalDateTime archivedAt;
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Conversation that = (Conversation) o;
         return id != null && Objects.equals(id, that.id);
     }

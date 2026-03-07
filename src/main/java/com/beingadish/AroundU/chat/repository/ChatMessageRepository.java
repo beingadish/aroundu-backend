@@ -1,6 +1,7 @@
 package com.beingadish.AroundU.chat.repository;
 
 import com.beingadish.AroundU.chat.entity.ChatMessage;
+import com.beingadish.AroundU.chat.entity.MessageStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,15 +10,54 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
     Page<ChatMessage> findByConversationIdOrderByCreatedAtDesc(Long conversationId, Pageable pageable);
 
-    long countByConversationIdAndIsReadFalseAndSenderIdNot(Long conversationId, Long userId);
+    /**
+     * Count unread messages (status != READ) sent by the other participant.
+     */
+    long countByConversationIdAndStatusNotAndSenderIdNot(Long conversationId, MessageStatus status, Long userId);
 
+    /**
+     * Find messages not yet delivered, sent by the other participant.
+     */
+    @Query("SELECT m FROM ChatMessage m WHERE m.conversation.id = :conversationId "
+            + "AND m.senderId <> :userId AND m.status = 'SENT'")
+    List<ChatMessage> findUndelivered(@Param("conversationId") Long conversationId,
+            @Param("userId") Long userId);
+
+    /**
+     * Find messages not yet read, sent by the other participant.
+     */
+    @Query("SELECT m FROM ChatMessage m WHERE m.conversation.id = :conversationId "
+            + "AND m.senderId <> :userId AND m.status <> 'READ'")
+    List<ChatMessage> findUnread(@Param("conversationId") Long conversationId,
+            @Param("userId") Long userId);
+
+    /**
+     * Bulk mark as delivered. Returns count of updated rows.
+     */
     @Modifying
-    @Query("UPDATE ChatMessage m SET m.isRead = true " +
-           "WHERE m.conversation.id = :conversationId AND m.senderId <> :userId AND m.isRead = false")
+    @Query("UPDATE ChatMessage m SET m.status = 'DELIVERED' "
+            + "WHERE m.conversation.id = :conversationId AND m.senderId <> :userId AND m.status = 'SENT'")
+    int markAsDelivered(@Param("conversationId") Long conversationId, @Param("userId") Long userId);
+
+    /**
+     * Bulk mark as read. Returns count of updated rows.
+     */
+    @Modifying
+    @Query("UPDATE ChatMessage m SET m.status = 'READ' "
+            + "WHERE m.conversation.id = :conversationId AND m.senderId <> :userId AND m.status <> 'READ'")
     int markAsRead(@Param("conversationId") Long conversationId, @Param("userId") Long userId);
+
+    /**
+     * Delete all messages belonging to given conversations.
+     */
+    @Modifying
+    @Query("DELETE FROM ChatMessage m WHERE m.conversation.id IN :conversationIds")
+    int deleteByConversationIds(@Param("conversationIds") List<Long> conversationIds);
 }

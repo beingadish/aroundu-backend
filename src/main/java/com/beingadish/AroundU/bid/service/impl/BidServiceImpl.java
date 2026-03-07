@@ -33,8 +33,9 @@ import java.util.List;
 @Slf4j
 public class BidServiceImpl implements BidService {
 
-    private static final List<JobStatus> WORKER_ACTIVE_STATUSES = List.of(
-            JobStatus.BID_SELECTED_AWAITING_HANDSHAKE,
+    // Statuses where a worker is actively performing a job and cannot accept
+    // another job via handshake. Bidding itself is unrestricted.
+    private static final List<JobStatus> WORKER_PERFORMING_STATUSES = List.of(
             JobStatus.READY_TO_START,
             JobStatus.IN_PROGRESS,
             JobStatus.COMPLETED_PENDING_PAYMENT
@@ -64,10 +65,8 @@ public class BidServiceImpl implements BidService {
             if (worker.isBlocked()) {
                 throw new IllegalStateException("Worker is temporarily blocked due to cancellation penalty");
             }
-            // Single active job enforcement: worker cannot bid if already engaged
-            if (jobRepository.hasActiveJobAsWorker(workerId, WORKER_ACTIVE_STATUSES)) {
-                throw new IllegalStateException("Worker already has an active job and cannot place new bids");
-            }
+            // Note: workers may freely bid on multiple jobs; only accepting (handshake)
+            // a job is restricted to one at a time.
             bidDuplicateCheckService.validateNoDuplicateBid(workerId, jobId);
             Bid bid = bidMapper.toEntity(request, job, worker);
             Bid saved = bidRepository.save(bid);
@@ -126,8 +125,7 @@ public class BidServiceImpl implements BidService {
         }
         if (Boolean.TRUE.equals(request.getAccepted())) {
             // Single active job enforcement: worker cannot accept if already engaged
-            if (jobRepository.hasActiveJobAsWorker(workerId,
-                    List.of(JobStatus.READY_TO_START, JobStatus.IN_PROGRESS, JobStatus.COMPLETED_PENDING_PAYMENT))) {
+            if (jobRepository.hasActiveJobAsWorker(workerId, WORKER_PERFORMING_STATUSES)) {
                 throw new IllegalStateException(
                         "Worker already has an active job. Complete or release the current job before accepting a new one.");
             }

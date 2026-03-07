@@ -3,8 +3,10 @@ package com.beingadish.AroundU.chat.service;
 import com.beingadish.AroundU.chat.dto.ChatMessageRequest;
 import com.beingadish.AroundU.chat.dto.ChatMessageResponseDTO;
 import com.beingadish.AroundU.chat.dto.ConversationResponseDTO;
+import com.beingadish.AroundU.chat.dto.JobConversationsDTO;
 import com.beingadish.AroundU.chat.entity.ChatMessage;
 import com.beingadish.AroundU.chat.entity.Conversation;
+import com.beingadish.AroundU.chat.entity.MessageStatus;
 import com.beingadish.AroundU.chat.exception.ChatValidationException;
 import com.beingadish.AroundU.chat.exception.ConversationNotFoundException;
 import com.beingadish.AroundU.chat.mapper.ChatMessageMapper;
@@ -25,8 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,7 +57,6 @@ public class ChatServiceImpl implements ChatService {
             throw new ChatValidationException("Cannot send messages for a job without an assigned worker");
         }
 
-        // Validate using role + id to avoid collisions between worker/client tables
         boolean senderIsClient = "CLIENT".equalsIgnoreCase(senderRole) && senderId.equals(clientId);
         boolean senderIsWorker = "WORKER".equalsIgnoreCase(senderRole) && senderId.equals(workerId);
 
@@ -64,7 +64,6 @@ public class ChatServiceImpl implements ChatService {
             throw new ChatValidationException("Sender is not a participant of this job");
         }
 
-        // Validate recipient matches the other participant
         if (senderIsClient && !recipientId.equals(workerId)) {
             throw new ChatValidationException("Recipient must be the assigned worker");
         }
@@ -90,12 +89,18 @@ public class ChatServiceImpl implements ChatService {
                 .senderId(senderId)
                 .senderRole(senderRole.toUpperCase())
                 .content(request.getContent().trim())
-                .isRead(false)
+                .status(MessageStatus.SENT)
                 .build();
         ChatMessage saved = chatMessageRepository.save(message);
 
-        // Update conversation timestamp
+        // Update conversation metadata
+        String preview = request.getContent().trim();
+        if (preview.length() > 200) {
+            preview = preview.substring(0, 200);
+        }
         conversation.setLastMessageAt(LocalDateTime.now());
+        conversation.setLastMessageContent(preview);
+        conversation.setLastMessageSenderId(senderId);
         conversationRepository.save(conversation);
 
         log.info("Message sent in conversation {} for job {} by {} {}", conversation.getId(), jobId, senderRole, senderId);
@@ -108,9 +113,8 @@ public class ChatServiceImpl implements ChatService {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException("Conversation not found: " + conversationId));
 
-        // Validate user is a participant
-        if (!conversation.getParticipantOneId().equals(userId) &&
-            !conversation.getParticipantTwoId().equals(userId)) {
+        if (!conversation.getParticipantOneId().equals(userId)
+                && !conversation.getParticipantTwoId().equals(userId)) {
             throw new ChatValidationException("User is not a participant of this conversation");
         }
 
@@ -131,17 +135,140 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<JobConversationsDTO> getConversationsGroupedByJob(Long userId) {
+        List<Conversation> conversations = conversationRepository.findByParticipant(userId);
+
+        // Group by jobId
+        Map<Long, List<Conversation>> byJob = conversations.stream()
+                .collect(Collectors.groupingBy(c -> c.getJob().getId(), LinkedHashMap::new, Collectors.toList()));
+
+        List<JobConversationsDTO> result = new ArrayList<>();
+        for (Map.Entry<Long, List<Conversation>> entry : byJob.entrySet()) {
+            List<Conversation> jobConversations = entry.getValue();
+            Conversation first = jobConversations.get(0);
+            Job job = first.getJob();
+
+            List<ConversationResponseDTO> convDtos = jobConversations.stream()
+                    .map(c -> mapConversationToDto(c, userId))
+                    .collect(Collectors.toList());
+
+            long totalUnread = convDtos.stream().mapToLong(ConversationResponseDTO::getUnreadCount).sum();
+
+            // Find the most recent message across all conversations for this job
+            LocalDateTime latestMsg = jobConversations.stream()
+                    .map(Conversation::getLastMessageAt)
+                    .filter(Objects::nonNull)
+                    .max(LocalDateTime::compareTo)
+                    .orElse(null);
+
+            String latestContent = jobConversations.stream()
+                    .filter(c -> c.getLastMessageAt() != null)
+                    .max(Comparator.comparing(Conversation::getLastMessageAt))
+                    .map(Conversation::getLastMessageContent)
+                    .orElse(null);
+
+            boolean archived = first.getArchivedAt() != null;
+
+            result.add(JobConversationsDTO.builder()
+                    .jobId(job.getId())
+                    .jobTitle(job.getTitle())
+                    .jobStatus(job.getJobStatus().name())
+                    .totalUnreadCount(totalUnread)
+                    .lastMessageContent(latestContent)
+                    .lastMessageAt(latestMsg != null ? latestMsg.toString() : null)
+                    .archived(archived)
+                    .conversations(convDtos)
+                    .build());
+        }
+
+        // Sort by most recent message
+        result.sort((a, b) -> {
+            if (a.getLastMessageAt() == null && b.getLastMessageAt() == null) {
+                return 0;
+            }
+            if (a.getLastMessageAt() == null) {
+                return 1;
+            }
+            if (b.getLastMessageAt() == null) {
+                return -1;
+            }
+            return b.getLastMessageAt().compareTo(a.getLastMessageAt());
+        });
+
+        return result;
+    }
+
+    @Override
     @Transactional
-    public void markAsRead(Long conversationId, Long userId) {
+    public List<Long> markAsDelivered(Long conversationId, Long userId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException("Conversation not found: " + conversationId));
 
-        if (!conversation.getParticipantOneId().equals(userId) &&
-            !conversation.getParticipantTwoId().equals(userId)) {
-            throw new ChatValidationException("User is not a participant of this conversation");
+        validateParticipant(conversation, userId);
+
+        List<ChatMessage> undelivered = chatMessageRepository.findUndelivered(conversationId, userId);
+        List<Long> ids = undelivered.stream().map(ChatMessage::getId).collect(Collectors.toList());
+
+        if (!ids.isEmpty()) {
+            chatMessageRepository.markAsDelivered(conversationId, userId);
         }
 
-        chatMessageRepository.markAsRead(conversationId, userId);
+        return ids;
+    }
+
+    @Override
+    @Transactional
+    public List<Long> markAsRead(Long conversationId, Long userId) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ConversationNotFoundException("Conversation not found: " + conversationId));
+
+        validateParticipant(conversation, userId);
+
+        List<ChatMessage> unread = chatMessageRepository.findUnread(conversationId, userId);
+        List<Long> ids = unread.stream().map(ChatMessage::getId).collect(Collectors.toList());
+
+        if (!ids.isEmpty()) {
+            chatMessageRepository.markAsRead(conversationId, userId);
+        }
+
+        return ids;
+    }
+
+    @Override
+    @Transactional
+    public void archiveCompletedConversations() {
+        List<Conversation> toArchive = conversationRepository.findConversationsToArchive();
+        LocalDateTime now = LocalDateTime.now();
+        for (Conversation c : toArchive) {
+            c.setArchivedAt(now);
+        }
+        if (!toArchive.isEmpty()) {
+            conversationRepository.saveAll(toArchive);
+            log.info("Archived {} conversations for completed/cancelled jobs", toArchive.size());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteExpiredConversations() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
+        List<Conversation> expired = conversationRepository.findExpiredArchived(cutoff);
+
+        if (!expired.isEmpty()) {
+            List<Long> ids = expired.stream().map(Conversation::getId).collect(Collectors.toList());
+            chatMessageRepository.deleteByConversationIds(ids);
+            conversationRepository.deleteByIds(ids);
+            log.info("Deleted {} expired conversations (archived > 30 days)", ids.size());
+        }
+    }
+
+    // ── Private helpers ──────────────────────────────────────────
+    private void validateParticipant(Conversation conversation, Long userId) {
+        if (!conversation.getParticipantOneId().equals(userId)
+                && !conversation.getParticipantTwoId().equals(userId)) {
+            throw new ChatValidationException("User is not a participant of this conversation");
+        }
     }
 
     private ConversationResponseDTO mapConversationToDto(Conversation conversation, Long currentUserId) {
@@ -149,18 +276,25 @@ public class ChatServiceImpl implements ChatService {
         dto.setId(conversation.getId());
         dto.setJobId(conversation.getJob().getId());
         dto.setJobTitle(conversation.getJob().getTitle());
+        dto.setJobStatus(conversation.getJob().getJobStatus().name());
         dto.setParticipantOneId(conversation.getParticipantOneId());
         dto.setParticipantTwoId(conversation.getParticipantTwoId());
         dto.setLastMessageAt(conversation.getLastMessageAt());
+        dto.setLastMessageContent(conversation.getLastMessageContent());
+        dto.setLastMessageSenderId(conversation.getLastMessageSenderId());
         dto.setCreatedAt(conversation.getCreatedAt());
+
+        // Archive status
+        dto.setArchivedAt(conversation.getArchivedAt());
+        dto.setArchived(conversation.getArchivedAt() != null);
 
         // Resolve names
         dto.setParticipantOneName(resolveUserName(conversation.getParticipantOneId()));
         dto.setParticipantTwoName(resolveUserName(conversation.getParticipantTwoId()));
 
-        // Unread count for current user
-        long unread = chatMessageRepository.countByConversationIdAndIsReadFalseAndSenderIdNot(
-                conversation.getId(), currentUserId);
+        // Unread count: messages not READ, sent by the other participant
+        long unread = chatMessageRepository.countByConversationIdAndStatusNotAndSenderIdNot(
+                conversation.getId(), MessageStatus.READ, currentUserId);
         dto.setUnreadCount(unread);
 
         return dto;
