@@ -25,7 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
-@Profile("!test")
+@Profile("dev")
 public class SecurityConfig {
 
     private static final String ADMIN = "ADMIN";
