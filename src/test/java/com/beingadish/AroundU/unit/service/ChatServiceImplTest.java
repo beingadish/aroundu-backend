@@ -330,10 +330,10 @@ class ChatServiceImplTest {
             when(conversationRepository.findByParticipant(1L)).thenReturn(List.of(conversation));
             when(clientReadRepository.findById(1L)).thenReturn(Optional.of(client));
             when(workerReadRepository.findById(10L)).thenReturn(Optional.of(worker));
-            when(chatMessageRepository.countByConversationIdAndStatusNotAndSenderIdNot(
-                    eq(500L), eq(MessageStatus.READ), eq(1L))).thenReturn(3L);
+            when(chatMessageRepository.countUnreadByRole(
+                    eq(500L), eq(MessageStatus.READ), eq("CLIENT"))).thenReturn(3L);
 
-            List<ConversationResponseDTO> result = chatService.getConversations(1L);
+            List<ConversationResponseDTO> result = chatService.getConversations(1L, "CLIENT");
 
             assertEquals(1, result.size());
             ConversationResponseDTO dto = result.get(0);
@@ -352,10 +352,10 @@ class ChatServiceImplTest {
             when(conversationRepository.findByParticipant(1L)).thenReturn(List.of(conversation));
             when(clientReadRepository.findById(1L)).thenReturn(Optional.of(client));
             when(workerReadRepository.findById(10L)).thenReturn(Optional.of(worker));
-            when(chatMessageRepository.countByConversationIdAndStatusNotAndSenderIdNot(anyLong(), any(), anyLong()))
+            when(chatMessageRepository.countUnreadByRole(anyLong(), any(), anyString()))
                     .thenReturn(0L);
 
-            List<ConversationResponseDTO> result = chatService.getConversations(1L);
+            List<ConversationResponseDTO> result = chatService.getConversations(1L, "CLIENT");
 
             assertTrue(result.get(0).isArchived());
             assertNotNull(result.get(0).getArchivedAt());
@@ -383,10 +383,10 @@ class ChatServiceImplTest {
             when(clientReadRepository.findById(1L)).thenReturn(Optional.of(client));
             when(workerReadRepository.findById(10L)).thenReturn(Optional.of(worker));
             when(workerReadRepository.findById(20L)).thenReturn(Optional.of(worker2));
-            when(chatMessageRepository.countByConversationIdAndStatusNotAndSenderIdNot(anyLong(), any(), anyLong()))
+            when(chatMessageRepository.countUnreadByRole(anyLong(), any(), anyString()))
                     .thenReturn(2L);
 
-            List<JobConversationsDTO> result = chatService.getConversationsGroupedByJob(1L);
+            List<JobConversationsDTO> result = chatService.getConversationsGroupedByJob(1L, "CLIENT");
 
             assertEquals(1, result.size());
             JobConversationsDTO group = result.get(0);
@@ -410,25 +410,25 @@ class ChatServiceImplTest {
                     .senderId(1L).senderRole("CLIENT").content("Hello").status(MessageStatus.SENT).build();
 
             when(conversationRepository.findById(500L)).thenReturn(Optional.of(conversation));
-            when(chatMessageRepository.findUndelivered(500L, 10L)).thenReturn(List.of(msg1, msg2));
-            when(chatMessageRepository.markAsDelivered(500L, 10L)).thenReturn(2);
+            when(chatMessageRepository.findUndelivered(500L, "WORKER")).thenReturn(List.of(msg1, msg2));
+            when(chatMessageRepository.markAsDelivered(500L, "WORKER")).thenReturn(2);
 
-            List<Long> ids = chatService.markAsDelivered(500L, 10L);
+            List<Long> ids = chatService.markAsDelivered(500L, 10L, "WORKER");
 
             assertEquals(List.of(1L, 2L), ids);
-            verify(chatMessageRepository).markAsDelivered(500L, 10L);
+            verify(chatMessageRepository).markAsDelivered(500L, "WORKER");
         }
 
         @Test
         @DisplayName("returns empty list when nothing to deliver")
         void returnsEmptyWhenNothingToDeliver() {
             when(conversationRepository.findById(500L)).thenReturn(Optional.of(conversation));
-            when(chatMessageRepository.findUndelivered(500L, 10L)).thenReturn(List.of());
+            when(chatMessageRepository.findUndelivered(500L, "WORKER")).thenReturn(List.of());
 
-            List<Long> ids = chatService.markAsDelivered(500L, 10L);
+            List<Long> ids = chatService.markAsDelivered(500L, 10L, "WORKER");
 
             assertTrue(ids.isEmpty());
-            verify(chatMessageRepository, never()).markAsDelivered(anyLong(), anyLong());
+            verify(chatMessageRepository, never()).markAsDelivered(anyLong(), anyString());
         }
     }
 
@@ -444,13 +444,13 @@ class ChatServiceImplTest {
                     .senderId(1L).senderRole("CLIENT").content("Read me").status(MessageStatus.DELIVERED).build();
 
             when(conversationRepository.findById(500L)).thenReturn(Optional.of(conversation));
-            when(chatMessageRepository.findUnread(500L, 10L)).thenReturn(List.of(msg));
-            when(chatMessageRepository.markAsRead(500L, 10L)).thenReturn(1);
+            when(chatMessageRepository.findUnread(500L, "WORKER")).thenReturn(List.of(msg));
+            when(chatMessageRepository.markAsRead(500L, "WORKER")).thenReturn(1);
 
-            List<Long> ids = chatService.markAsRead(500L, 10L);
+            List<Long> ids = chatService.markAsRead(500L, 10L, "WORKER");
 
             assertEquals(List.of(3L), ids);
-            verify(chatMessageRepository).markAsRead(500L, 10L);
+            verify(chatMessageRepository).markAsRead(500L, "WORKER");
         }
 
         @Test
@@ -459,7 +459,7 @@ class ChatServiceImplTest {
             when(conversationRepository.findById(999L)).thenReturn(Optional.empty());
 
             assertThrows(ConversationNotFoundException.class,
-                    () -> chatService.markAsRead(999L, 10L));
+                    () -> chatService.markAsRead(999L, 10L, "WORKER"));
         }
 
         @Test
@@ -468,7 +468,7 @@ class ChatServiceImplTest {
             when(conversationRepository.findById(500L)).thenReturn(Optional.of(conversation));
 
             assertThrows(ChatValidationException.class,
-                    () -> chatService.markAsRead(500L, 999L));
+                    () -> chatService.markAsRead(500L, 999L, "WORKER"));
         }
     }
 
