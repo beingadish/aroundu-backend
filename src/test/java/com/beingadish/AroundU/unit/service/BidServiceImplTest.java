@@ -11,6 +11,7 @@ import com.beingadish.AroundU.common.constants.enums.BidStatus;
 import com.beingadish.AroundU.common.constants.enums.JobStatus;
 import com.beingadish.AroundU.fixtures.JobTestBuilder;
 import com.beingadish.AroundU.fixtures.TestFixtures;
+import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
 import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import com.beingadish.AroundU.job.entity.Job;
 import com.beingadish.AroundU.job.repository.JobRepository;
@@ -56,6 +57,8 @@ class BidServiceImplTest {
     private MetricsService metricsService;
     @Mock
     private BidDuplicateCheckService bidDuplicateCheckService;
+    @Mock
+    private CacheEvictionService cacheEvictionService;
 
     @InjectMocks
     private BidServiceImpl bidService;
@@ -201,6 +204,7 @@ class BidServiceImplTest {
             assertNotNull(result);
             assertEquals(BidStatus.SELECTED, bid.getStatus());
             assertEquals(JobStatus.BID_SELECTED_AWAITING_HANDSHAKE, openJob.getJobStatus());
+            assertEquals(worker, openJob.getAssignedTo());
         }
 
         @Test

@@ -18,6 +18,7 @@ import com.beingadish.AroundU.job.repository.JobRepository;
 import com.beingadish.AroundU.user.repository.WorkerRepository;
 import com.beingadish.AroundU.bid.service.BidDuplicateCheckService;
 import com.beingadish.AroundU.bid.service.BidService;
+import com.beingadish.AroundU.infrastructure.cache.CacheEvictionService;
 import com.beingadish.AroundU.infrastructure.metrics.MetricsService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,7 @@ public class BidServiceImpl implements BidService {
     private final BidMapper bidMapper;
     private final MetricsService metricsService;
     private final BidDuplicateCheckService bidDuplicateCheckService;
+    private final CacheEvictionService cacheEvictionService;
 
     @Override
     public BidResponseDTO placeBid(Long jobId, Long workerId, BidCreateRequest request) {
@@ -98,7 +100,13 @@ public class BidServiceImpl implements BidService {
         bidRepository.save(bid);
         int rejectedCount = bidRepository.rejectOtherBids(job, bidId);
         job.setJobStatus(JobStatus.BID_SELECTED_AWAITING_HANDSHAKE);
+        // Tentatively assign the worker so chat and cancellation work during handshake.
+        // If the worker rejects the handshake this is cleared below.
+        job.setAssignedTo(bid.getWorker());
         jobRepository.save(job);
+        cacheEvictionService.evictJobDetail(job.getId());
+        cacheEvictionService.evictClientJobsCaches(clientId);
+        cacheEvictionService.evictWorkerFeedCaches();
         metricsService.getBidsAcceptedCounter().increment();
         for (int i = 0; i < rejectedCount; i++) {
             metricsService.getBidsRejectedCounter().increment();
@@ -134,9 +142,16 @@ public class BidServiceImpl implements BidService {
             job.setJobStatus(JobStatus.READY_TO_START);
         } else {
             bid.setStatus(BidStatus.REJECTED);
+            // Clear the tentative assignment set when the bid was accepted.
+            job.setAssignedTo(null);
         }
         bidRepository.save(bid);
         jobRepository.save(job);
+        cacheEvictionService.evictJobDetail(job.getId());
+        if (job.getCreatedBy() != null) {
+            cacheEvictionService.evictClientJobsCaches(job.getCreatedBy().getId());
+        }
+        cacheEvictionService.evictWorkerFeedCaches();
         return bidMapper.toDto(bid);
     }
 
