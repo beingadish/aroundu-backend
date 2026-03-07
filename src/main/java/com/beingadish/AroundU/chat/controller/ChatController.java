@@ -90,7 +90,7 @@ public class ChatController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Conversations listed")
     })
     public ResponseEntity<ApiResponse<List<ConversationResponseDTO>>> getConversations() {
-        List<ConversationResponseDTO> conversations = chatService.getConversations(principalId());
+        List<ConversationResponseDTO> conversations = chatService.getConversations(principalId(), principalRole());
         return ResponseEntity.ok(ApiResponse.success(conversations));
     }
 
@@ -101,7 +101,7 @@ public class ChatController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Grouped conversations listed")
     })
     public ResponseEntity<ApiResponse<List<JobConversationsDTO>>> getConversationsGroupedByJob() {
-        List<JobConversationsDTO> grouped = chatService.getConversationsGroupedByJob(principalId());
+        List<JobConversationsDTO> grouped = chatService.getConversationsGroupedByJob(principalId(), principalRole());
         return ResponseEntity.ok(ApiResponse.success(grouped));
     }
 
@@ -113,7 +113,7 @@ public class ChatController {
     })
     public ResponseEntity<ApiResponse<List<Long>>> markAsDelivered(
             @Parameter(description = "Conversation ID", required = true) @PathVariable Long conversationId) {
-        List<Long> updatedIds = chatService.markAsDelivered(conversationId, principalId());
+        List<Long> updatedIds = chatService.markAsDelivered(conversationId, principalId(), principalRole());
         return ResponseEntity.ok(ApiResponse.success(updatedIds));
     }
 
@@ -125,7 +125,7 @@ public class ChatController {
     })
     public ResponseEntity<ApiResponse<List<Long>>> markAsRead(
             @Parameter(description = "Conversation ID", required = true) @PathVariable Long conversationId) {
-        List<Long> updatedIds = chatService.markAsRead(conversationId, principalId());
+        List<Long> updatedIds = chatService.markAsRead(conversationId, principalId(), principalRole());
         return ResponseEntity.ok(ApiResponse.success(updatedIds));
     }
 }

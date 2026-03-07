@@ -18,6 +18,7 @@ public class ConversationResponseDTO {
     private long unreadCount;
     private String lastMessageContent;
     private Long lastMessageSenderId;
+    private String lastMessageSenderRole;
     private boolean archived;
     private LocalDateTime archivedAt;
     private LocalDateTime lastMessageAt;

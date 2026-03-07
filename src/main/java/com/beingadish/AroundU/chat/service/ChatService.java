@@ -22,25 +22,29 @@ public interface ChatService {
 
     /**
      * Get all conversations for a user (flat list — suitable for workers).
+     * userRole is "CLIENT" or "WORKER".
      */
-    List<ConversationResponseDTO> getConversations(Long userId);
+    List<ConversationResponseDTO> getConversations(Long userId, String userRole);
 
     /**
      * Get conversations grouped by job — suitable for clients/providers.
+     * userRole is "CLIENT" or "WORKER".
      */
-    List<JobConversationsDTO> getConversationsGroupedByJob(Long userId);
+    List<JobConversationsDTO> getConversationsGroupedByJob(Long userId, String userRole);
 
     /**
-     * Mark all messages in a conversation as delivered for the given user.
-     * Returns list of updated message IDs.
+     * Mark all messages in a conversation as delivered for the given user. Uses
+     * userRole for disambiguation when Client/Worker IDs overlap. Returns list
+     * of updated message IDs.
      */
-    List<Long> markAsDelivered(Long conversationId, Long userId);
+    List<Long> markAsDelivered(Long conversationId, Long userId, String userRole);
 
     /**
-     * Mark all messages in a conversation as read for the given user. Returns
-     * list of updated message IDs.
+     * Mark all messages in a conversation as read for the given user. Uses
+     * userRole for disambiguation when Client/Worker IDs overlap. Returns list
+     * of updated message IDs.
      */
-    List<Long> markAsRead(Long conversationId, Long userId);
+    List<Long> markAsRead(Long conversationId, Long userId, String userRole);
 
     /**
      * Archive conversations whose jobs have ended.

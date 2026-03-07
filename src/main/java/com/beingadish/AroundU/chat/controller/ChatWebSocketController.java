@@ -77,8 +77,11 @@ public class ChatWebSocketController {
     public void markDelivered(@DestinationVariable Long conversationId,
             Principal principal) {
         UserPrincipal user = (UserPrincipal) ((org.springframework.security.authentication.UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        String role = user.getAuthorities().stream()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .findFirst().orElse("UNKNOWN");
 
-        List<Long> updatedIds = chatService.markAsDelivered(conversationId, user.getId());
+        List<Long> updatedIds = chatService.markAsDelivered(conversationId, user.getId(), role);
 
         for (Long msgId : updatedIds) {
             messagingTemplate.convertAndSend(
@@ -95,8 +98,11 @@ public class ChatWebSocketController {
     public void markRead(@DestinationVariable Long conversationId,
             Principal principal) {
         UserPrincipal user = (UserPrincipal) ((org.springframework.security.authentication.UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        String role = user.getAuthorities().stream()
+                .map(a -> a.getAuthority().replace("ROLE_", ""))
+                .findFirst().orElse("UNKNOWN");
 
-        List<Long> updatedIds = chatService.markAsRead(conversationId, user.getId());
+        List<Long> updatedIds = chatService.markAsRead(conversationId, user.getId(), role);
 
         for (Long msgId : updatedIds) {
             messagingTemplate.convertAndSend(

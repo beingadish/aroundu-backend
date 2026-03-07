@@ -19,40 +19,50 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     /**
      * Count unread messages (status != READ) sent by the other participant.
+     * Uses senderRole rather than senderId because Client and Worker tables
+     * have independent ID sequences that can overlap.
      */
-    long countByConversationIdAndStatusNotAndSenderIdNot(Long conversationId, MessageStatus status, Long userId);
+    @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.conversation.id = :conversationId "
+            + "AND m.status <> :status AND m.senderRole <> :currentRole")
+    long countUnreadByRole(@Param("conversationId") Long conversationId,
+            @Param("status") MessageStatus status,
+            @Param("currentRole") String currentRole);
 
     /**
-     * Find messages not yet delivered, sent by the other participant.
+     * Find messages not yet delivered, sent by the other participant. Uses
+     * senderRole for disambiguation (see countUnreadByRole).
      */
     @Query("SELECT m FROM ChatMessage m WHERE m.conversation.id = :conversationId "
-            + "AND m.senderId <> :userId AND m.status = 'SENT'")
+            + "AND m.senderRole <> :currentRole AND m.status = 'SENT'")
     List<ChatMessage> findUndelivered(@Param("conversationId") Long conversationId,
-            @Param("userId") Long userId);
+            @Param("currentRole") String currentRole);
 
     /**
-     * Find messages not yet read, sent by the other participant.
+     * Find messages not yet read, sent by the other participant. Uses
+     * senderRole for disambiguation (see countUnreadByRole).
      */
     @Query("SELECT m FROM ChatMessage m WHERE m.conversation.id = :conversationId "
-            + "AND m.senderId <> :userId AND m.status <> 'READ'")
+            + "AND m.senderRole <> :currentRole AND m.status <> 'READ'")
     List<ChatMessage> findUnread(@Param("conversationId") Long conversationId,
-            @Param("userId") Long userId);
+            @Param("currentRole") String currentRole);
 
     /**
-     * Bulk mark as delivered. Returns count of updated rows.
+     * Bulk mark as delivered. Returns count of updated rows. Uses senderRole
+     * for disambiguation (see countUnreadByRole).
      */
     @Modifying
     @Query("UPDATE ChatMessage m SET m.status = 'DELIVERED' "
-            + "WHERE m.conversation.id = :conversationId AND m.senderId <> :userId AND m.status = 'SENT'")
-    int markAsDelivered(@Param("conversationId") Long conversationId, @Param("userId") Long userId);
+            + "WHERE m.conversation.id = :conversationId AND m.senderRole <> :currentRole AND m.status = 'SENT'")
+    int markAsDelivered(@Param("conversationId") Long conversationId, @Param("currentRole") String currentRole);
 
     /**
-     * Bulk mark as read. Returns count of updated rows.
+     * Bulk mark as read. Returns count of updated rows. Uses senderRole for
+     * disambiguation (see countUnreadByRole).
      */
     @Modifying
     @Query("UPDATE ChatMessage m SET m.status = 'READ' "
-            + "WHERE m.conversation.id = :conversationId AND m.senderId <> :userId AND m.status <> 'READ'")
-    int markAsRead(@Param("conversationId") Long conversationId, @Param("userId") Long userId);
+            + "WHERE m.conversation.id = :conversationId AND m.senderRole <> :currentRole AND m.status <> 'READ'")
+    int markAsRead(@Param("conversationId") Long conversationId, @Param("currentRole") String currentRole);
 
     /**
      * Delete all messages belonging to given conversations.

@@ -101,6 +101,7 @@ public class ChatServiceImpl implements ChatService {
         conversation.setLastMessageAt(LocalDateTime.now());
         conversation.setLastMessageContent(preview);
         conversation.setLastMessageSenderId(senderId);
+        conversation.setLastMessageSenderRole(senderRole.toUpperCase());
         conversationRepository.save(conversation);
 
         log.info("Message sent in conversation {} for job {} by {} {}", conversation.getId(), jobId, senderRole, senderId);
@@ -126,17 +127,17 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ConversationResponseDTO> getConversations(Long userId) {
+    public List<ConversationResponseDTO> getConversations(Long userId, String userRole) {
         List<Conversation> conversations = conversationRepository.findByParticipant(userId);
 
         return conversations.stream()
-                .map(c -> mapConversationToDto(c, userId))
+                .map(c -> mapConversationToDto(c, userId, userRole))
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<JobConversationsDTO> getConversationsGroupedByJob(Long userId) {
+    public List<JobConversationsDTO> getConversationsGroupedByJob(Long userId, String userRole) {
         List<Conversation> conversations = conversationRepository.findByParticipant(userId);
 
         // Group by jobId
@@ -150,7 +151,7 @@ public class ChatServiceImpl implements ChatService {
             Job job = first.getJob();
 
             List<ConversationResponseDTO> convDtos = jobConversations.stream()
-                    .map(c -> mapConversationToDto(c, userId))
+                    .map(c -> mapConversationToDto(c, userId, userRole))
                     .collect(Collectors.toList());
 
             long totalUnread = convDtos.stream().mapToLong(ConversationResponseDTO::getUnreadCount).sum();
@@ -201,17 +202,18 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public List<Long> markAsDelivered(Long conversationId, Long userId) {
+    public List<Long> markAsDelivered(Long conversationId, Long userId, String userRole) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException("Conversation not found: " + conversationId));
 
         validateParticipant(conversation, userId);
 
-        List<ChatMessage> undelivered = chatMessageRepository.findUndelivered(conversationId, userId);
+        String currentRole = userRole.toUpperCase();
+        List<ChatMessage> undelivered = chatMessageRepository.findUndelivered(conversationId, currentRole);
         List<Long> ids = undelivered.stream().map(ChatMessage::getId).collect(Collectors.toList());
 
         if (!ids.isEmpty()) {
-            chatMessageRepository.markAsDelivered(conversationId, userId);
+            chatMessageRepository.markAsDelivered(conversationId, currentRole);
         }
 
         return ids;
@@ -219,17 +221,18 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public List<Long> markAsRead(Long conversationId, Long userId) {
+    public List<Long> markAsRead(Long conversationId, Long userId, String userRole) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ConversationNotFoundException("Conversation not found: " + conversationId));
 
         validateParticipant(conversation, userId);
 
-        List<ChatMessage> unread = chatMessageRepository.findUnread(conversationId, userId);
+        String currentRole = userRole.toUpperCase();
+        List<ChatMessage> unread = chatMessageRepository.findUnread(conversationId, currentRole);
         List<Long> ids = unread.stream().map(ChatMessage::getId).collect(Collectors.toList());
 
         if (!ids.isEmpty()) {
-            chatMessageRepository.markAsRead(conversationId, userId);
+            chatMessageRepository.markAsRead(conversationId, currentRole);
         }
 
         return ids;
@@ -271,7 +274,7 @@ public class ChatServiceImpl implements ChatService {
         }
     }
 
-    private ConversationResponseDTO mapConversationToDto(Conversation conversation, Long currentUserId) {
+    private ConversationResponseDTO mapConversationToDto(Conversation conversation, Long currentUserId, String currentRole) {
         ConversationResponseDTO dto = new ConversationResponseDTO();
         dto.setId(conversation.getId());
         dto.setJobId(conversation.getJob().getId());
@@ -282,30 +285,35 @@ public class ChatServiceImpl implements ChatService {
         dto.setLastMessageAt(conversation.getLastMessageAt());
         dto.setLastMessageContent(conversation.getLastMessageContent());
         dto.setLastMessageSenderId(conversation.getLastMessageSenderId());
+        dto.setLastMessageSenderRole(conversation.getLastMessageSenderRole());
         dto.setCreatedAt(conversation.getCreatedAt());
 
         // Archive status
         dto.setArchivedAt(conversation.getArchivedAt());
         dto.setArchived(conversation.getArchivedAt() != null);
 
-        // Resolve names
-        dto.setParticipantOneName(resolveUserName(conversation.getParticipantOneId()));
-        dto.setParticipantTwoName(resolveUserName(conversation.getParticipantTwoId()));
+        // Resolve names — participant one is always the client, two is always the worker
+        dto.setParticipantOneName(resolveClientName(conversation.getParticipantOneId()));
+        dto.setParticipantTwoName(resolveWorkerName(conversation.getParticipantTwoId()));
 
-        // Unread count: messages not READ, sent by the other participant
-        long unread = chatMessageRepository.countByConversationIdAndStatusNotAndSenderIdNot(
-                conversation.getId(), MessageStatus.READ, currentUserId);
+        // Unread count: messages not READ, sent by the other participant (by role)
+        String normalizedRole = currentRole.toUpperCase();
+        long unread = chatMessageRepository.countUnreadByRole(
+                conversation.getId(), MessageStatus.READ, normalizedRole);
         dto.setUnreadCount(unread);
 
         return dto;
     }
 
-    private String resolveUserName(Long userId) {
-        Optional<Client> client = clientReadRepository.findById(userId);
-        if (client.isPresent()) {
-            return client.get().getName();
-        }
-        Optional<Worker> worker = workerReadRepository.findById(userId);
-        return worker.map(Worker::getName).orElse("Unknown");
+    private String resolveClientName(Long clientId) {
+        return clientReadRepository.findById(clientId)
+                .map(Client::getName)
+                .orElse("Unknown");
+    }
+
+    private String resolveWorkerName(Long workerId) {
+        return workerReadRepository.findById(workerId)
+                .map(Worker::getName)
+                .orElse("Unknown");
     }
 }

@@ -61,6 +61,9 @@ public class Conversation {
     @Column(name = "last_message_sender_id")
     private Long lastMessageSenderId;
 
+    @Column(name = "last_message_sender_role", length = 10)
+    private String lastMessageSenderRole;
+
     /**
      * Set when the associated job reaches a terminal state (COMPLETED /
      * CANCELLED).
