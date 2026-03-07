@@ -66,7 +66,9 @@ public class ProfileConfig {
             "/api/v1/worker/register",
             "/api/v1/fx/rate",
             "/actuator/health",
-            "/actuator/info"
+            "/actuator/info",
+            "/ws/chat",
+            "/ws/chat/**"
         };
 
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -115,6 +117,11 @@ public class ProfileConfig {
                     .requestMatchers("/api/v1/jobs/**").hasAnyRole(ADMIN, CLIENT, WORKER)
                     .requestMatchers("/api/v1/bids/**").hasAnyRole(ADMIN, CLIENT, WORKER)
                     .requestMatchers("/api/v1/payments/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                    .requestMatchers("/api/v1/reviews/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                    .requestMatchers("/api/v1/chat/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                    .requestMatchers("/api/v1/users/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                    .requestMatchers("/api/v1/skills/**").hasAnyRole(ADMIN, CLIENT, WORKER)
+                    .requestMatchers("/api/v1/public/**").authenticated()
                     .anyRequest().authenticated()
                     )
                     .authenticationProvider(authenticationProvider())
