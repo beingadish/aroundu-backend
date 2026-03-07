@@ -9,32 +9,24 @@ services:
     env_file:
       - .env
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
-      SERVER_PORT: ${SERVER_PORT:-20232}
-      # DB – point at the 'db' service
-      DEV_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-aroundu_dev}
-      DEV_DB_USERNAME: ${POSTGRES_USER:-aroundu_dev}
-      DEV_DB_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
-      # Prod DB – same internal container, different profile vars
-      PROD_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-aroundu_dev}
-      PROD_DB_USERNAME: ${POSTGRES_USER:-aroundu_dev}
-      PROD_DB_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
-      # Redis – point at the 'redis' service
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      # Prod Redis – same internal container
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SERVER_PORT: ${SERVER_PORT}
+      # Prod DB – resolves to the internal 'db' service
+      PROD_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      PROD_DB_USERNAME: ${POSTGRES_USER}
+      PROD_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      # Prod Redis – resolves to the internal 'redis' service
       PROD_REDIS_HOST: redis
       PROD_REDIS_PORT: 6379
-      PROD_REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      PROD_REDIS_PASSWORD: ${REDIS_PASSWORD}
       # JWT (must be set in .env)
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
-      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-3600000}
-      JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS:-86400000}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      JWT_REFRESH_EXPIRATION_MS: ${JWT_REFRESH_EXPIRATION_MS}
       # Admin seeder
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@aroundu.com}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-arounduadmin}
-      ADMIN_NAME: ${ADMIN_NAME:-AroundU Admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_NAME: ${ADMIN_NAME}
     ports:
       - "${SERVER_PORT:-20232}:${SERVER_PORT:-20232}"
     depends_on:
@@ -59,15 +51,15 @@ services:
     container_name: aroundu-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-aroundu_dev}
-      POSTGRES_USER: ${POSTGRES_USER:-aroundu_dev}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "${DB_PORT:-5433}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aroundu_dev} -d ${POSTGRES_DB:-aroundu_dev}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
