@@ -24,20 +24,27 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("select distinct j from Job j left join j.skillSet s where (:city is null or lower(j.jobLocation.city) = lower(:city)) and (:area is null or lower(j.jobLocation.area) = lower(:area)) and (:skillIds is null or s.id in :skillIds)")
     List<Job> searchByLocationAndSkills(@Param("city") String city, @Param("area") String area, @Param("skillIds") List<Long> skillIds);
 
-    @EntityGraph(attributePaths = {"skillSet", "jobLocation", "createdBy"})
+    // skillSet is intentionally excluded here: @BatchSize(50) on Job.skillSet makes Hibernate
+    // batch-load it after the paged query rather than JOIN-fetching (which causes HHH90003004).
+    @EntityGraph(attributePaths = {"jobLocation", "createdBy"})
     Page<Job> findByCreatedByIdAndJobStatusIn(Long clientId, Collection<JobStatus> statuses, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"skillSet", "jobLocation", "createdBy"})
+    @EntityGraph(attributePaths = {"jobLocation", "createdBy"})
     Page<Job> findByCreatedByIdAndJobStatusInAndCreatedAtBetween(Long clientId, Collection<JobStatus> statuses, LocalDateTime start, LocalDateTime end, Pageable pageable);
 
     Optional<Job> findByIdAndCreatedById(Long id, Long clientId);
 
     Optional<Job> findByIdAndAssignedToId(Long id, Long workerId);
 
-    @Query("select distinct j from Job j left join j.skillSet s where j.jobStatus = :status and (:skillIds is null or s.id in :skillIds)")
+    // Replaced left-join on skillSet collection with a correlated EXISTS subquery so
+    // Hibernate can push LIMIT/OFFSET to SQL instead of doing in-memory pagination (HHH90003004).
+    @Query(value = "SELECT j FROM Job j WHERE j.jobStatus = :status "
+            + "AND (:skillIds IS NULL OR EXISTS (SELECT s FROM j.skillSet s WHERE s.id IN :skillIds))",
+           countQuery = "SELECT COUNT(j) FROM Job j WHERE j.jobStatus = :status "
+            + "AND (:skillIds IS NULL OR EXISTS (SELECT s FROM j.skillSet s WHERE s.id IN :skillIds))")
     Page<Job> findOpenJobsBySkills(@Param("status") JobStatus status, @Param("skillIds") Collection<Long> skillIds, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"skillSet"})
+    // @EntityGraph removed: @BatchSize(50) on Job.skillSet handles batch loading after the page query.
     Page<Job> findByIdInAndJobStatus(Collection<Long> ids, JobStatus status, Pageable pageable);
 
     List<Job> findByJobStatus(JobStatus status);
