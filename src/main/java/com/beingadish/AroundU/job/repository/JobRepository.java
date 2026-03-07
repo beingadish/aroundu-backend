@@ -40,7 +40,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     // Hibernate can push LIMIT/OFFSET to SQL instead of doing in-memory pagination (HHH90003004).
     @Query(value = "SELECT j FROM Job j WHERE j.jobStatus = :status "
             + "AND (:skillIds IS NULL OR EXISTS (SELECT s FROM j.skillSet s WHERE s.id IN :skillIds))",
-           countQuery = "SELECT COUNT(j) FROM Job j WHERE j.jobStatus = :status "
+            countQuery = "SELECT COUNT(j) FROM Job j WHERE j.jobStatus = :status "
             + "AND (:skillIds IS NULL OR EXISTS (SELECT s FROM j.skillSet s WHERE s.id IN :skillIds))")
     Page<Job> findOpenJobsBySkills(@Param("status") JobStatus status, @Param("skillIds") Collection<Long> skillIds, Pageable pageable);
 
@@ -58,13 +58,13 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             + "(j.scheduledStartTime IS NOT NULL AND j.scheduledStartTime < :now "
             + "OR j.scheduledStartTime IS NULL AND j.createdAt < :fallback)")
     List<Job> findExpiredJobs(@Param("status") JobStatus status,
-                              @Param("now") LocalDateTime now,
-                              @Param("fallback") LocalDateTime fallback);
+            @Param("now") LocalDateTime now,
+            @Param("fallback") LocalDateTime fallback);
 
     @Query("SELECT j FROM Job j WHERE j.jobStatus = :status AND j.createdAt < :before "
             + "AND (SELECT COUNT(b) FROM Bid b WHERE b.job = j) = 0")
     List<Job> findJobsWithZeroBids(@Param("status") JobStatus status,
-                                   @Param("before") LocalDateTime before);
+            @Param("before") LocalDateTime before);
 
     long countByJobStatusAndCreatedAtBetween(JobStatus status, LocalDateTime start, LocalDateTime end);
 
@@ -76,7 +76,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("SELECT COUNT(j) > 0 FROM Job j WHERE j.assignedTo.id = :workerId "
             + "AND j.jobStatus IN :activeStatuses")
     boolean hasActiveJobAsWorker(@Param("workerId") Long workerId,
-                                 @Param("activeStatuses") Collection<JobStatus> activeStatuses);
+            @Param("activeStatuses") Collection<JobStatus> activeStatuses);
 
     /**
      * Does this client currently have a non-terminal job that has a worker
@@ -85,5 +85,5 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("SELECT COUNT(j) > 0 FROM Job j WHERE j.createdBy.id = :clientId "
             + "AND j.jobStatus = :status")
     boolean hasJobInStatus(@Param("clientId") Long clientId,
-                           @Param("status") JobStatus status);
+            @Param("status") JobStatus status);
 }
