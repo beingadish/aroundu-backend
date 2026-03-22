@@ -141,9 +141,12 @@ public class PayloadEncryptionFilter extends OncePerRequestFilter {
             byte[] encryptedBody = objectMapper.writeValueAsBytes(wrapper);
 
             responseWrapper.resetBuffer();
+            // Set the header BEFORE writing the body — once the output
+            // stream is written to, the response may commit and
+            // subsequent header changes are silently dropped.
+            responseWrapper.setHeader(ENCRYPTED_HEADER, "true");
             responseWrapper.getResponse().setContentLength(encryptedBody.length);
             responseWrapper.getResponse().getOutputStream().write(encryptedBody);
-            responseWrapper.setHeader(ENCRYPTED_HEADER, "true");
         } catch (Exception e) {
             log.error("Failed to encrypt response payload", e);
             // Fall through with original unencrypted body
