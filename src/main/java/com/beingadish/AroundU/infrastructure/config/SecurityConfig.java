@@ -3,6 +3,7 @@ package com.beingadish.AroundU.infrastructure.config;
 import com.beingadish.AroundU.infrastructure.security.CustomAccessDeniedHandler;
 import com.beingadish.AroundU.infrastructure.security.CustomAuthenticationEntryPoint;
 import com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter;
+import com.beingadish.AroundU.infrastructure.security.PayloadEncryptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,6 +59,7 @@ public class SecurityConfig {
     };
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PayloadEncryptionFilter payloadEncryptionFilter;
     private final UserDetailsService userDetailsService;
 
     @Bean
@@ -114,6 +116,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(payloadEncryptionFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

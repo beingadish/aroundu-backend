@@ -142,3 +142,7 @@ admin:
   email: ${ADMIN_EMAIL:admin@aroundu.com}
   password: ${ADMIN_PASSWORD:arounduadmin}
   name: ${ADMIN_NAME:AroundU Admin}
+
+app:
+  encryption:
+    key: ${PAYLOAD_ENCRYPTION_KEY:}
