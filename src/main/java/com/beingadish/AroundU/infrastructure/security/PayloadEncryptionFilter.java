@@ -68,12 +68,17 @@ public class PayloadEncryptionFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+        // Only encrypt the response if the client opted in by sending an encrypted request.
+        boolean clientWantsEncryption = "true".equalsIgnoreCase(request.getHeader(ENCRYPTED_HEADER));
+
         HttpServletRequest processedRequest = decryptRequest(request);
         ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
 
         filterChain.doFilter(processedRequest, responseWrapper);
 
-        encryptResponse(responseWrapper);
+        if (clientWantsEncryption) {
+            encryptResponse(responseWrapper);
+        }
         responseWrapper.copyBodyToResponse();
     }
 
