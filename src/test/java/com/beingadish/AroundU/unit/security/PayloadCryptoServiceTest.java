@@ -23,7 +23,7 @@ class PayloadCryptoServiceTest {
     void setUp() {
         service = new PayloadCryptoService();
         ReflectionTestUtils.setField(service, "base64Key", TEST_KEY);
-        service.init();
+        init(service);
     }
 
     @Test
@@ -37,7 +37,7 @@ class PayloadCryptoServiceTest {
     void isEnabled_whenKeyEmpty() {
         PayloadCryptoService emptyService = new PayloadCryptoService();
         ReflectionTestUtils.setField(emptyService, "base64Key", "");
-        emptyService.init();
+        init(emptyService);
         assertThat(emptyService.isEnabled()).isFalse();
     }
 
@@ -135,7 +135,7 @@ class PayloadCryptoServiceTest {
         PayloadCryptoService badService = new PayloadCryptoService();
         ReflectionTestUtils.setField(badService, "base64Key", base64ShortKey);
 
-        assertThatThrownBy(badService::init)
+        assertThatThrownBy(() -> init(badService))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("32 bytes");
     }
@@ -145,7 +145,7 @@ class PayloadCryptoServiceTest {
     void encryptWhenDisabled() {
         PayloadCryptoService disabledService = new PayloadCryptoService();
         ReflectionTestUtils.setField(disabledService, "base64Key", "");
-        disabledService.init();
+        init(disabledService);
 
         assertThatThrownBy(() -> disabledService.encrypt("test"))
                 .isInstanceOf(IllegalStateException.class)
@@ -157,11 +157,15 @@ class PayloadCryptoServiceTest {
     void decryptWhenDisabled() {
         PayloadCryptoService disabledService = new PayloadCryptoService();
         ReflectionTestUtils.setField(disabledService, "base64Key", "");
-        disabledService.init();
+        init(disabledService);
 
         assertThatThrownBy(() -> disabledService.decrypt("abc"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not enabled");
+    }
+
+    private static void init(PayloadCryptoService service) {
+        ReflectionTestUtils.invokeMethod(service, "init");
     }
 
     @Test

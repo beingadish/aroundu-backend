@@ -6,6 +6,8 @@
 # ── Stage 1: Build ────────────────────────────────────────────
 FROM amazoncorretto:21-alpine AS build
 
+RUN apk upgrade --no-cache
+
 WORKDIR /app
 
 # Cache Maven wrapper + dependencies before copying source
@@ -22,7 +24,8 @@ RUN ./mvnw package -Dmaven.test.skip=true -B -q && \
 # ── Stage 2: Runtime ─────────────────────────────────────────
 FROM amazoncorretto:21-alpine AS runtime
 
-RUN addgroup -S aroundu && adduser -S aroundu -G aroundu
+RUN apk upgrade --no-cache && \
+    addgroup -S aroundu && adduser -S aroundu -G aroundu
 
 WORKDIR /app
 

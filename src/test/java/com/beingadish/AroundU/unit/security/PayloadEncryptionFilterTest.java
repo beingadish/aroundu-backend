@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 @DisplayName("PayloadEncryptionFilter")
 class PayloadEncryptionFilterTest {
 
-    private PayloadEncryptionFilter filter;
+    private TestPayloadEncryptionFilter filter;
     private PayloadCryptoService cryptoService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -34,54 +34,44 @@ class PayloadEncryptionFilterTest {
     void setUp() {
         cryptoService = new PayloadCryptoService();
         ReflectionTestUtils.setField(cryptoService, "base64Key", TEST_KEY);
-        cryptoService.init();
+        init(cryptoService);
 
-        filter = new PayloadEncryptionFilter(cryptoService, objectMapper);
+        filter = new TestPayloadEncryptionFilter(cryptoService, objectMapper);
     }
 
     @Test
     @DisplayName("excluded path /actuator/health passes through")
     void excludedActuatorPath() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/actuator/health");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        assertThat(filter.shouldNotFilter(request)).isTrue();
+        assertThat(filter.shouldSkip(request)).isTrue();
     }
 
     @Test
     @DisplayName("excluded path /docs passes through")
     void excludedDocsPath() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/docs/index.html");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        assertThat(filter.shouldNotFilter(request)).isTrue();
+        assertThat(filter.shouldSkip(request)).isTrue();
     }
 
     @Test
     @DisplayName("excluded path /swagger-ui passes through")
     void excludedSwaggerPath() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/swagger-ui/index.html");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        assertThat(filter.shouldNotFilter(request)).isTrue();
+        assertThat(filter.shouldSkip(request)).isTrue();
     }
 
     @Test
     @DisplayName("excluded path /v3/api-docs passes through")
     void excludedApiDocsPath() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/v3/api-docs/openapi.json");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        assertThat(filter.shouldNotFilter(request)).isTrue();
+        assertThat(filter.shouldSkip(request)).isTrue();
     }
 
     @Test
     @DisplayName("API path is NOT excluded")
     void apiPathNotExcluded() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-
-        assertThat(filter.shouldNotFilter(request)).isFalse();
+        assertThat(filter.shouldSkip(request)).isFalse();
     }
 
     @Test
@@ -89,12 +79,12 @@ class PayloadEncryptionFilterTest {
     void filterDisabledWhenNoKey() throws Exception {
         PayloadCryptoService disabledService = new PayloadCryptoService();
         ReflectionTestUtils.setField(disabledService, "base64Key", "");
-        disabledService.init();
+        init(disabledService);
 
-        PayloadEncryptionFilter disabledFilter = new PayloadEncryptionFilter(disabledService, objectMapper);
+        TestPayloadEncryptionFilter disabledFilter = new TestPayloadEncryptionFilter(disabledService, objectMapper);
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
 
-        assertThat(disabledFilter.shouldNotFilter(request)).isTrue();
+        assertThat(disabledFilter.shouldSkip(request)).isTrue();
     }
 
     @Test
@@ -131,5 +121,20 @@ class PayloadEncryptionFilterTest {
         filter.doFilter(request, response, filterChain);
 
         verify(filterChain).doFilter(any(), any());
+    }
+
+    private static void init(PayloadCryptoService service) {
+        ReflectionTestUtils.invokeMethod(service, "init");
+    }
+
+    private static final class TestPayloadEncryptionFilter extends PayloadEncryptionFilter {
+
+        private TestPayloadEncryptionFilter(PayloadCryptoService cryptoService, ObjectMapper objectMapper) {
+            super(cryptoService, objectMapper);
+        }
+
+        private boolean shouldSkip(MockHttpServletRequest request) {
+            return super.shouldNotFilter(request);
+        }
     }
 }
