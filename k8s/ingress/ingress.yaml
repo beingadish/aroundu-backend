@@ -24,6 +24,7 @@ spec:
                 name: app-service
                 port:
                   number: 8080
+
           # ── Grafana dashboard ───────────────────────────────
           - path: /grafana
             pathType: Prefix
@@ -32,7 +33,8 @@ spec:
                 name: grafana-service
                 port:
                   number: 3000
-          # ── Prometheus (consider restricting in production) ──
+
+          # ── Prometheus ──────────────────────────────────────
           - path: /prometheus
             pathType: Prefix
             backend:
@@ -40,8 +42,9 @@ spec:
                 name: prometheus-service
                 port:
                   number: 9090
+
 ---
-# Separate Ingress for WebSocket path with long timeouts
+# WebSocket-specific ingress (long timeouts only)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -54,11 +57,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
     nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"
-    # These headers enable the HTTP → WebSocket upgrade
     nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "upgrade";
 spec:
   ingressClassName: nginx
   rules:
