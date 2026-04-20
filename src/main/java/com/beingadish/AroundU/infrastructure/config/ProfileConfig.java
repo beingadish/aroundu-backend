@@ -67,6 +67,7 @@ public class ProfileConfig {
             "/api/v1/fx/rate",
             "/actuator/health",
             "/actuator/info",
+            "/actuator/prometheus",
             "/ws/chat",
             "/ws/chat/**"
         };
