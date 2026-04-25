@@ -1,0 +1,78 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stress-test-vegeta
+  namespace: aroundu
+spec:
+  ttlSecondsAfterFinished: 3600 # Auto-cleanup after 1 hour
+  template:
+    metadata:
+      labels:
+        app: stress-test
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: vegeta
+          image: peterevans/vegeta:latest
+          args:
+            - /bin/sh
+            - -c
+            - |
+              echo "========================================"
+              echo "AroundU Backend Stress Test Suite"
+              echo "Target: http://aroundu-app:8080"
+              echo "========================================"
+
+              # Wait for app to be ready
+              echo "Checking target availability..."
+              until wget -q --spider http://aroundu-app:8080/actuator/health 2>/dev/null; do
+                echo "Waiting for aroundu-app..."
+                sleep 5
+              done
+              echo "Target is ready!"
+
+              # Test configuration
+              DURATION="30s"
+
+              # Run stress tests at different RPS levels
+              for RPS in 100 500 1000 2000 5000; do
+                echo ""
+                echo "========================================"
+                echo "Testing at $RPS RPS for $DURATION"
+                echo "========================================"
+                
+                echo "GET http://aroundu-app:8080/actuator/health" | \
+                  vegeta attack -duration=$DURATION -rate=$RPS -workers=100 -connections=100 | \
+                  tee /tmp/results_${RPS}.bin | \
+                  vegeta report
+                
+                # Short cooldown between tests
+                echo "Cooling down for 10s..."
+                sleep 10
+              done
+
+              echo ""
+              echo "========================================"
+              echo "Testing Rate-Limited Endpoints"
+              echo "========================================"
+
+              # Test auth endpoint (should show 429s if rate limited)
+              echo "Testing /api/v1/auth/login at 100 RPS..."
+              echo 'POST http://aroundu-app:8080/api/v1/auth/login
+              Content-Type: application/json
+
+              {"email":"stress@test.com","password":"test123"}' | \
+              vegeta attack -duration=15s -rate=100 | \
+              vegeta report
+
+              echo ""
+              echo "========================================"
+              echo "All tests completed!"
+              echo "========================================"
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"

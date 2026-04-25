@@ -1,7 +1,10 @@
 server:
-  port: ${SERVER_PORT:20232}
+  port: ${SERVER_PORT:8080}
 
 spring:
+  threads:
+    virtual:
+      enabled: true
   application:
     name: AroundU
   profiles:

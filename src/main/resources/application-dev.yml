@@ -1,5 +1,5 @@
 server:
-  port: ${SERVER_PORT:20232}
+  port: ${SERVER_PORT:8080}
 
 spring:
   datasource:
@@ -74,11 +74,11 @@ rate-limit:
 # ── Scheduler (aggressive for local testing) ─────────────────────
 scheduler:
   enabled: true
-  user-cleanup-cron: "0 */5 * * * ?"      # every 5 minutes
-  job-expiration-cron: "0 */2 * * * ?"     # every 2 minutes
-  reminder-cron: "0 */5 * * * ?"           # every 5 minutes
-  cache-sync-cron: "0 */5 * * * ?"         # every 5 minutes
-  analytics-cron: "0 */10 * * * ?"         # every 10 minutes
+  user-cleanup-cron: "0 */5 * * * ?" # every 5 minutes
+  job-expiration-cron: "0 */2 * * * ?" # every 2 minutes
+  reminder-cron: "0 */5 * * * ?" # every 5 minutes
+  cache-sync-cron: "0 */5 * * * ?" # every 5 minutes
+  analytics-cron: "0 */10 * * * ?" # every 10 minutes
   user-inactive-years: 2
   job-expiration-days: 1
   reminder-threshold-hours: 1

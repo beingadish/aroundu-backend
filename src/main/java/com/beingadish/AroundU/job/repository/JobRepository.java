@@ -1,7 +1,10 @@
 package com.beingadish.AroundU.job.repository;
 
-import com.beingadish.AroundU.common.constants.enums.JobStatus;
-import com.beingadish.AroundU.job.entity.Job;
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -10,10 +13,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import com.beingadish.AroundU.common.constants.enums.JobStatus;
+import com.beingadish.AroundU.job.entity.Job;
 
 @Repository
 public interface JobRepository extends JpaRepository<Job, Long> {
@@ -86,4 +87,9 @@ public interface JobRepository extends JpaRepository<Job, Long> {
             + "AND j.jobStatus = :status")
     boolean hasJobInStatus(@Param("clientId") Long clientId,
             @Param("status") JobStatus status);
+
+    long countByJobStatus(JobStatus status);
+
+    @EntityGraph(attributePaths = {"jobLocation", "createdBy"})
+    Page<Job> findByJobStatusIn(Collection<JobStatus> statuses, Pageable pageable);
 }

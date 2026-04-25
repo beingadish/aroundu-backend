@@ -12,7 +12,7 @@ spec:
     kind: Deployment
     name: aroundu-app
   minReplicas: 1
-  maxReplicas: 3
+  maxReplicas: 10 # Increased for high-load stress testing (20000+ RPS)
   metrics:
     - type: Resource
       resource:
@@ -28,11 +28,15 @@ spec:
           averageUtilization: 80
   behavior:
     scaleUp:
-      stabilizationWindowSeconds: 60
+      stabilizationWindowSeconds: 0 # Immediate scale-up for stress testing
       policies:
         - type: Pods
-          value: 1
-          periodSeconds: 60
+          value: 4 # Scale up to 4 pods at once
+          periodSeconds: 15
+        - type: Percent
+          value: 100 # Double pods
+          periodSeconds: 15
+      selectPolicy: Max
     scaleDown:
       stabilizationWindowSeconds: 300
       policies:

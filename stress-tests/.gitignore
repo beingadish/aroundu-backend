@@ -1,0 +1,12 @@
+# Stress test results
+*.bin
+*.json
+*.md
+!README.md
+
+# Temporary files
+*.tmp
+*.log
+
+# Target files (regenerated each run)
+targets/

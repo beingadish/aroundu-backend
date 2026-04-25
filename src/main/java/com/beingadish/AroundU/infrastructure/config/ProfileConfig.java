@@ -1,10 +1,5 @@
 package com.beingadish.AroundU.infrastructure.config;
 
-import com.beingadish.AroundU.infrastructure.security.CustomAccessDeniedHandler;
-import com.beingadish.AroundU.infrastructure.security.CustomAuthenticationEntryPoint;
-import com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +19,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
+
+import com.beingadish.AroundU.infrastructure.security.CustomAccessDeniedHandler;
+import com.beingadish.AroundU.infrastructure.security.CustomAuthenticationEntryPoint;
+import com.beingadish.AroundU.infrastructure.security.JwtAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 public class ProfileConfig {
@@ -63,8 +65,6 @@ public class ProfileConfig {
         private static final String[] AUTH_WHITELIST = {
             "/api/v1/auth/**",
             "/api/v1/client/register",
-            "/api/v1/worker/register",
-            "/api/v1/fx/rate",
             "/actuator/health",
             "/actuator/info",
             "/actuator/prometheus",
